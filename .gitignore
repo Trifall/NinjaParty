@@ -1,0 +1,47 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+relay/bin/
+server/bin/
+
+# Node/Bun
+node_modules/
+.pnpm-store/
+
+# SvelteKit
+.svelte-kit/
+build/
+.vercel/
+.netlify/
+.wrangler/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Misc
+*.tmp
+*.temp

@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoomMessage",
+  "description": "Canonical message schema for Ninjabrain Bot Cloud Relay. The payload always contains full state, not diffs.",
+  "type": "object",
+  "required": ["type", "ts", "source", "payload"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["stronghold_update", "presence"],
+      "description": "Message type. stronghold_update contains triangulation data. presence indicates runner online/offline status."
+    },
+    "ts": {
+      "type": "integer",
+      "description": "Unix timestamp in milliseconds"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source identifier, e.g. 'ninjabrain-local'"
+    },
+    "payload": {
+      "oneOf": [
+        { "$ref": "#/definitions/StrongholdPayload" },
+        { "$ref": "#/definitions/PresencePayload" }
+      ]
+    }
+  },
+  "definitions": {
+    "StrongholdPayload": {
+      "type": "object",
+      "required": ["resultType", "playerPosition", "eyeThrows"],
+      "properties": {
+        "resultType": {
+          "type": "string",
+          "enum": ["NONE", "TRIANGULATION", "FAILED", "BLIND", "DIVINE", "ALL_ADVANCEMENTS"],
+          "description": "Type of stronghold calculation result"
+        },
+        "playerPosition": { "$ref": "#/definitions/PlayerPosition" },
+        "eyeThrows": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EyeThrow" }
+        },
+        "predictions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ChunkPrediction" },
+          "description": "Chunk predictions sorted by certainty"
+        }
+      }
+    },
+    "PresencePayload": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["online", "offline"]
+        }
+      }
+    },
+    "PlayerPosition": {
+      "type": "object",
+      "required": ["xInOverworld", "zInOverworld", "isInOverworld", "horizontalAngle"],
+      "properties": {
+        "xInOverworld": { "type": "number" },
+        "zInOverworld": { "type": "number" },
+        "isInOverworld": { "type": "boolean" },
+        "isInNether": { "type": "boolean" },
+        "horizontalAngle": { "type": "number" }
+      }
+    },
+    "EyeThrow": {
+      "type": "object",
+      "required": ["xInOverworld", "zInOverworld", "angle", "error", "type"],
+      "properties": {
+        "xInOverworld": { "type": "number" },
+        "zInOverworld": { "type": "number" },
+        "angle": { "type": "number" },
+        "angleWithoutCorrection": { "type": "number" },
+        "correction": { "type": "number" },
+        "correctionIncrements": { "type": "integer" },
+        "error": { "type": "number" },
+        "type": {
+          "type": "string",
+          "enum": ["NORMAL", "NORMAL_WITH_ALT_STD", "MANUAL", "BOAT"]
+        }
+      }
+    },
+    "ChunkPrediction": {
+      "type": "object",
+      "required": ["certainty", "chunkX", "chunkZ", "overworldDistance"],
+      "properties": {
+        "certainty": { "type": "number", "minimum": 0, "maximum": 1 },
+        "chunkX": { "type": "integer" },
+        "chunkZ": { "type": "integer" },
+        "overworldDistance": { "type": "number" }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "type": "stronghold_update",
+  "ts": 1708455000000,
+  "source": "ninjabrain-local",
+  "payload": {
+    "resultType": "TRIANGULATION",
+    "playerPosition": {
+      "xInOverworld": 241.34,
+      "zInOverworld": -268.71,
+      "isInOverworld": true,
+      "isInNether": false,
+      "horizontalAngle": 101.06
+    },
+    "eyeThrows": [
+      {
+        "xInOverworld": 241.34,
+        "zInOverworld": -268.71,
+        "angle": 101.062,
+        "angleWithoutCorrection": 101.06,
+        "correction": 0.002,
+        "correctionIncrements": 0,
+        "error": -0.00118,
+        "type": "BOAT"
+      }
+    ],
+    "predictions": [
+      {
+        "certainty": 0.95,
+        "chunkX": 12,
+        "chunkZ": -8,
+        "overworldDistance": 1500
+      },
+      {
+        "certainty": 0.03,
+        "chunkX": 13,
+        "chunkZ": -8,
+        "overworldDistance": 1650
+      }
+    ]
+  }
+}

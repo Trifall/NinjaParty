@@ -1,0 +1,8 @@
+{
+  "type": "presence",
+  "ts": 1708455300000,
+  "source": "server",
+  "payload": {
+    "status": "offline"
+  }
+}
