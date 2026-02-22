@@ -1,0 +1,15 @@
+# .goreleaser.yaml
+project_name: relay
+builds:
+  - id: relay
+    main: ./
+    binary: relay
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
