@@ -1,8 +1,7 @@
 import { definePageMetaTags } from 'svelte-meta-tags';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ url, platform }) => {
-
+export const load: PageServerLoad = async ({ url }) => {
 	const pageTags = definePageMetaTags({
 		title: 'Ninjabrain Party Relay',
 		description: 'Real-time stronghold triangulation for Minecraft speedrunners',

@@ -10,10 +10,9 @@
 
 	interface Props {
 		authorName?: string;
-		transparentBackground?: boolean;
 	}
 
-	let { authorName = 'Jerren Trifan', transparentBackground = false }: Props = $props();
+	let { authorName = 'Jerren Trifan' }: Props = $props();
 </script>
 
 <footer class="w-full border-t border-gray-200 py-6 dark:border-gray-800">
@@ -21,10 +20,10 @@
 		<div class="flex flex-col items-center justify-center space-y-4">
 			<TooltipProvider>
 				<div class="flex items-center space-x-4 px-4">
-					<Tooltip delayDuration={0} >
+					<Tooltip delayDuration={0}>
 						<TooltipTrigger class="p-1">
 							<a
-								href={'https://github.com/Trifall'}
+								href="https://github.com/Trifall"
 								class="text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
 								target="_blank"
 								rel="noopener noreferrer"
