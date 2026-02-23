@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { RoomConnection } from '$lib/stores/room.svelte';
 	import { Badge } from '$lib/components/ui/badge';
-	import { LoaderCircle, Wifi, WifiOff, MapPin, CircleAlert, Info, Eye, TriangleAlert } from '@lucide/svelte';
+	import { LoaderCircle, Wifi, WifiOff, MapPin, CircleAlert, Info, Eye, EyeOff, TriangleAlert } from '@lucide/svelte';
 	import { settings } from '$lib/stores/settings.svelte';
 	import { chunkToNether, normalizeMinecraftAngle, getCertaintyColor, getAngleToStructure, getAngleDifference, getAngleDiffColor, getCorrectionColor } from '$lib/utils/stronghold';
 	import SettingsSheet from './SettingsSheet.svelte';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
+
+	let isRoomCodeHidden = $state(false);
+	let showRevealConfirm = $state(false);
 
 	let payload = $derived(roomStore.stronghold);
 	let predictions = $derived(payload?.predictions?.slice(0, 5) || []);
@@ -91,7 +95,23 @@
 	<div class="flex items-center justify-between rounded-t-lg border border-white/20 border-b-0 bg-black/60 px-5 py-3 backdrop-blur-xl">
 		<div class="flex items-center gap-4">
 			<span class="text-base text-gray-400">Room:</span>
-			<span class="text-base font-bold text-emerald-400 uppercase tracking-wider">{roomCode}</span>
+			{#if isRoomCodeHidden}
+				<span class="text-base font-bold text-emerald-400 uppercase tracking-wider">******</span>
+			{:else}
+				<span class="text-base font-bold text-emerald-400 uppercase tracking-wider">{roomCode}</span>
+			{/if}
+			<button
+				type="button"
+				onclick={() => { if (isRoomCodeHidden) { showRevealConfirm = true; } else { isRoomCodeHidden = true; } }}
+				class="text-gray-400 hover:text-gray-200 transition-colors"
+				title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
+			>
+				{#if isRoomCodeHidden}
+					<EyeOff class="h-4 w-4" />
+				{:else}
+					<Eye class="h-4 w-4" />
+				{/if}
+			</button>
 		</div>
 		<div class="flex items-center gap-3">
 			<Badge variant="outline" class="flex gap-2 px-3 py-1.5 text-sm {connectionColor}">
@@ -372,4 +392,22 @@
 			{/if}
 		{/if}
 	</div>
+
+	<AlertDialog.Root open={showRevealConfirm} onOpenChange={(open) => { showRevealConfirm = open; }}>
+		<AlertDialog.Portal>
+			<AlertDialog.Overlay class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+			<AlertDialog.Content class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
+				<AlertDialog.Header>
+					<AlertDialog.Title>Reveal Room Code?</AlertDialog.Title>
+					<AlertDialog.Description>
+						Are you sure you want to reveal the room code? This may be visible if you're streaming.
+					</AlertDialog.Description>
+				</AlertDialog.Header>
+				<AlertDialog.Footer>
+					<AlertDialog.Cancel onclick={() => showRevealConfirm = false}>Cancel</AlertDialog.Cancel>
+					<AlertDialog.Action onclick={() => { isRoomCodeHidden = false; showRevealConfirm = false; }}>Reveal</AlertDialog.Action>
+				</AlertDialog.Footer>
+			</AlertDialog.Content>
+		</AlertDialog.Portal>
+	</AlertDialog.Root>
 </div>

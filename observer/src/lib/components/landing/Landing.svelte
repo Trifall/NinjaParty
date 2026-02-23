@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import { Search, Loader2 } from '@lucide/svelte';
+	import { Loader2 } from '@lucide/svelte';
 
 	let roomCode = $state('');
 	let isLoading = $state(false);
@@ -34,6 +34,11 @@
 			joinRoom();
 		}
 	}
+
+	function handleInput(e: Event) {
+		const target = e.target as HTMLInputElement;
+		roomCode = target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+	}
 </script>
 
 <div class="flex h-[80vh] w-full flex-col items-center justify-center px-4">
@@ -48,23 +53,23 @@
 					Ninjabrain Party
 				</h1>
 				<p class="text-sm font-medium text-muted-foreground sm:text-base">
-					Real-time stronghold triangulation for competitive Minecraft speedrunners and coaches.
+					Real-time Ninjabrain Bot observation rooms.
 				</p>
 			</div>
 
 			<div class="w-full space-y-4">
 				<div class="relative">
-					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-						<Search class="h-5 w-5" />
-					</div>
 					<Input
 						type="text"
 						placeholder="Enter 6-character room code"
-						class="h-14 w-full bg-white/5 pl-10 text-center text-lg uppercase tracking-widest text-white transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:ring-emerald-500/50"
-						bind:value={roomCode}
+						class="h-14 w-full bg-white/5 px-4 text-center text-lg uppercase tracking-widest text-white transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+						style="--tw-outline-offset: 0px;"
+						value={roomCode}
+						oninput={handleInput}
 						onkeydown={handleKeydown}
 						maxlength={6}
 						disabled={isLoading}
+						spellcheck="false"
 					/>
 				</div>
 

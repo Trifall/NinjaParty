@@ -178,14 +178,6 @@
 		fill: hsl(var(--toast-info));
 	}
 
-	/*
-	Select the parent div of the nav with aria-label="Page navigation"
-	This targets the pagination container in the admin jobs page
-	*/
-	div:has(> nav[aria-label='Page navigation']) {
-		@apply space-x-0;
-	}
-
 	/* Apply monospace font only to specific code/content areas */
 	pre,
 	code,
@@ -196,52 +188,6 @@
 			monospace;
 	}
 
-	pre,
-	code,
-	textarea[name='content'] {
-		line-height: 0.8;
-		margin: 0;
-	}
-
-	/* ============================================ */
-	/* TABLE & PAGINATION OVERRIDES */
-	/* ============================================ */
-
-	/* Table Head hover - light mode */
-	:global(html:not(.dark) thead th:hover) {
-		background-color: hsl(var(--muted)) !important;
-	}
-
-	/* Table Head hover - dark mode (keep existing) */
-	:global(html.dark thead th:hover) {
-		background-color: rgb(55 65 81) !important; /* gray-700 */
-	}
-
-	/* Pagination button hover - light mode */
-	:global(html:not(.dark) button.page-link:hover),
-	:global(html:not(.dark) .pagination button:hover) {
-		background-color: hsl(var(--muted)) !important;
-	}
-
-	/* Pagination button hover - dark mode (keep existing) */
-	:global(html.dark button.page-link:hover),
-	:global(html.dark .pagination button:hover) {
-		background-color: rgb(55 65 81) !important; /* gray-700 */
-	}
-
-	/* ============================================ */
-	/* PORTFOLIO-SPECIFIC UTILITIES */
-	/* ============================================ */
-
-	.orb-canvas {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100% !important;
-		height: 100% !important;
-		pointer-events: none;
-		z-index: -1 !important;
-	}
 
 	div:has(.screen-modal) {
 		overflow-y: hidden;
@@ -309,4 +255,21 @@ html {
 .disabled\:pointer-events-none:disabled {
 	pointer-events: auto !important;
 	cursor: not-allowed;
+}
+
+
+.focus-visible\:outline-none:focus-visible {
+  outline: 0px solid transparent !important;
+  outline-offset: 0px !important;
+}
+
+.focus\:outline-none:focus {
+  outline: 0px solid transparent !important;
+  outline-offset: 0px !important;
+}
+
+.focus\:ring-0:focus {
+  --tw-ring-offset-shadow: 0 0 0 0 !important;
+  --tw-ring-shadow: 0 0 0 0 !important;
+  box-shadow: 0 0 0 0 !important;
 }

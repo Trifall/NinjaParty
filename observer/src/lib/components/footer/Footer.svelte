@@ -23,7 +23,7 @@
 					<Tooltip delayDuration={0}>
 						<TooltipTrigger class="p-1">
 							<a
-								href="https://github.com/Trifall"
+								href="https://github.com/Trifall/Ninjabrain-Party"
 								class="text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
 								target="_blank"
 								rel="noopener noreferrer"
@@ -35,7 +35,7 @@
 					</Tooltip>
 				</div>
 				<span class="flex items-center gap-1 text-sm text-gray-800 dark:text-gray-200 md:text-lg">
-					Crafted by
+					Created by
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
