@@ -4,6 +4,11 @@ export type McVersion = 'PRE_119' | 'POST_119';
 
 // ==================== COLOR UTILITIES (matching Ninjabrain Bot) ====================
 
+/*
+	- Color Mapping: https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/gui/style/theme/ColorMap.java
+	- Themes: https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/gui/style/theme/CustomTheme.java
+*/
+
 // Correction increments color
 export function getCorrectionColor(increments: number): string {
 	return increments >= 0 ? '#75CC6C' : '#CC6E72';
@@ -24,6 +29,10 @@ export function getCertaintyColor(certainty: number): string {
 
 	return interpolateColorStops(t, stops);
 }
+
+/*
+	Travel angle color: https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/model/datastate/common/StructureInformation.java:70-72 - getTravelAngleDiffColor() returns 1 - |angleDiff| / 180 (same formula as your TypeScript)
+*/
 
 // Angle difference color (for travel direction)
 // color = 1 - |angleDiff| / 180
@@ -69,6 +78,14 @@ function interpolateColorStops(
 }
 
 // ==================== ANGLE UTILITIES ====================
+
+/*
+Angle calculations:
+- https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/util/Coords.java - getPhi(x, z) = -Math.atan2(x, z) - returns angle in radians
+- https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/model/datastate/common/StructureInformation.java:42-47 - angle to structure and angle difference with wrapping (lines 42-47)
+- https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/model/datastate/stronghold/Chunk.java:105-108 - getAngleError() uses -180 / Math.PI * Math.atan2(deltaX, deltaZ)
+*/
+
 // Minecraft angles: 0 -> 180 -> wraps to -180 -> 0
 // Normalizes to -180 to 180 range
 export function normalizeMinecraftAngle(angle: number): number {
@@ -98,7 +115,19 @@ export function getAngleDifference(angleToStructure: number, playerAngle: number
 	return diff;
 }
 
+/*
+Coordinate conversions:
+- https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/model/datastate/stronghold/Chunk.java:34-56:
+  - fourFourX()/fourFourZ() = 16 * x/z + 4
+  - eightEightX()/eightEightZ() = 16 * x/z + 8
+  - netherX()/netherZ() = 2 * x/z
+Version-dependent offset:
+- https://github.com/Ninjabrain1/Ninjabrain-Bot/blob/a8d5d29c2f39cc4d1f8f1fd88cddbca8ea05cce1/src/main/java/ninjabrainbot/model/datastate/stronghold/StrongholdConstants.java:30-33 - getStrongholdChunkCoord() returns 8 for PRE119, 0 for POST119
+
+*/
+
 // ==================== OVERWORLD COORDINATES ====================
+
 // (4,4) - Starter staircase location (most common display)
 export function chunkToFourFour(chunkX: number, chunkZ: number): [number, number] {
 	return [16 * chunkX + 4, 16 * chunkZ + 4];

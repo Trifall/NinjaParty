@@ -88,7 +88,7 @@ Check out the [LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting up t
 ## Credits
 
 This project is entirely dependent upon the fantastic [Ninjabrain Bot](https://github.com/Ninjabrain1/NinjabrainBot) by [Ninjabrain1](https://github.com/Ninjabrain1/). 
-Some magic numbers and constants are derived from that project, as well as some UI elements like the boat colors.
+Some magic numbers, constants, and conversion formulas are derived from that project, as well as some UI elements like the boat colors.
 
 ## License
 
