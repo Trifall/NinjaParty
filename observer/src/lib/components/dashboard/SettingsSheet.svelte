@@ -1,18 +1,21 @@
 <script lang="ts">
-	import * as Sheet from '$lib/components/ui/sheet';
 	import { Settings } from '@lucide/svelte';
+	import * as Sheet from '$lib/components/ui/sheet';
 	import { settings } from '$lib/stores/settings.svelte';
 </script>
 
 <Sheet.Root>
-	<Sheet.Trigger class="inline-flex h-7 w-7 items-center justify-center whitespace-nowrap rounded-md border border-white/10 bg-black/40 text-sm font-medium text-white ring-offset-background transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 backdrop-blur-xl">
+	<Sheet.Trigger
+		class="inline-flex h-7 w-7 items-center justify-center whitespace-nowrap rounded-md border border-white/10 bg-black/40 text-sm font-medium text-white ring-offset-background backdrop-blur-xl transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+	>
 		<Settings class="h-4 w-4" />
 	</Sheet.Trigger>
 	<Sheet.Content class="border-l-white/10 bg-black/95 text-white backdrop-blur-xl">
 		<Sheet.Header>
 			<Sheet.Title class="text-white">Settings</Sheet.Title>
 			<Sheet.Description class="text-muted-foreground">
-				Configure the observer dashboard display. Note: Since these are purely presentation preferences, they are saved locally in your browser.
+				Configure the observer dashboard display. Note: Since these are purely presentation
+				preferences, they are saved locally in your browser.
 			</Sheet.Description>
 		</Sheet.Header>
 
@@ -20,41 +23,92 @@
 			<div class="space-y-4">
 				<h4 class="text-sm font-medium leading-none text-white">Coordinate Display Type</h4>
 				<div class="flex flex-col space-y-3">
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="radio" name="displayType" value="FOUR_FOUR" bind:group={settings.displayType} class="h-4 w-4 accent-emerald-500" />
-						<span class="text-sm">Location (4, 4) <span class="text-muted-foreground ml-1">- Default for starting staircase</span></span>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="displayType"
+							value="FOUR_FOUR"
+							bind:group={settings.displayType}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Location (4, 4) <span class="ml-1 text-muted-foreground"
+								>- Default for starting staircase</span
+							></span
+						>
 					</label>
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="radio" name="displayType" value="EIGHT_EIGHT" bind:group={settings.displayType} class="h-4 w-4 accent-emerald-500" />
-						<span class="text-sm">Location (8, 8) <span class="text-muted-foreground ml-1">- Center of stronghold chunk</span></span>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="displayType"
+							value="EIGHT_EIGHT"
+							bind:group={settings.displayType}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Location (8, 8) <span class="ml-1 text-muted-foreground"
+								>- Center of stronghold chunk</span
+							></span
+						>
 					</label>
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="radio" name="displayType" value="CHUNK" bind:group={settings.displayType} class="h-4 w-4 accent-emerald-500" />
-						<span class="text-sm">Chunk Coordinates <span class="text-muted-foreground ml-1">- Raw chunk output</span></span>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="displayType"
+							value="CHUNK"
+							bind:group={settings.displayType}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Chunk Coordinates <span class="ml-1 text-muted-foreground">- Raw chunk output</span
+							></span
+						>
 					</label>
 				</div>
 			</div>
 
-			<div class="space-y-4 pt-4 border-t border-white/10">
+			<div class="space-y-4 border-t border-white/10 pt-4">
 				<h4 class="text-sm font-medium leading-none text-white">Minecraft Version</h4>
 				<div class="flex flex-col space-y-3">
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="radio" name="mcVersion" value="PRE_119" bind:group={settings.mcVersion} class="h-4 w-4 accent-emerald-500" />
-						<span class="text-sm">1.18 and below <span class="text-muted-foreground ml-1">- Most common</span></span>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="mcVersion"
+							value="PRE_119"
+							bind:group={settings.mcVersion}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>1.18 and below <span class="ml-1 text-muted-foreground">- Most common</span></span
+						>
 					</label>
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="radio" name="mcVersion" value="POST_119" bind:group={settings.mcVersion} class="h-4 w-4 accent-emerald-500" />
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="mcVersion"
+							value="POST_119"
+							bind:group={settings.mcVersion}
+							class="h-4 w-4 accent-emerald-500"
+						/>
 						<span class="text-sm">1.19 and above</span>
 					</label>
 				</div>
 			</div>
 
-			<div class="space-y-4 pt-4 border-t border-white/10">
+			<div class="space-y-4 border-t border-white/10 pt-4">
 				<h4 class="text-sm font-medium leading-none text-white">Display Options</h4>
 				<div class="flex flex-col space-y-3">
-					<label class="flex items-center space-x-3 cursor-pointer">
-						<input type="checkbox" bind:checked={settings.colorNegatives} class="h-4 w-4 accent-emerald-500 rounded" />
-						<span class="text-sm">Color negative coordinates <span class="text-muted-foreground ml-1">- Show negative values in red</span></span>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="checkbox"
+							bind:checked={settings.colorNegatives}
+							class="h-4 w-4 rounded accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Color negative coordinates <span class="ml-1 text-muted-foreground"
+								>- Show negative values in red</span
+							></span
+						>
 					</label>
 				</div>
 			</div>

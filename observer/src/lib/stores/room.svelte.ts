@@ -1,5 +1,14 @@
-import type { AllAdvancementsPayload, BlindPayload, BoatPayload, DivinePayload, InformationMessagesPayload, PresencePayload, RoomMessage, StrongholdPayload } from '../types/stronghold';
 import { env } from '$env/dynamic/public';
+import type {
+	AllAdvancementsPayload,
+	BlindPayload,
+	BoatPayload,
+	DivinePayload,
+	InformationMessagesPayload,
+	PresencePayload,
+	RoomMessage,
+	StrongholdPayload,
+} from '../types/stronghold';
 
 export class RoomConnection {
 	private code: string = '';
@@ -26,7 +35,11 @@ export class RoomConnection {
 
 	connect() {
 		this.explicitClose = false;
-		if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
+		if (
+			this.ws &&
+			(this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
+		)
+			return;
 
 		this.status = this.reconnectFailures > 0 ? 'reconnecting' : 'connecting';
 

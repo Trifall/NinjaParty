@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import { RoomConnection } from '$lib/stores/room.svelte';
 	import Dashboard from '$lib/components/dashboard/Dashboard.svelte';
+	import { RoomConnection } from '$lib/stores/room.svelte';
+	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 

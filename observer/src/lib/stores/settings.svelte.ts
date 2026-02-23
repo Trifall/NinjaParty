@@ -10,7 +10,11 @@ class AppSettings {
 	constructor() {
 		if (typeof window !== 'undefined') {
 			const savedDisplay = localStorage.getItem('ninjabrain_settings_display_type');
-			if (savedDisplay === 'FOUR_FOUR' || savedDisplay === 'EIGHT_EIGHT' || savedDisplay === 'CHUNK') {
+			if (
+				savedDisplay === 'FOUR_FOUR' ||
+				savedDisplay === 'EIGHT_EIGHT' ||
+				savedDisplay === 'CHUNK'
+			) {
 				this.#displayType = savedDisplay;
 			}
 

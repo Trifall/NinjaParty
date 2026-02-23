@@ -15,11 +15,11 @@ export function getCertaintyColor(certainty: number): string {
 
 	// Color stops matching Ninjabrain Bot gradient
 	const stops = [
-		{ pos: 0, r: 255, g: 0, b: 0 },       // #FF0000 - Red (0-10%)
-		{ pos: 0.25, r: 255, g: 165, b: 0 },  // #FFA500 - Orange (20-30%)
-		{ pos: 0.5, r: 255, g: 255, b: 0 },   // #FFFF00 - Yellow (40-60%)
+		{ pos: 0, r: 255, g: 0, b: 0 }, // #FF0000 - Red (0-10%)
+		{ pos: 0.25, r: 255, g: 165, b: 0 }, // #FFA500 - Orange (20-30%)
+		{ pos: 0.5, r: 255, g: 255, b: 0 }, // #FFFF00 - Yellow (40-60%)
 		{ pos: 0.75, r: 144, g: 238, b: 144 }, // #90EE90 - Light green (70-80%)
-		{ pos: 1, r: 0, g: 206, b: 41 },      // #00CE29 - Green (90-100%)
+		{ pos: 1, r: 0, g: 206, b: 41 }, // #00CE29 - Green (90-100%)
 	];
 
 	return interpolateColorStops(t, stops);
@@ -33,15 +33,18 @@ export function getAngleDiffColor(angleDiff: number): string {
 	const t = 1 - Math.min(absDiff / 180, 1);
 
 	const stops = [
-		{ pos: 0, r: 255, g: 0, b: 0 },       // #FF0000 - Red (180° off)
-		{ pos: 0.5, r: 255, g: 255, b: 0 },   // #FFFF00 - Yellow (90° off)
-		{ pos: 1, r: 0, g: 206, b: 41 },      // #00CE29 - Green (0° off)
+		{ pos: 0, r: 255, g: 0, b: 0 }, // #FF0000 - Red (180° off)
+		{ pos: 0.5, r: 255, g: 255, b: 0 }, // #FFFF00 - Yellow (90° off)
+		{ pos: 1, r: 0, g: 206, b: 41 }, // #00CE29 - Green (0° off)
 	];
 
 	return interpolateColorStops(t, stops);
 }
 
-function interpolateColorStops(t: number, stops: { pos: number; r: number; g: number; b: number }[]): string {
+function interpolateColorStops(
+	t: number,
+	stops: { pos: number; r: number; g: number; b: number }[]
+): string {
 	// Find the two stops to interpolate between
 	let lower = stops[0];
 	let upper = stops[1];
@@ -76,10 +79,15 @@ export function normalizeMinecraftAngle(angle: number): number {
 }
 
 // Calculate angle to structure from player position
-export function getAngleToStructure(playerX: number, playerZ: number, structureX: number, structureZ: number): number {
+export function getAngleToStructure(
+	playerX: number,
+	playerZ: number,
+	structureX: number,
+	structureZ: number
+): number {
 	const xDiff = structureX - playerX;
 	const zDiff = structureZ - playerZ;
-	return -Math.atan2(xDiff, zDiff) * 180 / Math.PI;
+	return (-Math.atan2(xDiff, zDiff) * 180) / Math.PI;
 }
 
 // Calculate angle difference with wrapping (for turn direction)

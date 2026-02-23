@@ -1,36 +1,32 @@
 // ==================== ENUMS ====================
 export type ResultType =
-  | "NONE"
-  | "TRIANGULATION"
-  | "FAILED"
-  | "BLIND"
-  | "DIVINE"
-  | "ALL_ADVANCEMENTS";
+	| 'NONE'
+	| 'TRIANGULATION'
+	| 'FAILED'
+	| 'BLIND'
+	| 'DIVINE'
+	| 'ALL_ADVANCEMENTS';
 
-export type EnderEyeThrowType =
-  | "NORMAL"
-  | "NORMAL_WITH_ALT_STD"
-  | "MANUAL"
-  | "BOAT";
+export type EnderEyeThrowType = 'NORMAL' | 'NORMAL_WITH_ALT_STD' | 'MANUAL' | 'BOAT';
 
-export type BoatState = "NONE" | "ERROR" | "MEASURING" | "VALID";
+export type BoatState = 'NONE' | 'ERROR' | 'MEASURING' | 'VALID';
 
 export type BlindEvaluation =
-  | "EXCELLENT"
-  | "HIGHROLL_GOOD"
-  | "HIGHROLL_OKAY"
-  | "BAD_BUT_IN_RING"
-  | "BAD"
-  | "NOT_IN_RING";
+	| 'EXCELLENT'
+	| 'HIGHROLL_GOOD'
+	| 'HIGHROLL_OKAY'
+	| 'BAD_BUT_IN_RING'
+	| 'BAD'
+	| 'NOT_IN_RING';
 
-export type InformationMessageSeverity = "INFO" | "WARNING" | "ERROR";
+export type InformationMessageSeverity = 'INFO' | 'WARNING' | 'ERROR';
 
 export type InformationMessageType =
-  | "PORTAL_LINKING"
-  | "NEXT_THROW_DIRECTION"
-  | "MISMEASURE"
-  | "MC_VERSION"
-  | "COMBINED_CERTAINTY";
+	| 'PORTAL_LINKING'
+	| 'NEXT_THROW_DIRECTION'
+	| 'MISMEASURE'
+	| 'MC_VERSION'
+	| 'COMBINED_CERTAINTY';
 
 // ==================== SHARED TYPES ====================
 export interface PlayerPosition {
@@ -42,51 +38,51 @@ export interface PlayerPosition {
 }
 
 export interface EyeThrow {
-  xInOverworld: number;
-  zInOverworld: number;
-  angle: number;
-  angleWithoutCorrection: number;
-  correction: number;
-  correctionIncrements: number;
-  error: number;
-  type: EnderEyeThrowType;
+	xInOverworld: number;
+	zInOverworld: number;
+	angle: number;
+	angleWithoutCorrection: number;
+	correction: number;
+	correctionIncrements: number;
+	error: number;
+	type: EnderEyeThrowType;
 }
 
 export interface ChunkPrediction {
-  certainty: number;
-  chunkX: number;
-  chunkZ: number;
-  overworldDistance: number;
+	certainty: number;
+	chunkX: number;
+	chunkZ: number;
+	overworldDistance: number;
 }
 
 export interface StructurePosition {
-  xInOverworld?: number;
-  zInOverworld?: number;
-  overworldDistance?: number;
-  travelAngle?: number;
+	xInOverworld?: number;
+	zInOverworld?: number;
+	overworldDistance?: number;
+	travelAngle?: number;
 }
 
 export interface BlindResult {
-  xInNether: number;
-  zInNether: number;
-  highrollProbability: number;
-  highrollThreshold: number;
-  averageDistance: number;
-  improveDirection: number;
-  improveDistance: number;
-  evaluation: BlindEvaluation;
+	xInNether: number;
+	zInNether: number;
+	highrollProbability: number;
+	highrollThreshold: number;
+	averageDistance: number;
+	improveDirection: number;
+	improveDistance: number;
+	evaluation: BlindEvaluation;
 }
 
 export interface DivineResult {
-  fossilXCoordinate: number;
-  formattedHighrollCoords: string;
-  formattedSafeCoords: string;
+	fossilXCoordinate: number;
+	formattedHighrollCoords: string;
+	formattedSafeCoords: string;
 }
 
 export interface InformationMessage {
-  severity: InformationMessageSeverity;
-  type: InformationMessageType;
-  message: string;
+	severity: InformationMessageSeverity;
+	type: InformationMessageType;
+	message: string;
 }
 
 // ==================== APPS ====================
@@ -113,40 +109,40 @@ export interface PresencePayload {
 }
 
 export interface StrongholdPayload {
-  resultType: ResultType;
-  predictions?: ChunkPrediction[];
-  eyeThrows?: EyeThrow[];
-  playerPosition?: PlayerPosition;
+	resultType: ResultType;
+	predictions?: ChunkPrediction[];
+	eyeThrows?: EyeThrow[];
+	playerPosition?: PlayerPosition;
 }
 
 export interface BoatPayload {
-  boatAngle: number | null;
-  boatState: BoatState;
+	boatAngle: number | null;
+	boatState: BoatState;
 }
 
 export interface BlindPayload {
-  isBlindModeEnabled: boolean;
-  hasDivine: boolean;
-  blindResult: BlindResult | {};
+	isBlindModeEnabled: boolean;
+	hasDivine: boolean;
+	blindResult: BlindResult | {};
 }
 
 export interface DivinePayload {
-  isDivineModeEnabled: boolean;
-  divineResult: DivineResult | {};
+	isDivineModeEnabled: boolean;
+	divineResult: DivineResult | {};
 }
 
 export interface AllAdvancementsPayload {
-  isAllAdvancementsModeEnabled: boolean;
-  spawn: StructurePosition | {};
-  outpost: StructurePosition | {};
-  monument: StructurePosition | {};
-  stronghold: StructurePosition | {};
-  deepDark: StructurePosition | {};
-  cityQuery: StructurePosition | {};
-  shulkerTransport: StructurePosition | {};
-  generalLocation: StructurePosition | {};
+	isAllAdvancementsModeEnabled: boolean;
+	spawn: StructurePosition | {};
+	outpost: StructurePosition | {};
+	monument: StructurePosition | {};
+	stronghold: StructurePosition | {};
+	deepDark: StructurePosition | {};
+	cityQuery: StructurePosition | {};
+	shulkerTransport: StructurePosition | {};
+	generalLocation: StructurePosition | {};
 }
 
 export interface InformationMessagesPayload {
-  informationMessages?: InformationMessage[];
+	informationMessages?: InformationMessage[];
 }

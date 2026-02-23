@@ -188,7 +188,6 @@
 			monospace;
 	}
 
-
 	div:has(.screen-modal) {
 		overflow-y: hidden;
 	}
@@ -257,19 +256,18 @@ html {
 	cursor: not-allowed;
 }
 
-
 .focus-visible\:outline-none:focus-visible {
-  outline: 0px solid transparent !important;
-  outline-offset: 0px !important;
+	outline: 0px solid transparent !important;
+	outline-offset: 0px !important;
 }
 
 .focus\:outline-none:focus {
-  outline: 0px solid transparent !important;
-  outline-offset: 0px !important;
+	outline: 0px solid transparent !important;
+	outline-offset: 0px !important;
 }
 
 .focus\:ring-0:focus {
-  --tw-ring-offset-shadow: 0 0 0 0 !important;
-  --tw-ring-shadow: 0 0 0 0 !important;
-  box-shadow: 0 0 0 0 !important;
+	--tw-ring-offset-shadow: 0 0 0 0 !important;
+	--tw-ring-shadow: 0 0 0 0 !important;
+	box-shadow: 0 0 0 0 !important;
 }

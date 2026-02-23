@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Loader2 } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import { Loader2 } from '@lucide/svelte';
 
 	let roomCode = $state('');
 	let isLoading = $state(false);
@@ -42,19 +42,29 @@
 </script>
 
 <div class="flex h-[80vh] w-full flex-col items-center justify-center px-4">
-	<div class="relative w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
+	<div class="relative w-full max-w-md duration-700 animate-in fade-in slide-in-from-bottom-8">
 		<div
 			class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-20 blur-xl transition-all duration-500 group-hover:opacity-40"
 		></div>
 
-		<div class="relative flex flex-col items-center space-y-8 rounded-2xl border border-white/10 bg-black/40 p-10 text-center shadow-2xl backdrop-blur-xl">
-			<div class="space-y-3">
-				<h1 class="bg-gradient-to-br from-white to-white/60 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl">
+		<div
+			class="relative flex flex-col items-center space-y-8 rounded-2xl border border-white/10 bg-black/40 p-10 text-center shadow-2xl backdrop-blur-xl"
+		>
+			<div class="flex flex-col items-center justify-center space-y-4">
+				<h1
+					class="bg-gradient-to-br from-white to-white/60 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl"
+				>
 					Ninjabrain Party
 				</h1>
 				<p class="text-sm font-medium text-muted-foreground sm:text-base">
 					Real-time Ninjabrain Bot observation rooms.
 				</p>
+				<a
+					href="/about"
+					class="mt-16 text-lg font-bold text-emerald-400 transition-colors hover:text-emerald-300 hover:underline"
+				>
+					Learn more
+				</a>
 			</div>
 
 			<div class="w-full space-y-4">
@@ -74,7 +84,9 @@
 				</div>
 
 				{#if error}
-					<p class="text-sm font-medium text-red-500 animate-in fade-in slide-in-from-top-1">{error}</p>
+					<p class="text-sm font-medium text-red-500 animate-in fade-in slide-in-from-top-1">
+						{error}
+					</p>
 				{/if}
 
 				<Button
@@ -83,7 +95,9 @@
 					disabled={isLoading || roomCode.length !== 6}
 				>
 					<div class="absolute inset-0 flex h-full w-full justify-center [filter:blur(1px)]">
-						<div class="absolute inset-0 h-full w-full bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-0 transition-opacity duration-300 group-hover:opacity-20"></div>
+						<div
+							class="absolute inset-0 h-full w-full bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-0 transition-opacity duration-300 group-hover:opacity-20"
+						></div>
 					</div>
 
 					<span class="relative flex items-center justify-center gap-2">
