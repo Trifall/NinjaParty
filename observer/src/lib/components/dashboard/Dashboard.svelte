@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { RoomConnection } from '$lib/stores/room.svelte';
 	import { Badge } from '$lib/components/ui/badge';
-	import { LoaderCircle, Wifi, WifiOff, MapPin, CircleAlert, Info, AlertTriangle, Eye, TriangleAlert } from '@lucide/svelte';
+	import { LoaderCircle, Wifi, WifiOff, MapPin, CircleAlert, Info, Eye, TriangleAlert } from '@lucide/svelte';
 	import { settings } from '$lib/stores/settings.svelte';
-	import { getDisplayCoordinates, chunkToNether, normalizeMinecraftAngle, getCertaintyColor, getAngleToStructure, getAngleDifference, getAngleDiffColor, getCorrectionColor } from '$lib/utils/stronghold';
+	import { chunkToNether, normalizeMinecraftAngle, getCertaintyColor, getAngleToStructure, getAngleDifference, getAngleDiffColor, getCorrectionColor } from '$lib/utils/stronghold';
 	import SettingsSheet from './SettingsSheet.svelte';
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
@@ -78,7 +78,7 @@
 
 <div class="mx-auto w-full max-w-3xl">
 	<!-- Header -->
-	<div class="flex items-center justify-between rounded-t-lg border border-white/10 border-b-0 bg-black/60 px-5 py-3 backdrop-blur-xl">
+	<div class="flex items-center justify-between rounded-t-lg border border-white/20 border-b-0 bg-black/60 px-5 py-3 backdrop-blur-xl">
 		<div class="flex items-center gap-4">
 			<span class="text-base text-gray-400">Room:</span>
 			<span class="text-base font-bold text-emerald-400 uppercase tracking-wider">{roomCode}</span>
@@ -123,7 +123,7 @@
 	</div>
 
 	<!-- Main Panel -->
-	<div class="border border-white/10 border-t-0 rounded-b-lg bg-[#1a1a1a] text-sm text-gray-200 backdrop-blur-xl">
+	<div class="border border-white/20 border-t-0 rounded-b-lg bg-[#1a1a1a] text-sm text-gray-200 backdrop-blur-xl">
 		{#if roomStore.status === 'connected' && !payload && !infoMessages.length}
 			<div class="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
 				<LoaderCircle class="h-8 w-8 animate-spin text-emerald-500" />
@@ -132,11 +132,11 @@
 		{:else}
 			<!-- Info Messages -->
 			{#each infoMessages as msg}
-				<div class="flex items-start gap-3 px-4 py-3 {msg.severity === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-200' : msg.severity === 'WARNING' ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-blue-500/10 border-blue-500/30 text-blue-200'} border-b border-white/10">
+				<div class="flex items-start gap-3 px-4 py-3 {msg.severity === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-200' : msg.severity === 'WARNING' ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-blue-500/10 border-blue-500/30 text-blue-200'} border-b border-white/20">
 					{#if msg.severity === 'ERROR'}
-						<AlertTriangle class="h-5 w-5 shrink-0 text-red-400" />
+						<TriangleAlert class="h-5 w-5 shrink-0 text-red-400" />
 					{:else if msg.severity === 'WARNING'}
-						<AlertTriangle class="h-5 w-5 shrink-0 text-amber-400" />
+						<TriangleAlert class="h-5 w-5 shrink-0 text-amber-400" />
 					{:else}
 						<Info class="h-5 w-5 shrink-0 text-blue-400" />
 					{/if}
@@ -147,7 +147,7 @@
 			{#if payload}
 				<!-- Failed State Banner -->
 				{#if payload.resultType === 'FAILED'}
-					<div class="flex items-center justify-center gap-3 px-4 py-3 text-red-400 text-center bg-red-500/5 border-b border-white/10">
+					<div class="flex items-center justify-center gap-3 px-4 py-3 text-red-400 text-center bg-red-500/5 border-b border-white/20">
 						<CircleAlert class="h-5 w-5 shrink-0" />
 						<p>Could not determine stronghold chunk. You likely misread one of the eyes.</p>
 					</div>
@@ -157,7 +157,7 @@
 				{#if payload.resultType !== 'FAILED' && predictions.length > 0}
 					<table class="w-full border-collapse text-base">
 						<thead>
-							<tr class="text-gray-400 border-b border-white/10">
+							<tr class="text-gray-400 border-b border-white/20">
 								<th class="text-center px-3 py-2 font-normal w-[22%]">Location</th>
 								<th class="text-center px-3 py-2 font-normal w-[12%]">%</th>
 								<th class="text-center px-3 py-2 font-normal w-[12%]">Dist.</th>
@@ -206,7 +206,7 @@
 				{#if pos}
 					{@const displayX = pos.isInNether && pos.xInOverworld !== undefined ? (pos.xInOverworld / 8) : pos.xInOverworld}
 					{@const displayZ = pos.isInNether && pos.zInOverworld !== undefined ? (pos.zInOverworld / 8) : pos.zInOverworld}
-					<div class="flex items-center justify-between px-4 py-2.5 border-t border-white/10 bg-white/[0.02] text-base">
+					<div class="flex items-center justify-between px-4 py-2.5 border-t border-white/20 bg-white/[0.02] text-base">
 						<div class="flex items-center gap-5">
 							<span class="text-gray-400 flex items-center gap-1.5"><MapPin class="h-4 w-4" /> Position:</span>
 							<span class="text-gray-200">
@@ -228,14 +228,14 @@
 
 				<!-- Eye Throws Section - always show if available -->
 				{#if throws.length > 0}
-					<div class="border-t border-white/10">
+					<div class="border-t border-white/20">
 						<div class="flex items-center justify-between px-4 py-2 bg-white/[0.02]">
 							<span class="text-gray-300 font-semibold tracking-wide">Ender eye throws</span>
-							<span class="text-gray-500 text-xs">{throws.length} total</span>
+							<span class="text-gray-300 text-sm font-semibold">{throws.length} total</span>
 						</div>
 						<table class="w-full border-collapse text-base">
 							<thead>
-								<tr class="text-gray-400 border-b border-white/10">
+							<tr class="text-gray-400 border-b border-white/20">
 									<th class="text-center px-4 py-1.5 font-normal">X</th>
 									<th class="text-center px-4 py-1.5 font-normal">Z</th>
 									<th class="text-center px-4 py-1.5 font-normal">Angle</th>
@@ -303,7 +303,7 @@
 				<!-- Blind Mode -->
 				{#if roomStore.blind?.isBlindModeEnabled && roomStore.blind.blindResult && 'xInNether' in roomStore.blind.blindResult}
 					{@const blind = roomStore.blind.blindResult}
-					<div class="border-t border-white/10 px-4 py-3 bg-purple-500/5">
+					<div class="border-t border-white/20 px-4 py-3 bg-purple-500/5">
 						<div class="flex items-center gap-2 text-purple-300 font-semibold mb-1.5">
 							<Eye class="h-4 w-4" /> Blind Mode
 						</div>
@@ -319,7 +319,7 @@
 				<!-- Divine Mode -->
 				{#if roomStore.divine?.isDivineModeEnabled && roomStore.divine.divineResult && 'fossilXCoordinate' in roomStore.divine.divineResult}
 					{@const divine = roomStore.divine.divineResult}
-					<div class="border-t border-white/10 px-4 py-3 bg-amber-500/5">
+					<div class="border-t border-white/20 px-4 py-3 bg-amber-500/5">
 						<div class="flex items-center gap-2 text-amber-300 font-semibold mb-1.5">
 							<Eye class="h-4 w-4" /> Divine Mode
 						</div>
@@ -333,7 +333,7 @@
 
 				<!-- All Advancements -->
 				{#if roomStore.allAdvancements?.isAllAdvancementsModeEnabled}
-					<div class="border-t border-white/10 px-4 py-3 bg-cyan-500/5">
+					<div class="border-t border-white/20 px-4 py-3 bg-cyan-500/5">
 						<div class="flex items-center gap-2 text-cyan-300 font-semibold mb-1.5">
 							<MapPin class="h-4 w-4" /> All Advancements
 						</div>
