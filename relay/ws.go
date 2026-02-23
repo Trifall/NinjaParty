@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,6 +49,21 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 		}
 		defer conn.CloseNow()
 
+		readCtx, readCancel := context.WithCancel(ctx)
+		defer readCancel()
+
+		go func() {
+			for {
+				// We must read from the connection so that control frames (like Pong) are correctly handled.
+				// By discarding the data, coder/websocket's internal frame parser completes the ping.
+				_, _, err := conn.Read(readCtx)
+				if err != nil {
+					readCancel()
+					return
+				}
+			}
+		}()
+
 		c.logger.Info("connected to central websocket")
 		b.Reset()
 
@@ -58,6 +74,8 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 			select {
 			case <-ctx.Done():
 				return nil
+			case <-readCtx.Done():
+				return fmt.Errorf("read failed or connection closed")
 			case <-heartbeat.C:
 				if err := conn.Ping(ctx); err != nil {
 					return err
@@ -66,6 +84,9 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 				if err := wsjson.Write(ctx, conn, msg); err != nil {
 					return err
 				}
+
+				payloadBytes, _ := json.Marshal(msg.Payload)
+				c.logger.Info("sent payload to central websocket", zap.String("payload", string(payloadBytes)))
 			}
 		}
 	}, b, func(err error, t time.Duration) {

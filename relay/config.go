@@ -20,7 +20,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("NINJABRAIN_URL", "http://127.0.0.1:52533")
 	viper.SetDefault("SERVER_API_URL", "http://localhost:8080/api/v1")
 	viper.SetDefault("SERVER_WS_URL", "ws://localhost:8080/ws")
-	viper.SetDefault("LOCAL_UI_ADDR", "127.0.0.1:8080")
+	viper.SetDefault("LOCAL_UI_ADDR", "127.0.0.1:8081")
 	viper.SetDefault("OBSERVER_URL", "http://localhost:5173/room/")
 	viper.SetDefault("TLS_SKIP_VERIFY", true)
 	viper.SetDefault("HEARTBEAT_INTERVAL", 10)

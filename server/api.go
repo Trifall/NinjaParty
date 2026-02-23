@@ -122,7 +122,7 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 			Payload: json.RawMessage(`{"status":"offline"}`),
 		}
 		data, _ := json.Marshal(offlineMsg)
-		room.UpdateSnapshot(data)
+		room.UpdateSnapshot("presence", data)
 		api.logger.Info("writer disconnected", zap.String("room", room.code))
 	}()
 
@@ -134,7 +134,7 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 		Payload: json.RawMessage(`{"status":"online"}`),
 	}
 	data, _ := json.Marshal(onlineMsg)
-	room.UpdateSnapshot(data)
+	room.UpdateSnapshot("presence", data)
 
 	for {
 		var v json.RawMessage
@@ -143,7 +143,16 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 			break
 		}
 
-		room.UpdateSnapshot(v)
+		var msgType struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(v, &msgType); err != nil {
+			api.logger.Warn("invalid message format", zap.Error(err))
+			continue
+		}
+
+		// When wsjson.Read completes it parses it to []byte, no need to wrap again.
+		room.UpdateSnapshot(msgType.Type, v)
 	}
 }
 
@@ -155,12 +164,12 @@ func (api *API) handleSpectator(ctx context.Context, c *websocket.Conn, room *Ro
 		stop: make(chan struct{}),
 	}
 
-	lastSnap := room.AddSpectator(spec)
+	lastSnaps := room.AddSpectator(spec)
 	defer room.RemoveSpectator(spec)
 
-	// send last snapshot immediately if exists
-	if lastSnap != nil {
-		if err := wsjson.Write(ctx, c, json.RawMessage(lastSnap)); err != nil {
+	// send all last snapshots immediately
+	for _, snap := range lastSnaps {
+		if err := c.Write(ctx, websocket.MessageText, snap); err != nil {
 			return
 		}
 	}
@@ -173,7 +182,7 @@ func (api *API) handleSpectator(ctx context.Context, c *websocket.Conn, room *Ro
 			c.Close(websocket.StatusNormalClosure, "room deleted")
 			return
 		case msg := <-spec.ch:
-			if err := wsjson.Write(ctx, c, json.RawMessage(msg)); err != nil {
+			if err := c.Write(ctx, websocket.MessageText, msg); err != nil {
 				return
 			}
 		}

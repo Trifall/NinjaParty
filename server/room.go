@@ -9,11 +9,11 @@ import (
 )
 
 type RoomState struct {
-	mu           sync.RWMutex
-	code         string
-	writeToken   string
-	lastSnapshot []byte
-	lastUpdated  time.Time
+	mu            sync.RWMutex
+	code          string
+	writeToken    string
+	lastSnapshots map[string][]byte
+	lastUpdated   time.Time
 
 	// using channels to fan-out messages to spectators
 	spectators map[*SpectatorClient]bool
@@ -66,10 +66,11 @@ func (rm *RoomManager) CreateRoom() (string, string, error) {
 	}
 
 	rm.rooms[code] = &RoomState{
-		code:        code,
-		writeToken:  token,
-		lastUpdated: time.Now(),
-		spectators:  make(map[*SpectatorClient]bool),
+		code:          code,
+		writeToken:    token,
+		lastUpdated:   time.Now(),
+		lastSnapshots: make(map[string][]byte),
+		spectators:    make(map[*SpectatorClient]bool),
 	}
 
 	return code, token, nil
@@ -138,11 +139,11 @@ func (r *RoomState) ValidateToken(token string) bool {
 	return r.writeToken == token
 }
 
-func (r *RoomState) UpdateSnapshot(data []byte) {
+func (r *RoomState) UpdateSnapshot(msgType string, data []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.lastSnapshot = data
+	r.lastSnapshots[msgType] = data
 	r.lastUpdated = time.Now()
 
 	// Broadcast
@@ -155,12 +156,17 @@ func (r *RoomState) UpdateSnapshot(data []byte) {
 	}
 }
 
-func (r *RoomState) AddSpectator(spec *SpectatorClient) []byte {
+func (r *RoomState) AddSpectator(spec *SpectatorClient) [][]byte {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.spectators[spec] = true
 
-	return r.lastSnapshot
+	var snaps [][]byte
+	for _, snap := range r.lastSnapshots {
+		snaps = append(snaps, snap)
+	}
+
+	return snaps
 }
 
 func (r *RoomState) RemoveSpectator(spec *SpectatorClient) {
