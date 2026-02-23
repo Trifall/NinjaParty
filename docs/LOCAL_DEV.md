@@ -64,13 +64,6 @@ If Windows Defender blocks the executable:
 - It opens network ports (WebSocket connections)
 - Go binaries sometimes trigger heuristics due to their static linking
 
-### Future Mitigation
-
-We plan to:
-- Obtain a code-signing certificate for official releases
-- Submit the binary to Microsoft for reputation building
-- Provide checksums for verification
-
 ## Environment Variables
 
 ### Observer (.env)

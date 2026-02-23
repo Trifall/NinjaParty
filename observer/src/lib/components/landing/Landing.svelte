@@ -57,7 +57,7 @@
 					Ninjabrain Party
 				</h1>
 				<p class="text-sm font-medium text-muted-foreground sm:text-base">
-					Real-time Ninjabrain Bot observation rooms.
+					Observation tool for Ninjabrain Bot.
 				</p>
 				<a
 					href="/about"

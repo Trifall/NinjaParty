@@ -33,7 +33,7 @@
 					Ninjabrain<br />Party
 				</h1>
 				<p class="mt-2 text-sm font-medium uppercase tracking-wide text-emerald-400/80">
-					Real-time Ninjabrain Bot observation
+					Observation tool for Ninjabrain Bot
 				</p>
 			</div>
 

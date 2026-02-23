@@ -4,13 +4,13 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ url }) => {
 	const pageTags = definePageMetaTags({
 		title: 'Ninjabrain Party Relay',
-		description: 'Real-time stronghold triangulation for Minecraft speedrunners',
+		description: 'Observation tool for Ninjabrain Bot',
 		canonical: new URL(url.pathname, url.origin).href,
 		openGraph: {
 			type: 'website',
 			url: new URL(url.pathname, url.origin).href,
 			title: 'Ninjabrain Party Relay',
-			description: 'Real-time stronghold triangulation for Minecraft speedrunners',
+			description: 'Observation tool for Ninjabrain Bot',
 			images: [
 				{
 					url: new URL('/og-image.png', url.origin).href,
@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		twitter: {
 			cardType: 'summary_large_image',
 			title: 'Ninjabrain Party Relay',
-			description: 'Real-time stronghold triangulation for Minecraft speedrunners',
+			description: 'Observation tool for Ninjabrain Bot',
 			image: new URL('/og-image.png', url.origin).href,
 			imageAlt: 'Ninjabrain Party Relay',
 		},
