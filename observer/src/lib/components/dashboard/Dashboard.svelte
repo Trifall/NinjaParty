@@ -1,19 +1,21 @@
 <script lang="ts">
 	import { Eye, EyeOff, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { page } from '$app/state';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import type { RoomConnection } from '$lib/stores/room.svelte';
-	import SettingsSheet from './SettingsSheet.svelte';
-	import LocationsTable from './LocationsTable.svelte';
-	import PlayerPosition from './PlayerPosition.svelte';
-	import EyeThrows from './EyeThrows.svelte';
+	import AnimatedGradientText from '$components/ui/AnimatedGradientText.svelte';
+	import AllAdvancements from './AllAdvancements.svelte';
 	import BlindMode from './BlindMode.svelte';
 	import DivineMode from './DivineMode.svelte';
-	import AllAdvancements from './AllAdvancements.svelte';
+	import EyeThrows from './EyeThrows.svelte';
+	import LocationsTable from './LocationsTable.svelte';
+	import PlayerPosition from './PlayerPosition.svelte';
+	import SettingsSheet from './SettingsSheet.svelte';
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
 
-	let isRoomCodeHidden = $state(false);
+	let isRoomCodeHidden = $state(page.url.searchParams.get('embed') === '1');
 	let showRevealConfirm = $state(false);
 
 	let payload = $derived(roomStore.stronghold);
@@ -52,34 +54,48 @@
 <div class="mx-auto w-full max-w-3xl">
 	<!-- Header -->
 	<div
-		class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black/60 px-5 py-3 backdrop-blur-xl"
+		class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black px-5 py-3 backdrop-blur-xl"
 	>
-		<div class="flex items-center gap-4">
-			<span class="text-base text-gray-400">Room:</span>
-			{#if isRoomCodeHidden}
-				<span class="text-base font-bold uppercase tracking-wider text-emerald-400">******</span>
-			{:else}
-				<span class="text-base font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span
+		<div class="flex items-center gap-2">
+			<span class="flex items-center gap-1 text-sm text-gray-800 dark:text-gray-200 md:text-lg">
+				<AnimatedGradientText
+					noBorder
+					className="p-0"
+					spanClassName="text-sm font-bold mb-0 md:text-lg pb-0"
 				>
-			{/if}
-			<button
-				type="button"
-				onclick={() => {
-					if (isRoomCodeHidden) {
-						showRevealConfirm = true;
-					} else {
-						isRoomCodeHidden = true;
-					}
-				}}
-				class="text-gray-400 transition-colors hover:text-gray-200"
-				title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
-			>
+					Ninjabrain Party
+				</AnimatedGradientText>
+			</span>
+
+			{#if page.url.searchParams.get('embed') !== '1'}
+				<span class="text-gray-400">|</span>
+				<span class="text-base text-gray-400">Room:</span>
 				{#if isRoomCodeHidden}
-					<EyeOff class="h-4 w-4" />
+					<span class="text-base font-bold uppercase tracking-wider text-emerald-400">******</span>
 				{:else}
-					<Eye class="h-4 w-4" />
+					<span class="text-base font-bold uppercase tracking-wider text-emerald-400"
+						>{roomCode}</span
+					>
 				{/if}
-			</button>
+				<button
+					type="button"
+					onclick={() => {
+						if (isRoomCodeHidden) {
+							showRevealConfirm = true;
+						} else {
+							isRoomCodeHidden = true;
+						}
+					}}
+					class="text-gray-400 transition-colors hover:text-gray-200"
+					title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
+				>
+					{#if isRoomCodeHidden}
+						<EyeOff class="mt-1 h-4 w-4" />
+					{:else}
+						<Eye class="mt-1 h-4 w-4" />
+					{/if}
+				</button>
+			{:else}{/if}
 		</div>
 		<div class="flex items-center gap-3">
 			<Badge variant="outline" class="flex gap-2 px-3 py-1.5 text-sm {connectionColor}">
