@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
-	import { ROUTES } from '$src/lib/routes.js';
 	import { getPublicSiteName } from '$src/lib/utils/format';
 	import { Button } from '$components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$components/ui/card';
@@ -29,11 +28,7 @@
 			{/if}
 		</CardHeader>
 		<CardContent>
-			<Button
-				href={resolve(ROUTES.HOME as Pathname)}
-				variant="outline"
-				class="flex items-center gap-2"
-			>
+			<Button href={resolve('/' as Pathname)} variant="outline" class="flex items-center gap-2">
 				<House class="h-4 w-4" />
 				Back to Home
 			</Button>
