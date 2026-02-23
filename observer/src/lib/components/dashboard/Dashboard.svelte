@@ -11,7 +11,8 @@
 	import EyeThrows from './EyeThrows.svelte';
 	import LocationsTable from './LocationsTable.svelte';
 	import PlayerPosition from './PlayerPosition.svelte';
-	import SettingsSheet from './SettingsSheet.svelte';
+	import AddToObs from './modals/AddToObs.svelte';
+	import SettingsSheet from './modals/SettingsSheet.svelte';
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
 
@@ -21,6 +22,8 @@
 	let payload = $derived(roomStore.stronghold);
 	let pos = $derived(payload?.playerPosition);
 	let throws = $derived(payload?.eyeThrows || []);
+
+	let isEmbed = $derived(page.url.searchParams.get('embed') === '1');
 
 	let connectionColor = $derived(
 		roomStore.status === 'connected'
@@ -67,7 +70,7 @@
 				</AnimatedGradientText>
 			</span>
 
-			{#if page.url.searchParams.get('embed') !== '1'}
+			{#if !isEmbed}
 				<span class="text-gray-400">|</span>
 				<span class="text-base text-gray-400">Room:</span>
 				{#if isRoomCodeHidden}
@@ -95,7 +98,7 @@
 						<Eye class="mt-1 h-4 w-4" />
 					{/if}
 				</button>
-			{:else}{/if}
+			{/if}
 		</div>
 		<div class="flex items-center gap-3">
 			<Badge variant="outline" class="flex gap-2 px-3 py-1.5 text-sm {connectionColor}">
@@ -181,6 +184,12 @@
 		{/if}
 	</div>
 
+	<!-- Add to OBS Button -->
+	{#if !isEmbed}
+		<AddToObs {roomCode} />
+	{/if}
+
+	<!-- Reveal Room Code Dialog -->
 	<AlertDialog.Root
 		open={showRevealConfirm}
 		onOpenChange={(open) => {
