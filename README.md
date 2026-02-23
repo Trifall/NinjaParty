@@ -2,9 +2,17 @@
 
 Ninjabrain Party is an observation tool for [Ninjabrain Bot](https://github.com/Ninjabrain1/NinjabrainBot). It allows Minecraft speedrunners to broadcast their stronghold triangulation data to observers in real-time (ish) through a web dashboard.
 
-![System Architecture](observer/static/images/system_architecture.png)
+## Installation
+
+1. Player downloads the relay binary from the [releases](https://github.com/Ninjabrain1/NinjabrainParty/releases) page and runs it. See [Windows Defender Warning](#windows-defender-warning) for an explanation for Windows Defender stuff.
+2. Once ran, it opens a local web page containing the room code or the observation room direct link.
+3. Player gives the observer the room code or the observation room direct link.
+4. Observer goes to the observation site and enters the code, or joins the room directly with the link.
+5. Go!
 
 ## Architecture
+
+![System Architecture](observer/static/images/system_architecture.png)
 
 The system is split into four main components to ensure make it as simple as possible to setup:
 
@@ -43,6 +51,45 @@ A key choice was using a central relay server instead of direct peer-to-peer (P2
 └─ Makefile    # Development and build commands
 ```
 
+## Windows Defender Warning
+
+### Important: Unsigned Executable
+
+The relay binary (`Ninjabrain-Relay.exe`) is an unsigned executable. When you first run it on Windows, you will likely encounter one of these warnings:
+
+1. Windows SmartScreen - "Windows protected your PC"
+2. Windows Defender - Potential false positive detection
+
+### How to Bypass SmartScreen
+
+1. Click **"More info"**
+2. Click **"Run anyway"**
+
+### How to Whitelist in Windows Defender
+
+If Windows Defender blocks the executable:
+
+1. Open **Windows Security** → **Virus & threat protection**
+2. Click **"Manage settings"** under Virus & threat protection settings
+3. Scroll to **Exclusions** and click **"Add or remove exclusions"**
+4. Click **"Add an exclusion"** → **"File"**
+5. Select the `Ninjabrain-Relay.exe` file
+
+### Why This Happens
+
+- The executable is not code-signed with a Microsoft-trusted certificate
+- It opens network ports (WebSocket connection)
+- Go binaries sometimes trigger heuristics due to their static linking
+
 ## Getting Started / Development
 
 Check out the [LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting up the project locally.
+
+## Credits
+
+This project is entirely dependent upon the fantastic [Ninjabrain Bot](https://github.com/Ninjabrain1/NinjabrainBot) by [Ninjabrain1](https://github.com/Ninjabrain1/). 
+Some magic numbers and constants are derived from that project, as well as some UI elements like the boat colors.
+
+## License
+
+See [LICENSE (GPLv3)](LICENSE).

@@ -1,9 +1,9 @@
 # .goreleaser.yaml
-project_name: relay
+project_name: Ninjabrain-Relay
 builds:
   - id: relay
     main: ./
-    binary: relay
+    binary: Ninjabrain-Relay
     goos:
       - linux
       - windows

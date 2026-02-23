@@ -14,7 +14,7 @@ dev-observer:
 	cd $(OBSERVER_DIR) && bun run dev
 
 build-relay:
-	cd $(RELAY_DIR) && go build -o bin/relay .
+	cd $(RELAY_DIR) && go build -o bin/Ninjabrain-Relay .
 
 build-server:
 	cd $(SERVER_DIR) && go build -o bin/server .

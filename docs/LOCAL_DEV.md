@@ -38,7 +38,7 @@ make dev-relay
 
 ### Important: Unsigned Executable
 
-The relay binary (`relay.exe`) is an **unsigned executable**. When you first run it on Windows, you will likely encounter one of these warnings:
+The relay binary (`Ninjabrain-Relay.exe`) is an **unsigned executable**. When you first run it on Windows, you will likely encounter one of these warnings:
 
 1. **Windows SmartScreen** - "Windows protected your PC"
 2. **Windows Defender** - Potential false positive detection
@@ -56,7 +56,7 @@ If Windows Defender blocks the executable:
 2. Click **"Manage settings"** under Virus & threat protection settings
 3. Scroll to **Exclusions** and click **"Add or remove exclusions"**
 4. Click **"Add an exclusion"** → **"File"**
-5. Select the `relay.exe` file
+5. Select the `Ninjabrain-Relay.exe` file
 
 ### Why This Happens
 
