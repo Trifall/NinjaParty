@@ -51,9 +51,19 @@
 
 	const BOAT_ALLOWABLE_ERROR = 0.03;
 	const BOAT_STD_DEV = 0.0007;
-	const NON_BOAT_WARNING_THRESHOLD = 0.05;
+	const NON_BOAT_WARNING_THRESHOLD = 0.05; // guessing this
 
 	function getDerivedIncrements(correction: number | undefined): number {
+		/* this data is not available in the API for Ninjabrain v1.5.1 release, so we are estimating it
+
+			formula uses Math.cos(beta * toRad)
+				- verticalAngle = roughly -32.11166deg from my limited testing
+				- cos(-32.11166deg) = cos(32.11166deg) = ~0.8466
+					-> so correction per increment = 0.001874 / 0.8466 = ~0.002213 deg
+					-> correctionIncrements = round(correction / 0.002213) = round(correction * 451.9)
+
+			this is a rough approximation, we don't have access to the exact data
+		 */
 		if (correction === undefined) return 0;
 		return Math.round(correction * 451.9);
 	}
@@ -131,7 +141,9 @@
 			</div>
 		{:else}
 			<!-- Info Messages -->
-			{#each infoMessages as msg}
+			<!-- Currently disabled: this is not available in Ninjabrain v1.5.1 release -->
+
+			<!-- {#each infoMessages as msg (msg.message + msg.severity)}
 				<div class="flex items-start gap-3 px-4 py-3 {msg.severity === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-200' : msg.severity === 'WARNING' ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-blue-500/10 border-blue-500/30 text-blue-200'} border-b border-white/20">
 					{#if msg.severity === 'ERROR'}
 						<TriangleAlert class="h-5 w-5 shrink-0 text-red-400" />
@@ -143,6 +155,7 @@
 					<span class="leading-snug">{@html msg.message}</span>
 				</div>
 			{/each}
+			-->
 
 			{#if payload}
 				<!-- Failed State Banner -->
@@ -166,7 +179,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each predictions as pred, i}
+							{#each predictions as pred (pred.chunkX + '-' + pred.chunkZ)}
 								{@const coords = getPredictionDisplayCoords(pred.chunkX, pred.chunkZ)}
 								{@const nether = chunkToNether(pred.chunkX, pred.chunkZ)}
 								{@const travel = getTravelAngleInfo(pred.chunkX, pred.chunkZ)}
@@ -256,7 +269,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each throws as t, i}
+								{#each throws as t (t.xInOverworld + '-' + t.zInOverworld + '-' + t.angle)}
 									{@const status = getErrorStatus(t)}
 									{@const incr = getDerivedIncrements(t.correction)}
 									<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
@@ -344,7 +357,7 @@
 								{ label: 'Monument', data: roomStore.allAdvancements.monument },
 								{ label: 'Stronghold', data: roomStore.allAdvancements.stronghold },
 								{ label: 'Deep Dark', data: roomStore.allAdvancements.deepDark },
-							] as item}
+							] as item (item.label)}
 								<span class="text-gray-400">{item.label}:
 									{#if item.data && 'xInOverworld' in item.data}
 										<span class="text-cyan-300">({item.data.xInOverworld?.toFixed(0) ?? '?'}, {item.data.zInOverworld?.toFixed(0) ?? '?'})</span>
