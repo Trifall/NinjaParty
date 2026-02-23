@@ -89,14 +89,14 @@
 					href="https://github.com/Trifall/Ninjabrain-Party"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="animate-gradient-rotate relative rounded-lg p-[2px]"
+					class="group relative rounded-lg p-[2px]"
 				>
 					<div
-						class="absolute inset-0 rounded-lg bg-[conic-gradient(from_0deg,theme(colors.emerald.500),theme(colors.cyan.500),theme(colors.emerald.500))]"
+						class="animate-gradient-rotate absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"
 					></div>
 					<Button
 						variant="outline"
-						class="relative gap-2 border-0 bg-black/90 text-white/80 transition-colors hover:bg-black hover:text-white"
+						class="relative gap-2 border-0 bg-black text-white transition-colors hover:bg-black/80 hover:text-white"
 					>
 						<Github class="h-4 w-4" />
 						View Source on GitHub
@@ -106,3 +106,21 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	@keyframes gradient-shift {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+	.animate-gradient-rotate {
+		animation: gradient-shift 3s ease infinite;
+		background-size: 200% 200%;
+	}
+</style>
