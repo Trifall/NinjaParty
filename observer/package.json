@@ -7,7 +7,7 @@
 		"build": "NODE_ENV=production bunx --bun vite build",
 		"start": "NODE_ENV=production bun run build/index.js",
 		"preview": "bunx --bun vite preview",
-		"prepare": "husky",
+		"prepare": "husky && svelte-kit sync || echo ''",
 		"test": "bunx --bun vitest run",
 		"check": "svelte-kit sync && svelte-check --workspace ./ --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --workspace ./ --tsconfig ./tsconfig.json --watch",
