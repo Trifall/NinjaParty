@@ -23,6 +23,12 @@
 		getCorrectionColor,
 		normalizeMinecraftAngle,
 	} from '$lib/utils/stronghold';
+	import {
+		BOAT_ALLOWABLE_ERROR,
+		BOAT_STD_DEV,
+		NON_BOAT_WARNING_THRESHOLD,
+		getDerivedIncrements,
+	} from '$src/lib/utils/constants';
 	import SettingsSheet from './SettingsSheet.svelte';
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
@@ -81,25 +87,6 @@
 		const angle = getAngleToStructure(pos.xInOverworld, pos.zInOverworld, coords[0], coords[1]);
 		const diff = getAngleDifference(angle, pos.horizontalAngle);
 		return { angle, diff };
-	}
-
-	const BOAT_ALLOWABLE_ERROR = 0.03;
-	const BOAT_STD_DEV = 0.0007;
-	const NON_BOAT_WARNING_THRESHOLD = 0.05; // guessing this
-
-	function getDerivedIncrements(correction: number | undefined): number {
-		/* this data is not available in the API for Ninjabrain v1.5.1 release, so we are estimating it
-
-			formula uses Math.cos(beta * toRad)
-				- verticalAngle = roughly -32.11166deg from my limited testing
-				- cos(-32.11166deg) = cos(32.11166deg) = ~0.8466
-					-> so correction per increment = 0.001874 / 0.8466 = ~0.002213 deg
-					-> correctionIncrements = round(correction / 0.002213) = round(correction * 451.9)
-
-			this is a rough approximation, we don't have access to the exact data
-		 */
-		if (correction === undefined) return 0;
-		return Math.round(correction * 451.9);
 	}
 
 	function getErrorStatus(eyeThrow: { error: number; type: string }): {

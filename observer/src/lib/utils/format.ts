@@ -1,5 +1,4 @@
 import { env } from '$env/dynamic/public';
-import type { ZodError } from 'zod';
 
 export const getPublicSiteName = () => {
 	return env.PUBLIC_SITE_NAME && env.PUBLIC_SITE_NAME.length > 0
