@@ -50,12 +50,12 @@ func main() {
 	messageChan := make(chan RoomMessage, 100)
 
 	endpoints := map[string]string{
-		"/api/v1/stronghold/events":           "stronghold_update",
-		"/api/v1/boat/events":                 "boat_update",
-		"/api/v1/blind/events":                "blind_update",
-		"/api/v1/divine/events":               "divine_update",
-		"/api/v1/all-advancements/events":     "all_advancements_update",
-		"/api/v1/information-messages/events": "information_messages_update",
+		"/api/v1/stronghold/events":       "stronghold_update",
+		"/api/v1/boat/events":             "boat_update",
+		"/api/v1/blind/events":            "blind_update",
+		"/api/v1/divine/events":           "divine_update",
+		"/api/v1/all-advancements/events": "all_advancements_update",
+		// "/api/v1/information-messages/events": "information_messages_update", // this is not available in v1.5.1 API
 	}
 
 	for endpoint, evType := range endpoints {
