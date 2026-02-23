@@ -2,7 +2,6 @@ import { createChildLogger } from '@/src/lib/server/logger';
 import type { Handle, HandleValidationError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
-import { getRedirect } from '$lib/data/redirects';
 
 const logger = createChildLogger('Hooks');
 
@@ -20,31 +19,6 @@ export const handle: Handle = sequence(
 		const proto = event.request.headers.get('x-forwarded-proto');
 		if (proto === 'https') {
 			event.url.protocol = 'https:';
-		}
-
-		return resolve(event);
-	},
-	// redirect middleware - check for configured redirects
-	async ({ event, resolve }) => {
-		// skip during build process
-		if (building) {
-			return resolve(event);
-		}
-
-		const url = new URL(event.request.url);
-
-		// check if there's a redirect for this pathname
-		const redirect = getRedirect(url.pathname);
-		if (redirect) {
-			const status = redirect.permanent ? 308 : 307;
-			const destination = redirect.destination + url.search;
-			logger.debug(`Redirecting ${url.pathname} to ${destination} (${status})`);
-			return new Response(null, {
-				status,
-				headers: {
-					Location: destination,
-				},
-			});
 		}
 
 		return resolve(event);
