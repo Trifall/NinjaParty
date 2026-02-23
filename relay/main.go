@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/atotto/clipboard"
+	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
 )
@@ -43,6 +45,37 @@ func main() {
 
 	// automatically open browser to the local UI
 	browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
+
+	// Setup system tray in a goroutine
+	go func() {
+		systray.Run(func() {
+			systray.SetIcon(iconData)
+			systray.SetTitle("Ninjabrain Party Relay")
+			systray.SetTooltip("Ninjabrain Party Relay")
+
+			mTitle := systray.AddMenuItem("Ninjabrain Party Relay", "")
+			mTitle.Disable()
+			systray.AddSeparator()
+			mOpen := systray.AddMenuItem("Open UI", "Open the relay UI")
+			mCopyCode := systray.AddMenuItem("Copy Room Code", "Copy the room code to clipboard")
+			mQuit := systray.AddMenuItem("Quit", "Close the relay")
+			mQuit.SetTooltip("Quit the relay application")
+
+			for {
+				select {
+				case <-mOpen.ClickedCh:
+					browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
+				case <-mCopyCode.ClickedCh:
+					clipboard.WriteAll(roomRes.RoomCode)
+				case <-mQuit.ClickedCh:
+					logger.Info("shutting down relay via tray")
+					os.Exit(0)
+				}
+			}
+		}, func() {
+			logger.Info("systray exited")
+		})
+	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
