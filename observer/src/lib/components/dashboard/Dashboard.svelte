@@ -145,15 +145,16 @@
 			{/each}
 
 			{#if payload}
-				<!-- Failed State -->
+				<!-- Failed State Banner -->
 				{#if payload.resultType === 'FAILED'}
-					<div class="flex h-32 flex-col items-center justify-center gap-2 text-red-400 text-center px-4">
-						<CircleAlert class="h-6 w-6" />
-						<p>Could not determine stronghold chunk.</p>
-						<p class="text-gray-400">You likely misread one of the eyes.</p>
+					<div class="flex items-center justify-center gap-3 px-4 py-3 text-red-400 text-center bg-red-500/5 border-b border-white/10">
+						<CircleAlert class="h-5 w-5 shrink-0" />
+						<p>Could not determine stronghold chunk. You likely misread one of the eyes.</p>
 					</div>
-				{:else if predictions.length > 0}
-					<!-- Locations Table -->
+				{/if}
+
+				<!-- Locations Table (only if not FAILED and has predictions) -->
+				{#if payload.resultType !== 'FAILED' && predictions.length > 0}
 					<table class="w-full border-collapse text-base">
 						<thead>
 							<tr class="text-gray-400 border-b border-white/10">
@@ -195,164 +196,164 @@
 							{/each}
 						</tbody>
 					</table>
+				{:else if payload.resultType !== 'FAILED'}
+					<div class="flex h-16 items-center justify-center text-muted-foreground">
+						<CircleAlert class="mr-2 h-4 w-4" /> No predictions available.
+					</div>
+				{/if}
 
-					<!-- Player Position (horizontal) -->
-					{#if pos}
-						{@const displayX = pos.isInNether && pos.xInOverworld !== undefined ? (pos.xInOverworld / 8) : pos.xInOverworld}
-						{@const displayZ = pos.isInNether && pos.zInOverworld !== undefined ? (pos.zInOverworld / 8) : pos.zInOverworld}
-						<div class="flex items-center justify-between px-4 py-2.5 border-t border-white/10 bg-white/[0.02] text-base">
-							<div class="flex items-center gap-5">
-								<span class="text-gray-400 flex items-center gap-1.5"><MapPin class="h-4 w-4" /> Position:</span>
-								<span class="text-gray-200">
-									(<span class={settings.colorNegatives && displayX !== undefined && displayX < 0 ? 'text-red-400' : ''}>{displayX?.toFixed(2) ?? '?'}</span>, <span class={settings.colorNegatives && displayZ !== undefined && displayZ < 0 ? 'text-red-400' : ''}>{displayZ?.toFixed(2) ?? '?'}</span>)
-								</span>
-							</div>
-							<div class="flex items-center gap-5">
-								<span class="text-gray-400">Angle:</span>
-								<span class="text-gray-200">{pos.horizontalAngle !== undefined ? normalizeMinecraftAngle(pos.horizontalAngle).toFixed(2) + '°' : '-'}</span>
-							</div>
-							<div class="flex items-center gap-5">
-								<span class="text-gray-400">Dim:</span>
-								<span class={pos.isInNether ? 'text-red-400' : 'text-emerald-400'}>
-									{pos.isInNether ? 'Nether' : pos.isInOverworld ? 'Overworld' : '?'}
-								</span>
-							</div>
+				<!-- Player Position (horizontal) - always show if available -->
+				{#if pos}
+					{@const displayX = pos.isInNether && pos.xInOverworld !== undefined ? (pos.xInOverworld / 8) : pos.xInOverworld}
+					{@const displayZ = pos.isInNether && pos.zInOverworld !== undefined ? (pos.zInOverworld / 8) : pos.zInOverworld}
+					<div class="flex items-center justify-between px-4 py-2.5 border-t border-white/10 bg-white/[0.02] text-base">
+						<div class="flex items-center gap-5">
+							<span class="text-gray-400 flex items-center gap-1.5"><MapPin class="h-4 w-4" /> Position:</span>
+							<span class="text-gray-200">
+								(<span class={settings.colorNegatives && displayX !== undefined && displayX < 0 ? 'text-red-400' : ''}>{displayX?.toFixed(2) ?? '?'}</span>, <span class={settings.colorNegatives && displayZ !== undefined && displayZ < 0 ? 'text-red-400' : ''}>{displayZ?.toFixed(2) ?? '?'}</span>)
+							</span>
 						</div>
-					{/if}
+						<div class="flex items-center gap-5">
+							<span class="text-gray-400">Angle:</span>
+							<span class="text-gray-200">{pos.horizontalAngle !== undefined ? normalizeMinecraftAngle(pos.horizontalAngle).toFixed(2) + '°' : '-'}</span>
+						</div>
+						<div class="flex items-center gap-5">
+							<span class="text-gray-400">Dimension:</span>
+							<span class={pos.isInNether ? 'text-red-400' : 'text-emerald-400'}>
+								{pos.isInNether ? 'Nether' : pos.isInOverworld ? 'Overworld' : '?'}
+							</span>
+						</div>
+					</div>
+				{/if}
 
-					<!-- Eye Throws Section -->
-					{#if throws.length > 0}
-						<div class="border-t border-white/10">
-							<div class="flex items-center justify-between px-4 py-2 bg-white/[0.02]">
-								<span class="text-gray-300 font-semibold tracking-wide">Ender eye throws</span>
-								<span class="text-gray-500 text-xs">{throws.length} total</span>
-							</div>
-							<table class="w-full border-collapse text-base">
-								<thead>
-									<tr class="text-gray-400 border-b border-white/10">
-										<th class="text-center px-4 py-1.5 font-normal">X</th>
-										<th class="text-center px-4 py-1.5 font-normal">Z</th>
-										<th class="text-center px-4 py-1.5 font-normal">Angle</th>
-										<th class="text-center px-4 py-1.5 font-normal">Corr</th>
-										<th class="text-center px-4 py-1.5 font-normal">
-											<span class="inline-flex items-center gap-1">
-												Adj
-												<span class="relative group cursor-help">
-													<Info class="h-4 w-4 text-gray-500" />
-													<span class="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:block w-52 rounded bg-black/95 border border-white/10 px-3 py-2 text-xs text-white shadow-lg z-50 text-center">
-														Assumes 30 FOV, TALL resolution, 16384px height. May be slightly off.
-													</span>
+				<!-- Eye Throws Section - always show if available -->
+				{#if throws.length > 0}
+					<div class="border-t border-white/10">
+						<div class="flex items-center justify-between px-4 py-2 bg-white/[0.02]">
+							<span class="text-gray-300 font-semibold tracking-wide">Ender eye throws</span>
+							<span class="text-gray-500 text-xs">{throws.length} total</span>
+						</div>
+						<table class="w-full border-collapse text-base">
+							<thead>
+								<tr class="text-gray-400 border-b border-white/10">
+									<th class="text-center px-4 py-1.5 font-normal">X</th>
+									<th class="text-center px-4 py-1.5 font-normal">Z</th>
+									<th class="text-center px-4 py-1.5 font-normal">Angle</th>
+									<th class="text-center px-4 py-1.5 font-normal">Corr</th>
+									<th class="text-center px-4 py-1.5 font-normal">
+										<span class="inline-flex items-center gap-1">
+											Adj
+											<span class="relative group cursor-help">
+												<Info class="h-4 w-4 text-gray-500" />
+												<span class="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:block w-52 rounded bg-black/95 border border-white/10 px-3 py-2 text-xs text-white shadow-lg z-50 text-center">
+													Assumes 30 FOV, TALL resolution, 16384px height. May be slightly off.
 												</span>
 											</span>
-										</th>
-										<th class="text-center px-4 py-1.5 font-normal">Error</th>
-										<th class="text-center px-4 py-1.5 font-normal">Type</th>
-									</tr>
-								</thead>
-								<tbody>
-									{#each throws as t, i}
-										{@const status = getErrorStatus(t)}
-										{@const incr = getDerivedIncrements(t.correction)}
-										<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-											<td class="px-4 py-1.5 text-center text-gray-200">{t.xInOverworld.toFixed(2)}</td>
-											<td class="px-4 py-1.5 text-center text-gray-200">{t.zInOverworld.toFixed(2)}</td>
-											<td class="px-4 py-1.5 text-center text-gray-200">{normalizeMinecraftAngle(t.angle).toFixed(2)}°</td>
-											<td class="px-4 py-1.5 text-center">
-												{#if t.correction !== undefined && t.correction !== 0}
-													<span style="color: {getCorrectionColor(t.correction)}">{t.correction > 0 ? '+' : ''}{t.correction.toFixed(4)}</span>
-												{:else}
-													<span class="text-gray-500">0.0000</span>
-												{/if}
-											</td>
-											<td class="px-4 py-1.5 text-center">
-												{#if incr !== 0}
-													<span style="color: {getCorrectionColor(incr)}">{incr > 0 ? '+' : ''}{incr}</span>
-												{:else}
-													<span class="text-gray-500">-</span>
-												{/if}
-											</td>
-											<td class="px-4 py-1.5 text-center">
-												<span class="inline-flex items-center gap-1">
-													<span class={status.color}>{t.error.toFixed(5)}</span>
-													{#if status.warning}
-														<span class="relative group">
-															<TriangleAlert class="h-4 w-4 text-amber-400" />
-															<span class="absolute top-full right-0 mt-1 hidden group-hover:block whitespace-nowrap rounded bg-black/95 border border-white/10 px-2 py-1 text-xs text-white shadow-lg z-50">
-																{status.warning}
-															</span>
+										</span>
+									</th>
+									<th class="text-center px-4 py-1.5 font-normal">Error</th>
+									<th class="text-center px-4 py-1.5 font-normal">Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each throws as t, i}
+									{@const status = getErrorStatus(t)}
+									{@const incr = getDerivedIncrements(t.correction)}
+									<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+										<td class="px-4 py-1.5 text-center text-gray-200">{t.xInOverworld.toFixed(2)}</td>
+										<td class="px-4 py-1.5 text-center text-gray-200">{t.zInOverworld.toFixed(2)}</td>
+										<td class="px-4 py-1.5 text-center text-gray-200">{normalizeMinecraftAngle(t.angle).toFixed(2)}°</td>
+										<td class="px-4 py-1.5 text-center">
+											{#if t.correction !== undefined && t.correction !== 0}
+												<span style="color: {getCorrectionColor(t.correction)}">{t.correction > 0 ? '+' : ''}{t.correction.toFixed(4)}</span>
+											{:else}
+												<span class="text-gray-500">0.0000</span>
+											{/if}
+										</td>
+										<td class="px-4 py-1.5 text-center">
+											{#if incr !== 0}
+												<span style="color: {getCorrectionColor(incr)}">{incr > 0 ? '+' : ''}{incr}</span>
+											{:else}
+												<span class="text-gray-500">-</span>
+											{/if}
+										</td>
+										<td class="px-4 py-1.5 text-center">
+											<span class="inline-flex items-center gap-1">
+												<span class={status.color}>{t.error.toFixed(5)}</span>
+												{#if status.warning}
+													<span class="relative group">
+														<TriangleAlert class="h-4 w-4 text-amber-400" />
+														<span class="absolute top-full right-0 mt-1 hidden group-hover:block whitespace-nowrap rounded bg-black/95 border border-white/10 px-2 py-1 text-xs text-white shadow-lg z-50">
+															{status.warning}
 														</span>
-													{/if}
-												</span>
-											</td>
-											<td class="px-4 py-1.5 text-center">
-												<span class="text-gray-400 text-xs uppercase">{t.type}</span>
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-					{/if}
-
-					<!-- Blind Mode -->
-					{#if roomStore.blind?.isBlindModeEnabled && roomStore.blind.blindResult && 'xInNether' in roomStore.blind.blindResult}
-						{@const blind = roomStore.blind.blindResult}
-						<div class="border-t border-white/10 px-4 py-3 bg-purple-500/5">
-							<div class="flex items-center gap-2 text-purple-300 font-semibold mb-1.5">
-								<Eye class="h-4 w-4" /> Blind Mode
-							</div>
-							<div class="flex items-center gap-8 text-sm">
-								<span class="text-gray-400">Nether: <span class="text-purple-300 font-semibold">({blind.xInNether}, {blind.zInNether})</span></span>
-								<span class="text-gray-400">Avg: <span class="text-gray-200">{blind.averageDistance.toFixed(0)}</span></span>
-								<span class="text-gray-400">Highroll: <span class="text-gray-200">{(blind.highrollProbability * 100).toFixed(1)}%</span></span>
-								<span class="text-gray-400">Eval: <span class="text-amber-300">{blind.evaluation.replace(/_/g, ' ')}</span></span>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Divine Mode -->
-					{#if roomStore.divine?.isDivineModeEnabled && roomStore.divine.divineResult && 'fossilXCoordinate' in roomStore.divine.divineResult}
-						{@const divine = roomStore.divine.divineResult}
-						<div class="border-t border-white/10 px-4 py-3 bg-amber-500/5">
-							<div class="flex items-center gap-2 text-amber-300 font-semibold mb-1.5">
-								<Eye class="h-4 w-4" /> Divine Mode
-							</div>
-							<div class="flex items-center gap-6 text-sm">
-								<span class="text-gray-400">Fossil X: <span class="text-amber-300 font-semibold">{divine.fossilXCoordinate}</span></span>
-								<span class="text-gray-400">Highroll: <span class="text-gray-200">{divine.formattedHighrollCoords}</span></span>
-								<span class="text-gray-400">Safe: <span class="text-gray-200">{divine.formattedSafeCoords}</span></span>
-							</div>
-						</div>
-					{/if}
-
-					<!-- All Advancements -->
-					{#if roomStore.allAdvancements?.isAllAdvancementsModeEnabled}
-						<div class="border-t border-white/10 px-4 py-3 bg-cyan-500/5">
-							<div class="flex items-center gap-2 text-cyan-300 font-semibold mb-1.5">
-								<MapPin class="h-4 w-4" /> All Advancements
-							</div>
-							<div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-								{#each [
-									{ label: 'Spawn', data: roomStore.allAdvancements.spawn },
-									{ label: 'Outpost', data: roomStore.allAdvancements.outpost },
-									{ label: 'Monument', data: roomStore.allAdvancements.monument },
-									{ label: 'Stronghold', data: roomStore.allAdvancements.stronghold },
-									{ label: 'Deep Dark', data: roomStore.allAdvancements.deepDark },
-								] as item}
-									<span class="text-gray-400">{item.label}: 
-										{#if item.data && 'xInOverworld' in item.data}
-											<span class="text-cyan-300">({item.data.xInOverworld?.toFixed(0) ?? '?'}, {item.data.zInOverworld?.toFixed(0) ?? '?'})</span>
-										{:else}
-											<span class="text-gray-500">-</span>
-										{/if}
-									</span>
+													</span>
+												{/if}
+											</span>
+										</td>
+										<td class="px-4 py-1.5 text-center">
+											<span class="text-gray-400 text-xs uppercase">{t.type}</span>
+										</td>
+									</tr>
 								{/each}
-							</div>
+							</tbody>
+						</table>
+					</div>
+				{/if}
+
+				<!-- Blind Mode -->
+				{#if roomStore.blind?.isBlindModeEnabled && roomStore.blind.blindResult && 'xInNether' in roomStore.blind.blindResult}
+					{@const blind = roomStore.blind.blindResult}
+					<div class="border-t border-white/10 px-4 py-3 bg-purple-500/5">
+						<div class="flex items-center gap-2 text-purple-300 font-semibold mb-1.5">
+							<Eye class="h-4 w-4" /> Blind Mode
 						</div>
-					{/if}
-				{:else}
-					<div class="flex h-24 items-center justify-center text-muted-foreground">
-						<CircleAlert class="mr-2 h-5 w-5" /> No predictions available.
+						<div class="flex items-center gap-8 text-sm">
+							<span class="text-gray-400">Nether: <span class="text-purple-300 font-semibold">({blind.xInNether}, {blind.zInNether})</span></span>
+							<span class="text-gray-400">Avg: <span class="text-gray-200">{blind.averageDistance.toFixed(0)}</span></span>
+							<span class="text-gray-400">Highroll: <span class="text-gray-200">{(blind.highrollProbability * 100).toFixed(1)}%</span></span>
+							<span class="text-gray-400">Eval: <span class="text-amber-300">{blind.evaluation.replace(/_/g, ' ')}</span></span>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Divine Mode -->
+				{#if roomStore.divine?.isDivineModeEnabled && roomStore.divine.divineResult && 'fossilXCoordinate' in roomStore.divine.divineResult}
+					{@const divine = roomStore.divine.divineResult}
+					<div class="border-t border-white/10 px-4 py-3 bg-amber-500/5">
+						<div class="flex items-center gap-2 text-amber-300 font-semibold mb-1.5">
+							<Eye class="h-4 w-4" /> Divine Mode
+						</div>
+						<div class="flex items-center gap-6 text-sm">
+							<span class="text-gray-400">Fossil X: <span class="text-amber-300 font-semibold">{divine.fossilXCoordinate}</span></span>
+							<span class="text-gray-400">Highroll: <span class="text-gray-200">{divine.formattedHighrollCoords}</span></span>
+							<span class="text-gray-400">Safe: <span class="text-gray-200">{divine.formattedSafeCoords}</span></span>
+						</div>
+					</div>
+				{/if}
+
+				<!-- All Advancements -->
+				{#if roomStore.allAdvancements?.isAllAdvancementsModeEnabled}
+					<div class="border-t border-white/10 px-4 py-3 bg-cyan-500/5">
+						<div class="flex items-center gap-2 text-cyan-300 font-semibold mb-1.5">
+							<MapPin class="h-4 w-4" /> All Advancements
+						</div>
+						<div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+							{#each [
+								{ label: 'Spawn', data: roomStore.allAdvancements.spawn },
+								{ label: 'Outpost', data: roomStore.allAdvancements.outpost },
+								{ label: 'Monument', data: roomStore.allAdvancements.monument },
+								{ label: 'Stronghold', data: roomStore.allAdvancements.stronghold },
+								{ label: 'Deep Dark', data: roomStore.allAdvancements.deepDark },
+							] as item}
+								<span class="text-gray-400">{item.label}:
+									{#if item.data && 'xInOverworld' in item.data}
+										<span class="text-cyan-300">({item.data.xInOverworld?.toFixed(0) ?? '?'}, {item.data.zInOverworld?.toFixed(0) ?? '?'})</span>
+									{:else}
+										<span class="text-gray-500">-</span>
+									{/if}
+								</span>
+							{/each}
+						</div>
 					</div>
 				{/if}
 			{/if}
