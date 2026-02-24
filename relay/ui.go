@@ -258,12 +258,27 @@ const uiTemplate = `
 
 		.btn-close:hover { background: #ef4444; }
 
+		.instructions-container {
+			margin-top: 32px;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
 		.instruction {
-			font-size: 18px;
+			font-size: 16px;
 			color: rgba(255,255,255,0.8);
-			margin-top: 20px;
-			text-align: center;
 			line-height: 1.5;
+			display: flex;
+			gap: 10px;
+			text-align: left;
+			letter-spacing: -0.01em;
+		}
+
+		.instruction::before {
+			content: "•";
+			color: #10b981;
+			font-weight: 800;
 		}
 	</style>
 </head>
@@ -293,7 +308,11 @@ const uiTemplate = `
 			<button id="copyBtn" class="btn-copy" onclick="copyLink()">Copy</button>
 		</div>
 
-		<p class="instruction">Once you give out the code / link, you can close this window!</p>
+		<div class="instructions-container">
+			<p class="instruction">Once you give out the code / link, you can close this window.</p>
+			<p class="instruction">You can open this page again manually or by clicking the tray icon.</p>
+			<p class="instruction">If you quit via the tray icon, everything will be closed for you!</p>
+		</div>
 		<button class="btn-close" onclick="showCloseDialog()">CLOSE RELAY</button>
 	</div>
 
