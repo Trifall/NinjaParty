@@ -153,7 +153,9 @@
 					{roomStore.boat.boatState}
 				</Badge>
 			{/if}
-			<SettingsSheet />
+			{#if !isEmbed}
+				<SettingsSheet />
+			{/if}
 		</div>
 	</div>
 
