@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/getlantern/systray"
@@ -31,11 +30,15 @@ func main() {
 
 	logger.Info("room created", zap.String("code", roomRes.RoomCode))
 
+	relay := NewRelay(config, logger)
+	if err := relay.StartRoom(roomRes.RoomCode, roomRes.WriteToken); err != nil {
+		logger.Fatal("failed to start relay", zap.Error(err))
+	}
+
 	ui := &UI{
-		addr:        config.LocalUIAddr,
-		observerURL: config.ObserverURL,
-		room:        roomRes.RoomCode,
-		logger:      logger,
+		addr:   config.LocalUIAddr,
+		relay:  relay,
+		logger: logger,
 	}
 	go func() {
 		if err := ui.Start(); err != nil {
@@ -43,10 +46,8 @@ func main() {
 		}
 	}()
 
-	// automatically open browser to the local UI
 	browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
 
-	// Setup system tray in a goroutine
 	go func() {
 		systray.Run(func() {
 			systray.SetIcon(iconData)
@@ -66,9 +67,10 @@ func main() {
 				case <-mOpen.ClickedCh:
 					browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
 				case <-mCopyCode.ClickedCh:
-					clipboard.WriteAll(roomRes.RoomCode)
+					clipboard.WriteAll(relay.RoomCode())
 				case <-mQuit.ClickedCh:
 					logger.Info("shutting down relay via tray")
+					relay.Shutdown()
 					os.Exit(0)
 				}
 			}
@@ -80,25 +82,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	messageChan := make(chan RoomMessage, 100)
-
-	endpoints := map[string]string{
-		"/api/v1/stronghold/events":       "stronghold_update",
-		"/api/v1/boat/events":             "boat_update",
-		"/api/v1/blind/events":            "blind_update",
-		"/api/v1/divine/events":           "divine_update",
-		"/api/v1/all-advancements/events": "all_advancements_update",
-		// "/api/v1/information-messages/events": "information_messages_update", // this is not available in v1.5.1 API
-	}
-
-	for endpoint, evType := range endpoints {
-		sseClient := NewSSEClient(config.NinjabrainURL+endpoint, evType, logger)
-		go sseClient.Run(ctx, messageChan)
-	}
-
-	wsClient := NewWSClient(config.ServerWSURL, roomRes.RoomCode, roomRes.WriteToken, config.TLSSkipVerify, time.Duration(config.HeartbeatIntvl)*time.Second, logger)
-	go wsClient.Run(ctx, messageChan)
-
 	<-ctx.Done()
 	logger.Info("shutting down relay")
+	relay.Shutdown()
 }

@@ -3,16 +3,14 @@ package main
 import (
 	"html/template"
 	"net/http"
-	"os"
 
 	"go.uber.org/zap"
 )
 
 type UI struct {
-	addr        string
-	observerURL string
-	room        string
-	logger      *zap.Logger
+	addr   string
+	relay  *Relay
+	logger *zap.Logger
 }
 
 const uiTemplate = `
@@ -375,8 +373,16 @@ const uiTemplate = `
 			closeCloseDialog();
 			document.querySelector('.card').style.display = 'none';
 			document.querySelector('.glow').style.display = 'none';
-			document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:rgba(255,255,255,0.9);font-size:20px;">Relay closed. You can close this window.</div>';
+			document.body.innerHTML = 
+				'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:rgba(255,255,255,0.9);font-size:20px;gap:20px;">' +
+					'<div>Relay closed.</div>' +
+					'<button id="newRoomBtn" style="background:#10b981;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;" onclick="startNewRoom()">Start New Room</button>' +
+				'</div>';
 			fetch('/close', { method: 'POST' });
+		}
+
+		function startNewRoom() {
+			window.location.href = '/new-room';
 		}
 	</script>
 </body>
@@ -391,8 +397,8 @@ func (u *UI) Start() error {
 			RoomCode string
 			FullLink string
 		}{
-			RoomCode: u.room,
-			FullLink: u.observerURL + u.room,
+			RoomCode: u.relay.RoomCode(),
+			FullLink: u.relay.FullLink(),
 		}
 		if err := tmpl.Execute(w, data); err != nil {
 			u.logger.Error("failed to render ui template", zap.Error(err))
@@ -401,7 +407,19 @@ func (u *UI) Start() error {
 
 	http.HandleFunc("/close", func(w http.ResponseWriter, r *http.Request) {
 		u.logger.Info("close requested via UI")
-		os.Exit(0)
+		u.relay.Shutdown()
+	})
+
+	http.HandleFunc("/new-room", func(w http.ResponseWriter, r *http.Request) {
+		u.logger.Info("new room requested via UI")
+		_, err := u.relay.CreateNewRoom()
+		if err != nil {
+			u.logger.Error("failed to create new room", zap.Error(err))
+			http.Error(w, "Failed to create new room", http.StatusInternalServerError)
+			return
+		}
+		// Redirect to home page to show the new room
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
 	u.logger.Info("starting local UI", zap.String("url", "http://"+u.addr))

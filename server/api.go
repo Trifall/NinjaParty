@@ -124,6 +124,19 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 		data, _ := json.Marshal(offlineMsg)
 		room.UpdateSnapshot("presence", data)
 		api.logger.Info("writer disconnected", zap.String("room", room.code))
+
+		// Notify spectators that room is closing, then close the room
+		roomClosedMsg := RoomMessage{
+			Type:    "room_closed",
+			Ts:      time.Now().UnixMilli(),
+			Source:  "server",
+			Payload: json.RawMessage(`{"message":"The runner has closed the relay. This room is no longer active."}`),
+		}
+		roomClosedData, _ := json.Marshal(roomClosedMsg)
+		room.BroadcastToSpectators(roomClosedData)
+
+		// Close the room and kick all spectators - runner has left
+		api.rooms.CloseRoom(room.code)
 	}()
 
 	// send online presence immediately

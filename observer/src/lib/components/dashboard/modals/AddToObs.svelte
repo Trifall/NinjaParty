@@ -30,7 +30,7 @@
 			class="animate-gradient-rotate absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"
 		></div>
 		<div
-			class="relative flex items-center gap-2 rounded-lg border-0 bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/80 hover:text-white"
+			class="relative flex items-center gap-2 rounded-lg border-0 bg-black px-4 py-2 text-sm font-medium text-white transition-all hover:bg-black/60 hover:text-white"
 		>
 			<Monitor class="h-4 w-4" />
 			Add to OBS
@@ -61,7 +61,7 @@
 						<span class="text-sm font-medium text-white">1. Copy this link:</span>
 						<div class="flex items-center gap-2">
 							<code
-								class="flex-1 truncate rounded bg-black px-3 py-2 text-sm text-emerald-400 border border-white/10"
+								class="flex-1 truncate rounded border border-white/10 bg-black px-3 py-2 text-sm text-emerald-400"
 							>
 								{window.location.origin}{obsUrl}
 							</code>
@@ -93,10 +93,8 @@
 						/>
 					</div>
 
-					<div class="flex items-center justify-center pt-2">
-						<span class="rounded-full bg-emerald-500/20 px-3 py-1 text-sm font-medium text-emerald-400">
-							OK
-						</span>
+					<div class="flex flex-col gap-2">
+						<span class="text-sm font-medium text-white">4. Click OK</span>
 					</div>
 				</AlertDialog.Description>
 			</AlertDialog.Header>

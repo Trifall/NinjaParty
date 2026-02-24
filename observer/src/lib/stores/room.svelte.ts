@@ -1,4 +1,6 @@
 import { env } from '$env/dynamic/public';
+import { goto } from '$app/navigation';
+import { toast } from 'svelte-sonner';
 import type {
 	AllAdvancementsPayload,
 	BlindPayload,
@@ -6,6 +8,7 @@ import type {
 	DivinePayload,
 	InformationMessagesPayload,
 	PresencePayload,
+	RoomClosedPayload,
 	RoomMessage,
 	StrongholdPayload,
 } from '../types/stronghold';
@@ -91,6 +94,12 @@ export class RoomConnection {
 						break;
 					case 'information_messages_update':
 						this.informationMessages = data.payload as InformationMessagesPayload;
+						break;
+					case 'room_closed':
+						this.runnerStatus = 'offline';
+						const payload = data.payload as RoomClosedPayload;
+						toast.error(payload.message || 'The room has been closed');
+						goto('/');
 						break;
 				}
 			} catch (e) {

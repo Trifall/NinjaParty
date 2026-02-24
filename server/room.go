@@ -87,14 +87,29 @@ func (rm *RoomManager) DeleteRoom(code string) {
 	defer rm.mu.Unlock()
 
 	if room, exists := rm.rooms[code]; exists {
-		room.mu.Lock()
-		// close all spectator connections
-		for spec := range room.spectators {
-			close(spec.stop)
-		}
-		room.mu.Unlock()
+		room.closeSpectators()
 		delete(rm.rooms, code)
 	}
+}
+
+func (rm *RoomManager) CloseRoom(code string) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+
+	if room, exists := rm.rooms[code]; exists {
+		room.closeSpectators()
+		delete(rm.rooms, code)
+	}
+}
+
+func (r *RoomState) closeSpectators() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for spec := range r.spectators {
+		close(spec.stop)
+	}
+	r.spectators = make(map[*SpectatorClient]bool)
 }
 
 func (rm *RoomManager) StartEvictionTicker(ctx context.Context, interval time.Duration) {
@@ -167,6 +182,18 @@ func (r *RoomState) AddSpectator(spec *SpectatorClient) [][]byte {
 	}
 
 	return snaps
+}
+
+func (r *RoomState) BroadcastToSpectators(data []byte) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for spec := range r.spectators {
+		select {
+		case spec.ch <- data:
+		default:
+		}
+	}
 }
 
 func (r *RoomState) RemoveSpectator(spec *SpectatorClient) {

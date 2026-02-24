@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Eye, EyeOff, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { Eye, EyeOff, Home, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
@@ -16,7 +17,7 @@
 
 	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
 
-	let isRoomCodeHidden = $state(page.url.searchParams.get('embed') === '1');
+	let isRoomCodeHidden = $state(true);
 	let showRevealConfirm = $state(false);
 
 	let payload = $derived(roomStore.stronghold);
@@ -186,7 +187,22 @@
 
 	<!-- Add to OBS Button -->
 	{#if !isEmbed}
-		<AddToObs {roomCode} />
+		<div class="flex w-full items-center justify-center gap-2">
+			<AddToObs {roomCode} />
+			<div class="mt-4 flex justify-center">
+				<button type="button" onclick={() => goto('/')} class="group relative rounded-lg p-[2px]">
+					<div
+						class="animate-gradient-rotate absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"
+					></div>
+					<div
+						class="relative flex items-center gap-2 rounded-lg border-0 bg-black px-4 py-2 text-sm font-medium text-white transition-all hover:bg-black/60 hover:text-white"
+					>
+						<House class="h-4 w-4" />
+						Return to Home
+					</div>
+				</button>
+			</div>
+		</div>
 	{/if}
 
 	<!-- Reveal Room Code Dialog -->

@@ -95,7 +95,8 @@ export type RoomMessageType =
 	| 'blind_update'
 	| 'divine_update'
 	| 'all_advancements_update'
-	| 'information_messages_update';
+	| 'information_messages_update'
+	| 'room_closed';
 
 export interface RoomMessage {
 	type: RoomMessageType;
@@ -106,6 +107,10 @@ export interface RoomMessage {
 
 export interface PresencePayload {
 	status: 'online' | 'offline';
+}
+
+export interface RoomClosedPayload {
+	message: string;
 }
 
 export interface StrongholdPayload {
