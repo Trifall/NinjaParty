@@ -1,12 +1,14 @@
 <script lang="ts">
 	import Dashboard from '$lib/components/dashboard/Dashboard.svelte';
 	import { RoomConnection } from '$lib/stores/room.svelte';
+	import { page } from '$app/state';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
+	let isEmbed = page.url.searchParams.get('embed') === '1';
 	// svelte-ignore state_referenced_locally
-	let roomStore = $state(new RoomConnection(data.room));
+	let roomStore = $state(new RoomConnection(data.room, isEmbed));
 
 	$effect(() => {
 		roomStore.connect();
@@ -21,5 +23,5 @@
 </svelte:head>
 
 <div class="h-full min-h-[calc(100vh-64px)] w-full p-4 lg:p-8">
-	<Dashboard {roomStore} roomCode={data.room} />
+	<Dashboard {roomStore} roomCode={data.room} {isEmbed} />
 </div>

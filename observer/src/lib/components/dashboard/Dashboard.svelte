@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Eye, EyeOff, Home, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import type { RoomConnection } from '$lib/stores/room.svelte';
@@ -15,7 +14,7 @@
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
 
-	let { roomStore, roomCode }: { roomStore: RoomConnection; roomCode: string } = $props();
+	let { roomStore, roomCode, isEmbed }: { roomStore: RoomConnection; roomCode: string; isEmbed: boolean } = $props();
 
 	let isRoomCodeHidden = $state(true);
 	let showRevealConfirm = $state(false);
@@ -23,8 +22,6 @@
 	let payload = $derived(roomStore.stronghold);
 	let pos = $derived(payload?.playerPosition);
 	let throws = $derived(payload?.eyeThrows || []);
-
-	let isEmbed = $derived(page.url.searchParams.get('embed') === '1');
 
 	let connectionColor = $derived(
 		roomStore.status === 'connected'
@@ -158,6 +155,12 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if isEmbed && roomStore.roomClosed}
+		<div class="mt-4 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-center text-red-400">
+			This room has been closed
+		</div>
+	{/if}
 
 	<!-- Main Panel -->
 	<div
