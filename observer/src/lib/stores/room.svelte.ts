@@ -15,9 +15,11 @@ import type {
 
 export class RoomConnection {
 	private code: string = '';
+	private isEmbed: boolean = false;
 	ws: WebSocket | null = null;
 	status = $state<'connecting' | 'connected' | 'reconnecting' | 'offline' | 'error'>('offline');
 	runnerStatus = $state<'online' | 'offline' | 'unknown'>('unknown');
+	roomClosed = $state(false);
 
 	// Individual Payloads
 	stronghold = $state<StrongholdPayload | null>(null);
@@ -32,8 +34,9 @@ export class RoomConnection {
 	private maxReconnectFailures = 15;
 	private explicitClose = false;
 
-	constructor(code: string) {
+	constructor(code: string, isEmbed: boolean = false) {
 		this.code = code;
+		this.isEmbed = isEmbed;
 	}
 
 	connect() {
@@ -97,9 +100,12 @@ export class RoomConnection {
 						break;
 					case 'room_closed':
 						this.runnerStatus = 'offline';
-						const payload = data.payload as RoomClosedPayload;
-						toast.error(payload.message || 'The room has been closed');
-						goto('/');
+						this.roomClosed = true;
+						if (!this.isEmbed) {
+							const payload = data.payload as RoomClosedPayload;
+							toast.error(payload.message || 'The room has been closed');
+							goto('/');
+						}
 						break;
 				}
 			} catch (e) {
