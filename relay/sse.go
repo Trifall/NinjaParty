@@ -71,6 +71,12 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
 	b.MaxElapsedTime = 0 // loop forever
 
 	_ = backoff.RetryNotify(func() error {
+		select {
+		case <-ctx.Done():
+			return backoff.Permanent(ctx.Err())
+		default:
+		}
+
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url, nil)
 		if err != nil {
 			return err

@@ -158,5 +158,4 @@ func (r *Relay) Shutdown() {
 	r.clientsMu.Lock()
 	defer r.clientsMu.Unlock()
 	r.stopClientsLocked()
-	close(r.messageChan)
 }

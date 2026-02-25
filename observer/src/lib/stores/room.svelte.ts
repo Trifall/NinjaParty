@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/public';
-import { goto } from '$app/navigation';
 import { toast } from 'svelte-sonner';
+import { goto } from '$app/navigation';
 import type {
 	AllAdvancementsPayload,
 	BlindPayload,
@@ -57,8 +57,16 @@ export class RoomConnection {
 			this.reconnectFailures = 0;
 		};
 
-		this.ws.onclose = () => {
+		this.ws.onclose = (event: CloseEvent) => {
 			if (this.explicitClose) {
+				this.status = 'offline';
+				return;
+			}
+
+			// code 4000 = room closed by server
+			if (event.code === 4000) {
+				this.roomClosed = true;
+				this.runnerStatus = 'offline';
 				this.status = 'offline';
 				return;
 			}
@@ -116,6 +124,10 @@ export class RoomConnection {
 
 	private handleReconnect() {
 		if (this.explicitClose) return;
+		if (this.roomClosed) {
+			this.status = 'offline';
+			return;
+		}
 
 		this.ws = null;
 

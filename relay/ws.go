@@ -43,6 +43,12 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 	b.MaxElapsedTime = 0 // loop forever
 
 	_ = backoff.RetryNotify(func() error {
+		select {
+		case <-ctx.Done():
+			return backoff.Permanent(ctx.Err())
+		default:
+		}
+
 		client := &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: c.tlsSkipVerify},

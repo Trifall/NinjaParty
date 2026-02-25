@@ -204,7 +204,7 @@ func (api *API) handleSpectator(ctx context.Context, c *websocket.Conn, room *Ro
 		case <-ctx.Done():
 			return
 		case <-spec.stop:
-			c.Close(websocket.StatusNormalClosure, "room deleted")
+			c.Close(4000, "room closed")
 			return
 		case msg := <-spec.ch:
 			if err := c.Write(ctx, websocket.MessageText, msg); err != nil {
