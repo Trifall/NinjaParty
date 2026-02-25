@@ -62,6 +62,8 @@
 				<a
 					href="/about"
 					class="mt-16 text-lg font-bold text-emerald-400 transition-colors hover:text-emerald-300 hover:underline"
+					data-sveltekit-preload-data="off"
+					data-sveltekit-preload-code="off"
 				>
 					Learn more
 				</a>
