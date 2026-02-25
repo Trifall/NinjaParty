@@ -13,9 +13,10 @@ import (
 )
 
 type SSEClient struct {
-	url     string
-	msgType string
-	logger  *zap.Logger
+	url       string
+	msgType   string
+	logger    *zap.Logger
+	ctxCancel context.CancelFunc
 }
 
 func NewSSEClient(url, msgType string, logger *zap.Logger) *SSEClient {
@@ -58,7 +59,14 @@ func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint strin
 	}
 }
 
+func (c *SSEClient) Close() {
+	if c.ctxCancel != nil {
+		c.ctxCancel()
+	}
+}
+
 func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
+	ctx, c.ctxCancel = context.WithCancel(ctx)
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 0 // loop forever
 

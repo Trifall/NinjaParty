@@ -75,6 +75,18 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(roomCode) > 20 || len(roomCode) < 3 {
+		http.Error(w, "invalid room code length", http.StatusBadRequest)
+		return
+	}
+
+	for _, c := range roomCode {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			http.Error(w, "invalid room code format", http.StatusBadRequest)
+			return
+		}
+	}
+
 	room := api.rooms.GetRoom(roomCode)
 	if room == nil {
 		http.Error(w, "room not found", http.StatusNotFound)

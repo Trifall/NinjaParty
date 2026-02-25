@@ -22,5 +22,13 @@ func createRoom(serverAPI string) (*RoomResponse, error) {
 		return nil, err
 	}
 
+	if parsed.RoomCode == "" || parsed.WriteToken == "" {
+		return nil, fmt.Errorf("invalid response: missing roomCode or writeToken")
+	}
+
+	if len(parsed.RoomCode) < 3 || len(parsed.WriteToken) < 16 {
+		return nil, fmt.Errorf("invalid response: roomCode or writeToken too short")
+	}
+
 	return &parsed, nil
 }

@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -46,34 +48,37 @@ func GenerateRandomHex(n int) (string, error) {
 }
 
 func (rm *RoomManager) CreateRoom() (string, string, error) {
-	code, err := GenerateRandomHex(3)
-	if err != nil {
-		return "", "", err
-	}
-	token, err := GenerateRandomHex(16)
-	if err != nil {
-		return "", "", err
-	}
-
-	rm.mu.Lock()
-	defer rm.mu.Unlock()
-
-	for rm.rooms[code] != nil {
-		code, err = GenerateRandomHex(3)
+	const maxAttempts = 100
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		code, err := GenerateRandomHex(3)
 		if err != nil {
 			return "", "", err
 		}
+		token, err := GenerateRandomHex(16)
+		if err != nil {
+			return "", "", err
+		}
+
+		rm.mu.Lock()
+
+		if rm.rooms[code] != nil {
+			rm.mu.Unlock()
+			continue
+		}
+
+		rm.rooms[code] = &RoomState{
+			code:          code,
+			writeToken:    token,
+			lastUpdated:   time.Now(),
+			lastSnapshots: make(map[string][]byte),
+			spectators:    make(map[*SpectatorClient]bool),
+		}
+
+		rm.mu.Unlock()
+		return code, token, nil
 	}
 
-	rm.rooms[code] = &RoomState{
-		code:          code,
-		writeToken:    token,
-		lastUpdated:   time.Now(),
-		lastSnapshots: make(map[string][]byte),
-		spectators:    make(map[*SpectatorClient]bool),
-	}
-
-	return code, token, nil
+	return "", "", fmt.Errorf("failed to generate unique room code after %d attempts", maxAttempts)
 }
 
 func (rm *RoomManager) GetRoom(code string) *RoomState {
@@ -151,7 +156,7 @@ func (rm *RoomManager) evictIdleRooms() {
 func (r *RoomState) ValidateToken(token string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.writeToken == token
+	return subtle.ConstantTimeCompare([]byte(r.writeToken), []byte(token)) == 1
 }
 
 func (r *RoomState) UpdateSnapshot(msgType string, data []byte) {
@@ -174,6 +179,11 @@ func (r *RoomState) UpdateSnapshot(msgType string, data []byte) {
 func (r *RoomState) AddSpectator(spec *SpectatorClient) [][]byte {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if r.spectators[spec] {
+		return nil
+	}
+
 	r.spectators[spec] = true
 
 	var snaps [][]byte

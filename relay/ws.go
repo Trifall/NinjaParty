@@ -19,6 +19,7 @@ type WSClient struct {
 	tlsSkipVerify  bool
 	heartbeatIntvl time.Duration
 	logger         *zap.Logger
+	ctxCancel      context.CancelFunc
 }
 
 func NewWSClient(serverURL, room, token string, tlsSkipVerify bool, heartbeatIntvl time.Duration, logger *zap.Logger) *WSClient {
@@ -30,7 +31,14 @@ func NewWSClient(serverURL, room, token string, tlsSkipVerify bool, heartbeatInt
 	}
 }
 
+func (c *WSClient) Close() {
+	if c.ctxCancel != nil {
+		c.ctxCancel()
+	}
+}
+
 func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
+	ctx, c.ctxCancel = context.WithCancel(ctx)
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 0 // loop forever
 
@@ -54,8 +62,8 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 
 		go func() {
 			for {
-				// We must read from the connection so that control frames (like Pong) are correctly handled.
-				// By discarding the data, coder/websocket's internal frame parser completes the ping.
+				// we must read from the connection so that control frames (like Pong) are correctly handled
+				// by discarding the data, coder/websocket's internal frame parser completes the ping
 				_, _, err := conn.Read(readCtx)
 				if err != nil {
 					readCancel()

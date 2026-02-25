@@ -1,16 +1,43 @@
 package main
 
 import (
+	"encoding/json"
 	"html/template"
 	"net/http"
+	"sync"
+	"time"
 
 	"go.uber.org/zap"
 )
 
+type RateLimiter struct {
+	mu          sync.Mutex
+	lastRequest time.Time
+	minInterval time.Duration
+}
+
+func NewRateLimiter(interval time.Duration) *RateLimiter {
+	return &RateLimiter{
+		minInterval: interval,
+	}
+}
+
+func (rl *RateLimiter) Allow() bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	now := time.Now()
+	if now.Sub(rl.lastRequest) < rl.minInterval {
+		return false
+	}
+	rl.lastRequest = now
+	return true
+}
+
 type UI struct {
-	addr   string
-	relay  *Relay
-	logger *zap.Logger
+	addr        string
+	relay       *Relay
+	logger      *zap.Logger
+	newRoomRate *RateLimiter
 }
 
 const uiTemplate = `
@@ -401,22 +428,56 @@ const uiTemplate = `
 		}
 
 		function startNewRoom() {
-			window.location.href = '/new-room';
+			var btn = document.getElementById('newRoomBtn');
+			if (btn) {
+				btn.disabled = true;
+				btn.textContent = 'Creating...';
+			}
+			fetch('/new-room', { method: 'POST' })
+				.then(function(response) { return response.json(); })
+				.then(function(data) {
+					if (data.success) {
+						location.reload();
+					} else {
+						alert('Error: ' + data.error);
+						if (btn) {
+							btn.disabled = false;
+							btn.textContent = 'Start New Room';
+						}
+					}
+				})
+				.catch(function(err) {
+					alert('Failed to create room: ' + err);
+					if (btn) {
+						btn.disabled = false;
+						btn.textContent = 'Start New Room';
+					}
+				});
 		}
 	</script>
 </body>
 </html>
 `
 
+type CreateRoomResponse struct {
+	Success  bool   `json:"success"`
+	RoomCode string `json:"roomCode,omitempty"`
+	Error    string `json:"error,omitempty"`
+}
+
 func (u *UI) Start() error {
 	tmpl := template.Must(template.New("ui").Parse(uiTemplate))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		roomCode := u.relay.RoomCode()
+		if roomCode == "" {
+			roomCode = "connecting..."
+		}
 		data := struct {
 			RoomCode string
 			FullLink string
 		}{
-			RoomCode: u.relay.RoomCode(),
+			RoomCode: roomCode,
 			FullLink: u.relay.FullLink(),
 		}
 		if err := tmpl.Execute(w, data); err != nil {
@@ -430,15 +491,32 @@ func (u *UI) Start() error {
 	})
 
 	http.HandleFunc("/new-room", func(w http.ResponseWriter, r *http.Request) {
-		u.logger.Info("new room requested via UI")
-		_, err := u.relay.CreateNewRoom()
-		if err != nil {
-			u.logger.Error("failed to create new room", zap.Error(err))
-			http.Error(w, "Failed to create new room", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+
+		if !u.newRoomRate.Allow() {
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(CreateRoomResponse{
+				Success: false,
+				Error:   "rate limit exceeded, please wait before creating another room",
+			})
 			return
 		}
-		// Redirect to home page to show the new room
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+
+		roomRes, err := u.relay.CreateNewRoom()
+		if err != nil {
+			u.logger.Error("failed to create new room", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(CreateRoomResponse{
+				Success: false,
+				Error:   "Failed to create new room. Please try again.",
+			})
+			return
+		}
+
+		json.NewEncoder(w).Encode(CreateRoomResponse{
+			Success:  true,
+			RoomCode: roomRes.RoomCode,
+		})
 	})
 
 	u.logger.Info("starting local UI", zap.String("url", "http://"+u.addr))

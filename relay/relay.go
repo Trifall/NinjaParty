@@ -83,19 +83,26 @@ func (r *Relay) stopClientsLocked() {
 	if r.cancel != nil {
 		r.cancel()
 	}
+	for _, client := range r.sseClients {
+		client.Close()
+	}
 	r.sseClients = nil
-	r.wsClient = nil
+	if r.wsClient != nil {
+		r.wsClient.Close()
+		r.wsClient = nil
+	}
 }
 
 func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
 	r.logger.Info("creating new room")
 
 	r.clientsMu.Lock()
+	defer r.clientsMu.Unlock()
+
 	r.stopClientsLocked()
 
 	roomRes, err := createRoom(r.config.ServerAPIURL)
 	if err != nil {
-		r.clientsMu.Unlock()
 		return nil, err
 	}
 
@@ -105,14 +112,7 @@ func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
 	}
 
 	r.logger.Info("starting clients for new room", zap.String("code", roomRes.RoomCode))
-	r.startClientsLocked()
 
-	r.clientsMu.Unlock()
-
-	return roomRes, nil
-}
-
-func (r *Relay) startClientsLocked() {
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
 	endpoints := map[string]string{
@@ -138,6 +138,8 @@ func (r *Relay) startClientsLocked() {
 		r.logger,
 	)
 	go r.wsClient.Run(r.ctx, r.messageChan)
+
+	return roomRes, nil
 }
 
 func (r *Relay) RoomCode() string {
@@ -156,4 +158,5 @@ func (r *Relay) Shutdown() {
 	r.clientsMu.Lock()
 	defer r.clientsMu.Unlock()
 	r.stopClientsLocked()
+	close(r.messageChan)
 }

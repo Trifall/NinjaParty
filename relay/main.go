@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/getlantern/systray"
@@ -36,9 +37,10 @@ func main() {
 	}
 
 	ui := &UI{
-		addr:   config.LocalUIAddr,
-		relay:  relay,
-		logger: logger,
+		addr:        config.LocalUIAddr,
+		relay:       relay,
+		logger:      logger,
+		newRoomRate: NewRateLimiter(5 * time.Second),
 	}
 	go func() {
 		if err := ui.Start(); err != nil {
