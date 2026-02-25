@@ -14,7 +14,11 @@
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
 
-	let { roomStore, roomCode, isEmbed }: { roomStore: RoomConnection; roomCode: string; isEmbed: boolean } = $props();
+	let {
+		roomStore,
+		roomCode,
+		isEmbed,
+	}: { roomStore: RoomConnection; roomCode: string; isEmbed: boolean } = $props();
 
 	let isRoomCodeHidden = $state(true);
 	let showRevealConfirm = $state(false);
@@ -156,17 +160,15 @@
 		</div>
 	</div>
 
-	{#if isEmbed && roomStore.roomClosed}
-		<div class="mt-4 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-center text-red-400">
-			This room has been closed
-		</div>
-	{/if}
-
 	<!-- Main Panel -->
 	<div
 		class="rounded-b-lg border border-t-0 border-white/20 bg-[#1a1a1a] text-sm text-gray-200 backdrop-blur-xl"
 	>
-		{#if roomStore.status === 'connected' && !payload}
+		{#if roomStore.roomClosed}
+			<div class="flex h-48 flex-col items-center justify-center gap-3 text-red-400">
+				<p class="text-base">This room has been closed</p>
+			</div>
+		{:else if roomStore.status === 'connected' && !payload}
 			<div class="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
 				<LoaderCircle class="h-8 w-8 animate-spin text-emerald-500" />
 				<p>Waiting for Ninjabrain Bot data...</p>

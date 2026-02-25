@@ -469,6 +469,9 @@ func (u *UI) Start() error {
 	tmpl := template.Must(template.New("ui").Parse(uiTemplate))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+
 		roomCode := u.relay.RoomCode()
 		if roomCode == "" {
 			roomCode = "connecting..."
