@@ -4,8 +4,12 @@ Ninjabrain Party is an observation tool for [Ninjabrain Bot](https://github.com/
 
 ## Installation
 
-1. Player enables the Ninjabrain API server: open Ninjabrain → Settings → Advanced Tab → Check "Enable API (starts HTTP server)"
+1. Player enables the Ninjabrain API server: 
+
+Open Ninjabrain Bot → Settings → Advanced Tab → Check "Enable API (starts HTTP server)"
+
 ![Enable API](relay/static/ninjabrain_enable_api_setting.png)
+
 2. Player downloads the relay binary from the [releases](https://github.com/Ninjabrain1/NinjabrainParty/releases) page and runs it. See [Windows Defender Warning](#windows-defender-warning) for an explanation for Windows Defender stuff.
 2. Once ran, it opens a local web page containing the room code or the observation room direct link.
 3. Player gives the observer the room code or the observation room direct link.
@@ -20,13 +24,10 @@ The system is split into four main components to ensure make it as simple as pos
 
 1.  **Ninjabrain Bot**: The source of truth, running on the player's local machine with its HTTP API enabled (in Settings -> Advanced -> Enable API).
 2.  **Relay (`/relay`)**: A simple Go executable that runs on the player's PC. It reads the local SSE stream from Ninjabrain Bot and forwards the data to the central server via WebSockets.
-3.  **Central Server (`/server`)**: A Go application acting as a headless message broker. It manages "Rooms" in-memory and routes data from runners to their observers who have joined the room.
+3.  **Central Server (`/server`)**: A Go application acting as a headless message broker. It manages "rooms" in-memory and routes data from runners to their observers who have joined the room.
 4.  **Observer (`/observer`)**: A modern SvelteKit web dashboard where observers can view live data (eye throws, triangulation results, and player position) by just entering a room code.
 
-## Privacy
 
--   **No Personal Data**: The central server does not collect or store any personal data from observers nor runners.
--   **No Data Retention**: The central server does not store any data after it has been relayed to observers. The Ninjabrain data is stored in memory, once the room closes, it is gone.
 
 ## Why a Relay?
 
@@ -50,6 +51,7 @@ A key choice was using a central relay server instead of direct peer-to-peer (P2
 ├─ observer/   # SvelteKit web dashboard for observers
 ├─ shared/     # Shared JSON schemas and types
 ├─ infra/      # Docker & deployment configurations
+├─ docs/       # Documentation
 └─ Makefile    # Development and build commands
 ```
 
@@ -83,11 +85,15 @@ If Windows Defender blocks the executable:
 - It opens network ports (WebSocket connection)
 - Go binaries sometimes trigger heuristics due to their static linking
 
-## Getting Started / Development
+## Getting Started (Development)
 
-Check out the [LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting up the project locally.
+Check out the [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting up the project locally.
 
-## Configuration
+## Self Hosting
+
+This project is open-source, so you can host the server and observer yourself. Check out the [docs/INFRA.md](docs/INFRA.md) for instructions on how to do that.
+
+### Configuration
 
 The relay and server use [viper](https://github.com/spf13/viper) for configuration with support for `.env` files via [godotenv](https://github.com/joho/godotenv).
 
@@ -97,6 +103,16 @@ The relay and server use [viper](https://github.com/spf13/viper) for configurati
 3. Hardcoded defaults
 
 Create a `.env` file in `relay/` or `server/` to override defaults.
+
+## Privacy Policy
+
+- This project is not affiliated with Ninjabrain Bot, MCSR, nor any other party.
+- This project does not collect or store any personal data from observers nor runners.
+- This project does not store any data after it has been relayed to observers. The Ninjabrain data is stored in memory, once the room closes, it is gone.
+
+## Contributing
+
+Feel free to open an issue or submit a pull request. I can't promise much, but I'll try to take a look!
 
 ## Credits
 
