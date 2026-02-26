@@ -9,10 +9,10 @@ make install-deps
 # Run the observer (SvelteKit frontend)
 make dev-observer
 
-# Run the central server (after Phase 2)
+# Run the central server
 make dev-server
 
-# Run the local relay (after Phase 3)
+# Run the local relay
 make dev-relay
 ```
 
@@ -33,6 +33,16 @@ make dev-relay
 - **Go 1.21+** for relay and server
 - **Bun** for observer frontend
 - **Docker** for deployment (optional)
+
+## Prerequisites
+
+### Enable Ninjabrain API Server
+
+1. Open Ninjabrain Bot
+2. Go to **Settings** → **Advanced** tab
+3. Check **"Enable API (starts HTTP server)"**
+
+This starts the HTTP server that the relay connects to for SSE data.
 
 ## Windows Defender Warning
 
@@ -66,21 +76,37 @@ If Windows Defender blocks the executable:
 
 ## Environment Variables
 
+Configuration uses [viper](https://github.com/spf13/viper) with support for `.env` files via [godotenv](https://github.com/joho/godotenv).
+
+### Precedence Order
+
+1. **Environment variables** - Actual env vars set in your shell
+2. **`.env` file** - Loaded from the service directory (e.g., `relay/.env`, `server/.env`)
+3. **Defaults** - Hardcoded defaults in the code
+
 ### Observer (.env)
 
 ```bash
 PUBLIC_SITE_NAME="Ninjabrain Party Relay"
 PUBLIC_API_URL=http://localhost:8080
-PUBLIC_WS_URL=ws://localhost:8080
+PUBLIC_WS_URL=ws://localhost:8080/ws
 ```
 
 ### Server
 
 ```bash
 LISTEN_ADDR=:8080
-UI_DOMAIN=http://localhost:5173
+OBSERVER_URL=http://localhost:5173
 ROOM_TTL=2h
 ```
+
+### Local Relay
+
+```bash
+TLS_SKIP_VERIFY=true  # Skip TLS verification for local development
+```
+
+The relay is started via `make dev-relay` which automatically sets `TLS_SKIP_VERIFY=true` to allow local connections and avoid certificate errors.
 
 ## Development Ports
 
@@ -88,5 +114,5 @@ ROOM_TTL=2h
 |---------|------|
 | Observer (SvelteKit) | 5173 |
 | Central Server | 8080 |
-| Local Relay UI | 8080 |
+| Local Relay UI | 52532 |
 | Ninjabrain Bot API | 52533 |

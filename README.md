@@ -4,7 +4,9 @@ Ninjabrain Party is an observation tool for [Ninjabrain Bot](https://github.com/
 
 ## Installation
 
-1. Player downloads the relay binary from the [releases](https://github.com/Ninjabrain1/NinjabrainParty/releases) page and runs it. See [Windows Defender Warning](#windows-defender-warning) for an explanation for Windows Defender stuff.
+1. Player enables the Ninjabrain API server: open Ninjabrain → Settings → Advanced Tab → Check "Enable API (starts HTTP server)"
+![Enable API](relay/static/ninjabrain_enable_api_setting.png)
+2. Player downloads the relay binary from the [releases](https://github.com/Ninjabrain1/NinjabrainParty/releases) page and runs it. See [Windows Defender Warning](#windows-defender-warning) for an explanation for Windows Defender stuff.
 2. Once ran, it opens a local web page containing the room code or the observation room direct link.
 3. Player gives the observer the room code or the observation room direct link.
 4. Observer goes to the observation site and enters the code, or joins the room directly with the link.
@@ -16,7 +18,7 @@ Ninjabrain Party is an observation tool for [Ninjabrain Bot](https://github.com/
 
 The system is split into four main components to ensure make it as simple as possible to setup:
 
-1.  **Ninjabrain Bot (Existing)**: The source of truth, running on the player's local machine with its HTTP API enabled (in Settings -> Advanced -> Enable API).
+1.  **Ninjabrain Bot**: The source of truth, running on the player's local machine with its HTTP API enabled (in Settings -> Advanced -> Enable API).
 2.  **Relay (`/relay`)**: A simple Go executable that runs on the player's PC. It reads the local SSE stream from Ninjabrain Bot and forwards the data to the central server via WebSockets.
 3.  **Central Server (`/server`)**: A Go application acting as a headless message broker. It manages "Rooms" in-memory and routes data from runners to their observers who have joined the room.
 4.  **Observer (`/observer`)**: A modern SvelteKit web dashboard where observers can view live data (eye throws, triangulation results, and player position) by just entering a room code.
@@ -84,6 +86,17 @@ If Windows Defender blocks the executable:
 ## Getting Started / Development
 
 Check out the [LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting up the project locally.
+
+## Configuration
+
+The relay and server use [viper](https://github.com/spf13/viper) for configuration with support for `.env` files via [godotenv](https://github.com/joho/godotenv).
+
+**Precedence order** (highest to lowest):
+1. Environment variables (shell exports)
+2. `.env` file in the service directory
+3. Hardcoded defaults
+
+Create a `.env` file in `relay/` or `server/` to override defaults.
 
 ## Credits
 

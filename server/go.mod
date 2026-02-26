@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/coder/websocket v1.8.14
 	github.com/go-chi/chi/v5 v5.2.5
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/cors v1.11.1
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.27.1

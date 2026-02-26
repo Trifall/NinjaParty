@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -13,50 +14,90 @@ import (
 )
 
 type SSEClient struct {
-	url       string
-	msgType   string
-	logger    *zap.Logger
-	ctxCancel context.CancelFunc
+	url            string
+	msgType        string
+	tlsSkipVerify  bool
+	logger         *zap.Logger
+	ctxCancel      context.CancelFunc
+	onConnected    func()
+	onDisconnected func()
 }
 
-func NewSSEClient(url, msgType string, logger *zap.Logger) *SSEClient {
+func NewSSEClient(url, msgType string, tlsSkipVerify bool, logger *zap.Logger) *SSEClient {
 	return &SSEClient{
-		url:     url,
-		msgType: msgType,
-		logger:  logger,
+		url:           url,
+		msgType:       msgType,
+		tlsSkipVerify: tlsSkipVerify,
+		logger:        logger,
 	}
+}
+
+func (c *SSEClient) SetCallbacks(onConnected, onDisconnected func()) {
+	c.onConnected = onConnected
+	c.onDisconnected = onDisconnected
 }
 
 func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint string, out chan<- RoomMessage) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, defaultEndpoint, nil)
-	if err != nil {
-		return
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.tlsSkipVerify},
+		},
 	}
-	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+	retries := 10
+	retryInterval := 10 * time.Second
 
-	if resp.StatusCode == http.StatusOK {
-		var payload json.RawMessage
-		if err := json.NewDecoder(resp.Body).Decode(&payload); err == nil {
-			msg := RoomMessage{
-				Type:    c.msgType,
-				Ts:      time.Now().UnixMilli(),
-				Source:  "ninjabrain-local",
-				Payload: payload,
-			}
-			select {
-			case out <- msg:
-				c.logger.Info("fetched initial state", zap.String("type", c.msgType))
-			case <-ctx.Done():
-			default:
+	for i := 0; i < retries; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, defaultEndpoint, nil)
+		if err != nil {
+			time.Sleep(retryInterval)
+			continue
+		}
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			c.logger.Warn("failed to fetch initial state, retrying", zap.Error(err), zap.Int("attempt", i+1))
+			time.Sleep(retryInterval)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			var payload json.RawMessage
+			if err := json.NewDecoder(resp.Body).Decode(&payload); err == nil {
+				msg := RoomMessage{
+					Type:    c.msgType,
+					Ts:      time.Now().UnixMilli(),
+					Source:  "ninjabrain-local",
+					Payload: payload,
+				}
+				select {
+				case out <- msg:
+					c.logger.Info("fetched initial state", zap.String("type", c.msgType))
+				case <-ctx.Done():
+				default:
+				}
+				return
+			} else {
+				c.logger.Warn("failed to decode initial state response, retrying", zap.Error(err), zap.Int("attempt", i+1))
+				time.Sleep(retryInterval)
+				continue
 			}
 		}
+
+		c.logger.Warn("failed to fetch initial state, retrying", zap.Int("status", resp.StatusCode), zap.Int("attempt", i+1))
+		time.Sleep(retryInterval)
 	}
+
+	c.logger.Warn("failed to fetch initial state after all retries", zap.String("type", c.msgType))
 }
 
 func (c *SSEClient) Close() {
@@ -83,13 +124,22 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
 		}
 		req.Header.Set("Accept", "text/event-stream")
 
-		resp, err := http.DefaultClient.Do(req)
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: c.tlsSkipVerify},
+			},
+		}
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
 
 		c.logger.Info("connected to ninjabrain SSE")
+		if c.onConnected != nil {
+			c.onConnected()
+		}
 		b.Reset()
 
 		if c.msgType != "information_messages_update" {
@@ -139,5 +189,8 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
 		return nil
 	}, b, func(err error, t time.Duration) {
 		c.logger.Warn("ninjabrain connection lost, retrying", zap.Error(err), zap.Duration("delay", t))
+		if c.onDisconnected != nil {
+			c.onDisconnected()
+		}
 	})
 }

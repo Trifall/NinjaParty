@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -112,6 +114,16 @@ const uiTemplate = `
 			background: #10b981;
 			border-radius: 50%;
 			animation: pulse 2s ease infinite;
+		}
+
+		.status-disconnected {
+			color: #f59e0b;
+			background: rgba(245,158,11,0.1);
+			border-color: rgba(245,158,11,0.2);
+		}
+
+		.status-disconnected .status-dot {
+			background: #f59e0b;
 		}
 
 		@keyframes pulse {
@@ -307,6 +319,55 @@ const uiTemplate = `
 			color: #10b981;
 			font-weight: 800;
 		}
+
+		.btn-help {
+			margin-top: 16px;
+			width: 100%;
+			background: rgba(16,185,129,0.15);
+			color: #10b981;
+			border: 1px solid rgba(16,185,129,0.3);
+			padding: 10px;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.btn-help:hover {
+			background: rgba(16,185,129,0.25);
+			color: #34d399;
+		}
+
+		/* API Help Modal */
+		.help-content {
+			text-align: left;
+		}
+
+		.help-content h2 {
+			font-size: 18px;
+			font-weight: 600;
+			color: #fff;
+			margin-bottom: 16px;
+			text-align: center;
+		}
+
+		.help-content ol {
+			margin: 0;
+			padding-left: 20px;
+			color: rgba(255,255,255,0.8);
+			font-size: 14px;
+			line-height: 1.8;
+		}
+
+		.help-content li {
+			margin-bottom: 8px;
+		}
+
+		.help-content img {
+			display: block;
+			max-width: 100%;
+			border-radius: 8px;
+			margin: 16px auto;
+			border: 1px solid rgba(255,255,255,0.1);
+		}
 	</style>
 </head>
 <body>
@@ -316,6 +377,10 @@ const uiTemplate = `
 		<div class="status">
 			<span class="status-dot"></span>
 			Relay Active
+		</div>
+		<div id="ninjabrainStatus" class="status status-disconnected">
+			<span class="status-dot"></span>
+			<span id="ninjabrainStatusText">Waiting for Ninjabrain...</span>
 		</div>
 
 		<h1>Ninjabrain Party</h1>
@@ -340,6 +405,7 @@ const uiTemplate = `
 			<p class="instruction">You can open this page again manually or by clicking the tray icon.</p>
 			<p class="instruction">If you quit via the tray icon, everything will be closed for you!</p>
 		</div>
+		<button class="btn-help" onclick="showApiHelp()">How do I enable the Ninjabrain API?</button>
 		<button class="btn-close" onclick="showCloseDialog()">CLOSE RELAY</button>
 	</div>
 
@@ -363,10 +429,47 @@ const uiTemplate = `
 		</div>
 	</div>
 
+	<div id="apiHelpDialog" class="dialog-overlay">
+		<div class="dialog" style="max-width: 420px;">
+			<div class="help-content">
+				<h2>Enable Ninjabrain API</h2>
+				<ol>
+					<li>Open Ninjabrain Bot</li>
+					<li>Go to <strong>Settings</strong> → <strong>Advanced</strong> tab</li>
+					<li>Check <strong>"Enable API (starts HTTP server)"</strong></li>
+				</ol>
+				<img src="/static/ninjabrain_enable_api_setting.png" alt="Enable API setting in Ninjabrain Bot" />
+			</div>
+			<button class="btn-close" onclick="closeApiHelp()">Got it</button>
+		</div>
+	</div>
+
 	<script>
 		var isHidden = false;
 		var originalRoomCode = "{{.RoomCode}}";
 		var originalLink = "{{.FullLink}}";
+
+		function updateNinjabrainStatus() {
+			fetch('/status')
+				.then(function(response) { return response.json(); })
+				.then(function(data) {
+					var statusEl = document.getElementById('ninjabrainStatus');
+					var statusText = document.getElementById('ninjabrainStatusText');
+					if (data.ninjabrainConnected) {
+						statusEl.classList.remove('status-disconnected');
+						statusText.textContent = 'Ninjabrain API Connected';
+					} else {
+						statusEl.classList.add('status-disconnected');
+						statusText.textContent = 'Waiting for Ninjabrain...';
+					}
+				})
+				.catch(function() {
+					// ignore errors
+				});
+		}
+
+		setInterval(updateNinjabrainStatus, 2000);
+		updateNinjabrainStatus();
 
 		function toggleRoomCode() {
 			if (isHidden) {
@@ -427,6 +530,14 @@ const uiTemplate = `
 			fetch('/close', { method: 'POST' });
 		}
 
+		function showApiHelp() {
+			document.getElementById('apiHelpDialog').style.display = 'flex';
+		}
+
+		function closeApiHelp() {
+			document.getElementById('apiHelpDialog').style.display = 'none';
+		}
+
 		function startNewRoom() {
 			var btn = document.getElementById('newRoomBtn');
 			if (btn) {
@@ -467,6 +578,14 @@ type CreateRoomResponse struct {
 
 func (u *UI) Start() error {
 	tmpl := template.Must(template.New("ui").Parse(uiTemplate))
+
+	wd, err := os.Getwd()
+	if err != nil {
+		u.logger.Warn("could not get working directory, static files may not be available", zap.Error(err))
+	} else {
+		fs := http.FileServer(http.Dir(filepath.Join(wd, "static")))
+		http.Handle("/static/", http.StripPrefix("/static/", fs))
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
@@ -519,6 +638,13 @@ func (u *UI) Start() error {
 		json.NewEncoder(w).Encode(CreateRoomResponse{
 			Success:  true,
 			RoomCode: roomRes.RoomCode,
+		})
+	})
+
+	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]bool{
+			"ninjabrainConnected": u.relay.NinjabrainConnected(),
 		})
 	})
 

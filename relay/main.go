@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
@@ -24,9 +25,16 @@ func main() {
 	}
 
 	logger.Info("fetching room from server", zap.String("api", config.ServerAPIURL))
-	roomRes, err := createRoom(config.ServerAPIURL)
+
+	var roomRes *RoomResponse
+	err = backoff.RetryNotify(func() error {
+		roomRes, err = createRoom(config.ServerAPIURL)
+		return err
+	}, backoff.NewExponentialBackOff(), func(err error, t time.Duration) {
+		logger.Warn("failed to connect to server, retrying", zap.Error(err), zap.Duration("delay", t))
+	})
 	if err != nil {
-		logger.Fatal("could not create room", zap.Error(err))
+		logger.Fatal("could not create room after retries", zap.Error(err))
 	}
 
 	logger.Info("room created", zap.String("code", roomRes.RoomCode))

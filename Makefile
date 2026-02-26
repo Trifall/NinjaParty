@@ -5,7 +5,7 @@ SERVER_DIR := server
 OBSERVER_DIR := observer
 
 dev-relay:
-	cd $(RELAY_DIR) && go run .
+	cd $(RELAY_DIR) && TLS_SKIP_VERIFY=true go run .
 
 dev-server:
 	cd $(SERVER_DIR) && go run .

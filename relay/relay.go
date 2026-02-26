@@ -14,9 +14,11 @@ type Relay struct {
 	roomRes     *RoomResponse
 	messageChan chan RoomMessage
 
-	clientsMu  sync.Mutex
-	sseClients []*SSEClient
-	wsClient   *WSClient
+	clientsMu             sync.Mutex
+	sseClients            []*SSEClient
+	wsClient              *WSClient
+	ninjabrainConnected   bool
+	ninjabrainClientsDone int
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -63,7 +65,27 @@ func (r *Relay) startClients() {
 	}
 
 	for endpoint, evType := range endpoints {
-		sseClient := NewSSEClient(r.config.NinjabrainURL+endpoint, evType, r.logger)
+		sseClient := NewSSEClient(r.config.NinjabrainURL+endpoint, evType, r.config.TLSSkipVerify, r.logger)
+		sseClient.SetCallbacks(func() {
+			r.clientsMu.Lock()
+			defer r.clientsMu.Unlock()
+			wasConnected := r.ninjabrainConnected
+			r.ninjabrainClientsDone++
+			if !wasConnected {
+				r.ninjabrainConnected = true
+				r.logger.Info("ninjabrain API connected")
+			}
+		}, func() {
+			r.clientsMu.Lock()
+			defer r.clientsMu.Unlock()
+			if r.ninjabrainClientsDone > 0 {
+				r.ninjabrainClientsDone--
+			}
+			if r.ninjabrainClientsDone == 0 && r.ninjabrainConnected {
+				r.ninjabrainConnected = false
+				r.logger.Info("ninjabrain API disconnected")
+			}
+		})
 		r.sseClients = append(r.sseClients, sseClient)
 		go sseClient.Run(r.ctx, r.messageChan)
 	}
@@ -87,6 +109,8 @@ func (r *Relay) stopClientsLocked() {
 		client.Close()
 	}
 	r.sseClients = nil
+	r.ninjabrainConnected = false
+	r.ninjabrainClientsDone = 0
 	if r.wsClient != nil {
 		r.wsClient.Close()
 		r.wsClient = nil
@@ -124,7 +148,27 @@ func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
 	}
 
 	for endpoint, evType := range endpoints {
-		sseClient := NewSSEClient(r.config.NinjabrainURL+endpoint, evType, r.logger)
+		sseClient := NewSSEClient(r.config.NinjabrainURL+endpoint, evType, r.config.TLSSkipVerify, r.logger)
+		sseClient.SetCallbacks(func() {
+			r.clientsMu.Lock()
+			defer r.clientsMu.Unlock()
+			wasConnected := r.ninjabrainConnected
+			r.ninjabrainClientsDone++
+			if !wasConnected {
+				r.ninjabrainConnected = true
+				r.logger.Info("ninjabrain API connected")
+			}
+		}, func() {
+			r.clientsMu.Lock()
+			defer r.clientsMu.Unlock()
+			if r.ninjabrainClientsDone > 0 {
+				r.ninjabrainClientsDone--
+			}
+			if r.ninjabrainClientsDone == 0 && r.ninjabrainConnected {
+				r.ninjabrainConnected = false
+				r.logger.Info("ninjabrain API disconnected")
+			}
+		})
 		r.sseClients = append(r.sseClients, sseClient)
 		go sseClient.Run(r.ctx, r.messageChan)
 	}
@@ -147,6 +191,12 @@ func (r *Relay) RoomCode() string {
 		return ""
 	}
 	return r.roomRes.RoomCode
+}
+
+func (r *Relay) NinjabrainConnected() bool {
+	r.clientsMu.Lock()
+	defer r.clientsMu.Unlock()
+	return r.ninjabrainConnected
 }
 
 func (r *Relay) FullLink() string {

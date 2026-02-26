@@ -15,6 +15,14 @@ import (
 	"go.uber.org/zap"
 )
 
+func normalizeOrigin(o string) string {
+	o = strings.TrimSpace(o)
+	if !strings.HasPrefix(o, "http://") && !strings.HasPrefix(o, "https://") {
+		o = "http://" + o
+	}
+	return strings.ToLower(o)
+}
+
 type API struct {
 	logger *zap.Logger
 	config *Config
@@ -38,7 +46,7 @@ func (api *API) Router() chi.Router {
 	r.Use(middleware.Recoverer)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: strings.Split(api.config.UIDomain, ","),
+		AllowedOrigins: strings.Split(api.config.ObserverURL, ","),
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	})
@@ -103,8 +111,23 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		origin = normalizeOrigin(origin)
+		allowedOrigins := strings.Split(api.config.ObserverURL, ",")
+		allowed := false
+		for _, ao := range allowedOrigins {
+			allowed = allowed || (strings.TrimSpace(normalizeOrigin(ao)) == origin)
+		}
+		if !allowed {
+			http.Error(w, "origin not allowed", http.StatusForbidden)
+			return
+		}
+	}
+
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // we have CORS middleware before this covering it usually, but typically we allow all for websocket anyway
+		CompressionMode:    websocket.CompressionNoContextTakeover,
+		InsecureSkipVerify: true, // We do our own origin validation above
 	})
 	if err != nil {
 		api.logger.Error("websocket upgrade failed", zap.Error(err))
