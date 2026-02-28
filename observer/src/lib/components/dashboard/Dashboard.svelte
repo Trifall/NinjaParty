@@ -68,7 +68,7 @@
 					className="p-0"
 					spanClassName="text-sm font-bold mb-0 md:text-lg pb-0"
 				>
-					Ninjabrain Party
+					NinjaParty
 				</AnimatedGradientText>
 			</span>
 
