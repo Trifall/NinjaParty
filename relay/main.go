@@ -61,10 +61,10 @@ func main() {
 	go func() {
 		systray.Run(func() {
 			systray.SetIcon(iconData)
-			systray.SetTitle("Ninjabrain Party Relay")
-			systray.SetTooltip("Ninjabrain Party Relay")
+			systray.SetTitle("NinjaParty Relay")
+			systray.SetTooltip("NinjaParty Relay")
 
-			mTitle := systray.AddMenuItem("Ninjabrain Party Relay", "")
+			mTitle := systray.AddMenuItem("NinjaParty Relay", "")
 			mTitle.Disable()
 			systray.AddSeparator()
 			mOpen := systray.AddMenuItem("Open UI", "Open the relay UI")

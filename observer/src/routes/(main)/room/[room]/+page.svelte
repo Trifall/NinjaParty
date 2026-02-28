@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import Dashboard from '$lib/components/dashboard/Dashboard.svelte';
 	import { RoomConnection } from '$lib/stores/room.svelte';
-	import { page } from '$app/state';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>Room {data.room.toUpperCase()} - Ninjabrain Party</title>
+	<title>Room {data.room.toUpperCase()} - NinjaParty</title>
 </svelte:head>
 
 <div class="h-full min-h-[calc(100vh-64px)] w-full p-4 lg:p-8">

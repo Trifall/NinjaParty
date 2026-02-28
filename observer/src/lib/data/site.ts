@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-	name: `Ninjabrain Party Relay`,
+	name: `NinjaParty`,
 	description: 'Observation tool for Ninjabrain Bot',
 	url: 'https://np.trifall.com',
 	ogImage: 'https://np.trifall.com/og-image.png',

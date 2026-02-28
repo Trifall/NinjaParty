@@ -48,7 +48,7 @@ This starts the HTTP server that the relay connects to for SSE data.
 
 ### Important: Unsigned Executable
 
-The relay binary (`Ninjabrain-Relay.exe`) is an **unsigned executable**. When you first run it on Windows, you will likely encounter one of these warnings:
+The relay binary (`NinjaParty-Relay.exe`) is an **unsigned executable**. When you first run it on Windows, you will likely encounter one of these warnings:
 
 1. **Windows SmartScreen** - "Windows protected your PC"
 2. **Windows Defender** - Potential false positive detection
@@ -66,7 +66,7 @@ If Windows Defender blocks the executable:
 2. Click **"Manage settings"** under Virus & threat protection settings
 3. Scroll to **Exclusions** and click **"Add or remove exclusions"**
 4. Click **"Add an exclusion"** → **"File"**
-5. Select the `Ninjabrain-Relay.exe` file
+5. Select the `NinjaParty-Relay.exe` file
 
 ### Why This Happens
 
@@ -87,7 +87,7 @@ Configuration uses [viper](https://github.com/spf13/viper) with support for `.en
 ### Observer (.env)
 
 ```bash
-PUBLIC_SITE_NAME="Ninjabrain Party Relay"
+PUBLIC_SITE_NAME="NinjaParty"
 PUBLIC_API_URL=http://localhost:8080
 PUBLIC_WS_URL=ws://localhost:8080/ws
 ```

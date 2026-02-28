@@ -1,3 +1,3 @@
 # observer
 
-Observer for the Ninjabrain Party relay tool.
+Observer for the NinjaParty relay tool.

@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>About - Ninjabrain Party</title>
+	<title>About - NinjaParty</title>
 </svelte:head>
 
 <div class="flex min-h-[90vh] w-full flex-col items-center justify-center px-4 py-16">
@@ -86,7 +86,7 @@
 			<!-- Footer -->
 			<div class="border-white/8 flex items-center justify-center border-t px-8 py-5">
 				<a
-					href="https://github.com/Trifall/Ninjabrain-Party"
+					href="https://github.com/Trifall/NinjaParty"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="group relative rounded-lg p-[2px]"

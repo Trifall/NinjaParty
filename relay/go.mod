@@ -1,4 +1,4 @@
-module github.com/Ninjabrain-Party/relay
+module github.com/NinjaParty/relay
 
 go 1.25.0
 

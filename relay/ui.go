@@ -48,7 +48,7 @@ const uiTemplate = `
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Ninjabrain Party Relay</title>
+	<title>NinjaParty Relay</title>
 	<style>
 		*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -383,7 +383,7 @@ const uiTemplate = `
 			<span id="ninjabrainStatusText">Waiting for Ninjabrain...</span>
 		</div>
 
-		<h1>Ninjabrain Party</h1>
+		<h1>NinjaParty</h1>
 		<p class="subtitle">Share the link below with your observer to get started.</p>
 
 		<hr class="divider" />

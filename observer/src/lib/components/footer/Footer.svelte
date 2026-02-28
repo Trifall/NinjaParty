@@ -23,7 +23,7 @@
 					<Tooltip delayDuration={0}>
 						<TooltipTrigger class="p-1">
 							<a
-								href="https://github.com/Trifall/Ninjabrain-Party"
+								href="https://github.com/Trifall/NinjaParty"
 								class="text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
 								target="_blank"
 								rel="noopener noreferrer"

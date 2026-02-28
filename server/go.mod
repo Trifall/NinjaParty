@@ -1,4 +1,4 @@
-module github.com/Ninjabrain-Party/server
+module github.com/NinjaParty/server
 
 go 1.25.0
 

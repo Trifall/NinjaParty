@@ -54,7 +54,7 @@
 				<h1
 					class="bg-gradient-to-br from-white to-white/60 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl"
 				>
-					Ninjabrain Party
+					NinjaParty
 				</h1>
 				<p class="text-sm font-medium text-muted-foreground sm:text-base">
 					Observation tool for Ninjabrain Bot.
