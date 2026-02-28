@@ -25,13 +25,12 @@ The system is split into four main components to ensure make it as simple as pos
 1.  **Ninjabrain Bot**: The source of truth, running on the player's local machine with its HTTP API enabled (in Settings -> Advanced -> Enable API).
 2.  **Relay (`/relay`)**: A simple Go executable that runs on the player's PC. It reads the local SSE stream from Ninjabrain Bot and forwards the data to the central server via WebSockets.
 3.  **Central Server (`/server`)**: A Go application acting as a headless message broker. It manages "rooms" in-memory and routes data from runners to their observers who have joined the room.
-4.  **Observer (`/observer`)**: A modern SvelteKit web dashboard where observers can view live data (eye throws, triangulation results, and player position) by just entering a room code.
-
+4.  **Observer (`/observer`)**: An easy to use SvelteKit dashboard display for observers to view live data (eye throws, triangulation results, and player position) by just entering a room code.
 
 
 ## Why a Relay?
 
-A key choice was using a central relay server instead of direct peer-to-peer (P2P) connections between the player and the observer.
+Decided on using a central relay server instead of direct peer-to-peer (P2P) connections between the player and the observer due to the following reasons:
 
 -   **Privacy & Security**: By routing data through a central server, the player's IP address is never exposed to observers. Random people joining a room (code leak, or somehow guessed) only see the data, not the player's network location.
 -   **Reliability**: Direct connections can fail due to ISP restrictions, NAT traversal issues, or complex router configurations. Using a WebSocket-based relay bypasses these hurdles entirely, requiring zero port-forwarding from the player.
@@ -91,11 +90,7 @@ Check out the [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting
 
 ## Self Hosting
 
-This project is open-source, so you can host the server and observer yourself. Check out the [docs/INFRA.md](docs/INFRA.md) for instructions on how to do that.
-
-### Configuration
-
-The relay and server use [viper](https://github.com/spf13/viper) for configuration with support for `.env` files via [godotenv](https://github.com/joho/godotenv).
+This project is open-source, so you can host the server and observer site yourself. Check out the [docs/INFRA.md](docs/INFRA.md) for instructions on how to do that.
 
 **Precedence order** (highest to lowest):
 1. Environment variables (shell exports)
@@ -118,6 +113,8 @@ Feel free to open an issue or submit a pull request. I can't promise much, but I
 
 This project is entirely dependent upon the fantastic [Ninjabrain Bot](https://github.com/Ninjabrain1/NinjabrainBot) by [Ninjabrain1](https://github.com/Ninjabrain1/). 
 Some magic numbers, constants, and conversion formulas are derived from that project, as well as some UI elements like the boat colors.
+
+I found out about a similar project, [NinjaLink](https://github.com/DuncanRuns/NinjaLink) by the wonderful [DuncanRuns](https://github.com/DuncanRuns/) after I had already started this project. It didn't work for me when I tried it on my setup (user error perhaps), but it seems like a great tool.
 
 ## License
 
