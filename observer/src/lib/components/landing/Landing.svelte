@@ -22,9 +22,6 @@
 		isLoading = true;
 		error = '';
 
-		// Optional: you could make a quick REST API call here to verify the room exists
-		// before routing, but for now we'll just route directly to it.
-
 		await goto(`/room/${roomCode.trim().toLowerCase()}`);
 		isLoading = false;
 	}
