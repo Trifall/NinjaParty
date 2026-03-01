@@ -3,11 +3,11 @@
   "title": "RoomMessage",
   "description": "Canonical message schema for Ninjabrain Bot Cloud Relay. The payload always contains full state, not diffs.",
   "type": "object",
-  "required": ["type", "ts", "source", "payload"],
+  "required": ["type", "ts", "source", "runnerName", "payload"],
   "properties": {
     "type": {
       "type": "string",
-      "enum": ["stronghold_update", "presence"],
+      "enum": ["stronghold_update", "presence", "boat_update", "blind_update", "divine_update", "all_advancements_update", "information_messages_update", "room_closed"],
       "description": "Message type. stronghold_update contains triangulation data. presence indicates runner online/offline status."
     },
     "ts": {
@@ -18,10 +18,20 @@
       "type": "string",
       "description": "Source identifier, e.g. 'ninjabrain-local'"
     },
+    "runnerName": {
+      "type": "string",
+      "description": "The display name of the runner (max 24 chars)"
+    },
     "payload": {
       "oneOf": [
         { "$ref": "#/definitions/StrongholdPayload" },
-        { "$ref": "#/definitions/PresencePayload" }
+        { "$ref": "#/definitions/PresencePayload" },
+        { "$ref": "#/definitions/BoatPayload" },
+        { "$ref": "#/definitions/BlindPayload" },
+        { "$ref": "#/definitions/DivinePayload" },
+        { "$ref": "#/definitions/AllAdvancementsPayload" },
+        { "$ref": "#/definitions/InformationMessagesPayload" },
+        { "$ref": "#/definitions/RoomClosedPayload" }
       ]
     }
   },
@@ -54,7 +64,172 @@
         "status": {
           "type": "string",
           "enum": ["online", "offline"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional display name for the runner"
         }
+      }
+    },
+    "BoatPayload": {
+      "type": "object",
+      "required": ["boatState"],
+      "properties": {
+        "boatAngle": {
+          "type": ["number", "null"]
+        },
+        "boatState": {
+          "type": "string",
+          "enum": ["NONE", "ERROR", "MEASURING", "VALID"]
+        }
+      }
+    },
+    "BlindPayload": {
+      "type": "object",
+      "required": ["isBlindModeEnabled", "hasDivine", "blindResult"],
+      "properties": {
+        "isBlindModeEnabled": { "type": "boolean" },
+        "hasDivine": { "type": "boolean" },
+        "blindResult": {
+          "oneOf": [
+            { "$ref": "#/definitions/BlindResult" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "BlindResult": {
+      "type": "object",
+      "required": ["xInNether", "zInNether", "highrollProbability", "highrollThreshold", "averageDistance", "improveDirection", "improveDistance", "evaluation"],
+      "properties": {
+        "xInNether": { "type": "number" },
+        "zInNether": { "type": "number" },
+        "highrollProbability": { "type": "number" },
+        "highrollThreshold": { "type": "number" },
+        "averageDistance": { "type": "number" },
+        "improveDirection": { "type": "number" },
+        "improveDistance": { "type": "number" },
+        "evaluation": {
+          "type": "string",
+          "enum": ["EXCELLENT", "HIGHROLL_GOOD", "HIGHROLL_OKAY", "BAD_BUT_IN_RING", "BAD", "NOT_IN_RING"]
+        }
+      }
+    },
+    "DivinePayload": {
+      "type": "object",
+      "required": ["isDivineModeEnabled", "divineResult"],
+      "properties": {
+        "isDivineModeEnabled": { "type": "boolean" },
+        "divineResult": {
+          "oneOf": [
+            { "$ref": "#/definitions/DivineResult" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "DivineResult": {
+      "type": "object",
+      "required": ["fossilXCoordinate", "formattedHighrollCoords", "formattedSafeCoords"],
+      "properties": {
+        "fossilXCoordinate": { "type": "number" },
+        "formattedHighrollCoords": { "type": "string" },
+        "formattedSafeCoords": { "type": "string" }
+      }
+    },
+    "AllAdvancementsPayload": {
+      "type": "object",
+      "required": ["isAllAdvancementsModeEnabled"],
+      "properties": {
+        "isAllAdvancementsModeEnabled": { "type": "boolean" },
+        "spawn": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "outpost": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "monument": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "stronghold": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "deepDark": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "cityQuery": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "shulkerTransport": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        },
+        "generalLocation": {
+          "oneOf": [
+            { "$ref": "#/definitions/StructurePosition" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "StructurePosition": {
+      "type": "object",
+      "properties": {
+        "xInOverworld": { "type": "number" },
+        "zInOverworld": { "type": "number" },
+        "overworldDistance": { "type": "number" },
+        "travelAngle": { "type": "number" }
+      }
+    },
+    "InformationMessagesPayload": {
+      "type": "object",
+      "properties": {
+        "informationMessages": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/InformationMessage" }
+        }
+      }
+    },
+    "InformationMessage": {
+      "type": "object",
+      "required": ["severity", "type", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["INFO", "WARNING", "ERROR"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["PORTAL_LINKING", "NEXT_THROW_DIRECTION", "MISMEASURE", "MC_VERSION", "COMBINED_CERTAINTY"]
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "RoomClosedPayload": {
+      "type": "object",
+      "required": ["message"],
+      "properties": {
+        "message": { "type": "string" }
       }
     },
     "PlayerPosition": {

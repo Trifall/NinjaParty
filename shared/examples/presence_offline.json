@@ -2,6 +2,7 @@
   "type": "presence",
   "ts": 1708455300000,
   "source": "server",
+  "runnerName": "Speedrun",
   "payload": {
     "status": "offline"
   }

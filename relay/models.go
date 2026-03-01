@@ -3,10 +3,11 @@ package main
 import "encoding/json"
 
 type RoomMessage struct {
-	Type    string          `json:"type"`
-	Ts      int64           `json:"ts"`
-	Source  string          `json:"source"`
-	Payload json.RawMessage `json:"payload"`
+	Type       string          `json:"type"`
+	Ts         int64           `json:"ts"`
+	Source     string          `json:"source"`
+	RunnerName string          `json:"runnerName"`
+	Payload    json.RawMessage `json:"payload"`
 }
 
 type StrongholdPayload struct {
@@ -43,6 +44,23 @@ type ChunkPrediction struct {
 }
 
 type RoomResponse struct {
-	RoomCode   string `json:"roomCode"`
-	WriteToken string `json:"writeToken"`
+	RoomCode     string `json:"roomCode"`
+	WriteToken   string `json:"writeToken"`
+	CreatorToken string `json:"creatorToken,omitempty"`
+}
+
+type JoinRoomRequest struct {
+	RunnerName string `json:"runnerName"`
+	Password   string `json:"password,omitempty"`
+}
+
+type JoinRoomResponse struct {
+	WriteToken string `json:"writeToken,omitempty"`
+	Error      string `json:"error,omitempty"`
+}
+
+type RelayState struct {
+	RunnerName   string `json:"runnerName"`
+	RoomCode     string `json:"roomCode,omitempty"`
+	CreatorToken string `json:"creatorToken,omitempty"`
 }

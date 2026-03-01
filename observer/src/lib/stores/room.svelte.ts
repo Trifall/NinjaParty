@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/public';
 import { toast } from 'svelte-sonner';
+import { SvelteMap } from 'svelte/reactivity';
 import { goto } from '$app/navigation';
 import type {
 	AllAdvancementsPayload,
@@ -13,23 +14,32 @@ import type {
 	StrongholdPayload,
 } from '../types/stronghold';
 
-export class RoomConnection {
-	private code: string = '';
-	private isEmbed: boolean = false;
-	ws: WebSocket | null = null;
-	status = $state<'connecting' | 'connected' | 'reconnecting' | 'offline' | 'error'>('offline');
-	runnerStatus = $state<'online' | 'offline' | 'unknown'>('unknown');
-	roomClosed = $state(false);
-
-	// Individual Payloads
+export class RunnerState {
+	name: string;
+	status = $state<'online' | 'offline'>('offline');
 	stronghold = $state<StrongholdPayload | null>(null);
 	boat = $state<BoatPayload | null>(null);
 	blind = $state<BlindPayload | null>(null);
 	divine = $state<DivinePayload | null>(null);
 	allAdvancements = $state<AllAdvancementsPayload | null>(null);
 	informationMessages = $state<InformationMessagesPayload | null>(null);
+	lastUpdate = $state(Date.now());
 
-	// Ticker for connection health
+	constructor(name: string) {
+		this.name = name;
+	}
+}
+
+export class RoomConnection {
+	private code: string = '';
+	private isEmbed: boolean = false;
+	ws: WebSocket | null = null;
+	status = $state<'connecting' | 'connected' | 'reconnecting' | 'offline' | 'error'>('offline');
+	roomClosed = $state(false);
+
+	runners = new SvelteMap<string, RunnerState>();
+	runnerJoinOrder: string[] = [];
+
 	private reconnectFailures = 0;
 	private maxReconnectFailures = 15;
 	private explicitClose = false;
@@ -43,6 +53,35 @@ export class RoomConnection {
 				this.disconnect();
 			});
 		}
+	}
+
+	get sortedRunners(): RunnerState[] {
+		const runnerList: RunnerState[] = [];
+		this.runners.forEach((runner) => {
+			runnerList.push(runner);
+		});
+
+		return runnerList.sort((a, b) => {
+			if (a.status !== b.status) {
+				return a.status === 'online' ? -1 : 1;
+			}
+			const aIndex = this.runnerJoinOrder.indexOf(a.name);
+			const bIndex = this.runnerJoinOrder.indexOf(b.name);
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			return a.name.localeCompare(b.name);
+		});
+	}
+
+	private getOrCreateRunner(name: string): RunnerState {
+		let runner = this.runners.get(name);
+		if (!runner) {
+			runner = new RunnerState(name);
+			this.runners.set(name, runner);
+			this.runnerJoinOrder.push(name);
+		}
+		return runner;
 	}
 
 	connect() {
@@ -59,6 +98,7 @@ export class RoomConnection {
 		this.ws = new WebSocket(`${wsUrl}?room=${this.code}`);
 
 		this.ws.onopen = () => {
+			console.log('WebSocket connected to room:', this.code);
 			this.status = 'connected';
 			this.reconnectFailures = 0;
 		};
@@ -69,11 +109,16 @@ export class RoomConnection {
 				return;
 			}
 
-			// code 4000 = room closed by server
 			if (event.code === 4000) {
 				this.roomClosed = true;
-				this.runnerStatus = 'offline';
 				this.status = 'offline';
+				this.runners.forEach((runner) => {
+					runner.status = 'offline';
+				});
+				if (!this.isEmbed && !this.roomClosed) {
+					toast.error('The room has been closed');
+					goto('/');
+				}
 				return;
 			}
 
@@ -87,38 +132,64 @@ export class RoomConnection {
 		this.ws.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data) as RoomMessage;
+				console.log('WS message received:', data.type, 'runnerName:', data.runnerName);
+				const runnerName = data.runnerName;
+
+				if (!runnerName) {
+					console.warn('Received message without runnerName', data);
+					return;
+				}
+
+				const runner = this.getOrCreateRunner(runnerName);
+				console.log(
+					'Processing message for runner:',
+					runnerName,
+					'status:',
+					runner.status,
+					'runners count:',
+					this.runners.size
+				);
 
 				switch (data.type) {
 					case 'presence':
 						if ('status' in data.payload) {
-							this.runnerStatus = (data.payload as PresencePayload).status;
+							runner.status = (data.payload as PresencePayload).status;
+							runner.lastUpdate = Date.now();
 						}
 						break;
 					case 'stronghold_update':
-						this.stronghold = data.payload as StrongholdPayload;
+						runner.stronghold = data.payload as StrongholdPayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'boat_update':
-						this.boat = data.payload as BoatPayload;
+						runner.boat = data.payload as BoatPayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'blind_update':
-						this.blind = data.payload as BlindPayload;
+						runner.blind = data.payload as BlindPayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'divine_update':
-						this.divine = data.payload as DivinePayload;
+						runner.divine = data.payload as DivinePayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'all_advancements_update':
-						this.allAdvancements = data.payload as AllAdvancementsPayload;
+						runner.allAdvancements = data.payload as AllAdvancementsPayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'information_messages_update':
-						this.informationMessages = data.payload as InformationMessagesPayload;
+						runner.informationMessages = data.payload as InformationMessagesPayload;
+						runner.lastUpdate = Date.now();
 						break;
 					case 'room_closed':
-						this.runnerStatus = 'offline';
-						this.roomClosed = true;
-						if (!this.isEmbed) {
-							const payload = data.payload as RoomClosedPayload;
-							toast.error(payload.message || 'The room has been closed');
-							goto('/');
+						runner.status = 'offline';
+						if (!this.roomClosed) {
+							this.roomClosed = true;
+							if (!this.isEmbed) {
+								const payload = data.payload as RoomClosedPayload;
+								toast.error(payload.message || 'The room has been closed');
+								goto('/');
+							}
 						}
 						break;
 				}
@@ -145,7 +216,6 @@ export class RoomConnection {
 		this.reconnectFailures++;
 		this.status = 'reconnecting';
 
-		// Exponential backoff
 		const delayMs = Math.min(1000 * Math.pow(1.5, this.reconnectFailures), 10000);
 		setTimeout(() => this.connect(), delayMs);
 	}

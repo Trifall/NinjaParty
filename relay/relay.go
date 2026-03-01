@@ -11,6 +11,7 @@ import (
 type Relay struct {
 	config      *Config
 	logger      *zap.Logger
+	runnerName  string
 	roomRes     *RoomResponse
 	messageChan chan RoomMessage
 
@@ -35,10 +36,15 @@ func NewRelay(config *Config, logger *zap.Logger) *Relay {
 	}
 }
 
-func (r *Relay) StartRoom(roomCode, writeToken string) error {
+func (r *Relay) SetRunnerName(name string) {
+	r.runnerName = name
+}
+
+func (r *Relay) StartRoom(roomCode, writeToken, creatorToken string) error {
 	r.roomRes = &RoomResponse{
-		RoomCode:   roomCode,
-		WriteToken: writeToken,
+		RoomCode:     roomCode,
+		WriteToken:   writeToken,
+		CreatorToken: creatorToken,
 	}
 
 	r.logger.Info("starting clients for room", zap.String("code", roomCode))
@@ -87,12 +93,13 @@ func (r *Relay) startClients() {
 			}
 		})
 		r.sseClients = append(r.sseClients, sseClient)
-		go sseClient.Run(r.ctx, r.messageChan)
+		go sseClient.Run(r.ctx, r.messageChan, r.runnerName)
 	}
 
 	r.wsClient = NewWSClient(
 		r.config.ServerWSURL,
 		r.roomRes.RoomCode,
+		r.runnerName,
 		r.roomRes.WriteToken,
 		r.config.TLSSkipVerify,
 		time.Duration(r.config.HeartbeatIntvl)*time.Second,
@@ -121,71 +128,51 @@ func (r *Relay) stopAllClientsLocked() {
 	r.stopClientsLocked()
 }
 
-func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
+func (r *Relay) CreateNewRoom(password string) (*RoomResponse, error) {
 	r.logger.Info("creating new room")
 
 	r.clientsMu.Lock()
-	defer r.clientsMu.Unlock()
-
 	r.stopClientsLocked()
+	r.clientsMu.Unlock()
 
-	roomRes, err := createRoom(r.config.ServerAPIURL)
+	roomRes, err := createRoom(r.config.ServerAPIURL, r.runnerName, password)
 	if err != nil {
 		return nil, err
 	}
 
-	r.ctx, r.cancel = context.WithCancel(context.Background())
+	r.roomRes = &RoomResponse{
+		RoomCode:     roomRes.RoomCode,
+		WriteToken:   roomRes.WriteToken,
+		CreatorToken: roomRes.CreatorToken,
+	}
+
+	r.logger.Info("room created", zap.String("code", roomRes.RoomCode))
+
+	r.startClients()
+
+	return roomRes, nil
+}
+
+func (r *Relay) JoinRoom(roomCode, password string) (*RoomResponse, error) {
+	r.logger.Info("joining room", zap.String("code", roomCode))
+
+	r.clientsMu.Lock()
+	r.stopClientsLocked()
+	r.clientsMu.Unlock()
+
+	roomRes, err := joinRoom(r.config.ServerAPIURL, roomCode, r.runnerName, password)
+	if err != nil {
+		return nil, err
+	}
 
 	r.roomRes = &RoomResponse{
 		RoomCode:   roomRes.RoomCode,
 		WriteToken: roomRes.WriteToken,
 	}
 
-	r.logger.Info("room created", zap.String("code", roomRes.RoomCode))
+	r.logger.Info("joined room", zap.String("code", roomRes.RoomCode))
 
-	endpoints := map[string]string{
-		"/api/v1/stronghold/events":       "stronghold_update",
-		"/api/v1/boat/events":             "boat_update",
-		"/api/v1/blind/events":            "blind_update",
-		"/api/v1/divine/events":           "divine_update",
-		"/api/v1/all-advancements/events": "all_advancements_update",
-	}
-
-	for endpoint, evType := range endpoints {
-		sseClient := NewSSEClient(r.config.NinjabrainURL+endpoint, evType, r.config.TLSSkipVerify, r.logger)
-		sseClient.SetCallbacks(func() {
-			r.clientsMu.Lock()
-			defer r.clientsMu.Unlock()
-			wasConnected := r.ninjabrainConnected
-			r.ninjabrainClientsDone++
-			if !wasConnected {
-				r.ninjabrainConnected = true
-				r.logger.Info("ninjabrain API connected")
-			}
-		}, func() {
-			r.clientsMu.Lock()
-			defer r.clientsMu.Unlock()
-			if r.ninjabrainClientsDone > 0 {
-				r.ninjabrainClientsDone--
-			}
-			if r.ninjabrainClientsDone == 0 && r.ninjabrainConnected {
-				r.ninjabrainConnected = false
-				r.logger.Info("ninjabrain API disconnected")
-			}
-		})
-		r.sseClients = append(r.sseClients, sseClient)
-		go sseClient.Run(r.ctx, r.messageChan)
-	}
-
-	r.wsClient = NewWSClient(
-		r.config.ServerWSURL,
-		r.roomRes.RoomCode,
-		r.roomRes.WriteToken,
-		r.config.TLSSkipVerify,
-		time.Duration(r.config.HeartbeatIntvl)*time.Second,
-		r.logger,
-	)
-	go r.wsClient.Run(r.ctx, r.messageChan)
+	r.startClients()
 
 	return roomRes, nil
 }
@@ -195,6 +182,14 @@ func (r *Relay) RoomCode() string {
 		return ""
 	}
 	return r.roomRes.RoomCode
+}
+
+func (r *Relay) RunnerName() string {
+	return r.runnerName
+}
+
+func (r *Relay) IsCreator() bool {
+	return r.roomRes != nil && r.roomRes.CreatorToken != ""
 }
 
 func (r *Relay) NinjabrainConnected() bool {
@@ -212,4 +207,8 @@ func (r *Relay) Shutdown() {
 	r.clientsMu.Lock()
 	defer r.clientsMu.Unlock()
 	r.stopAllClientsLocked()
+}
+
+func (r *Relay) ServerAPIURL() string {
+	return r.config.ServerAPIURL
 }

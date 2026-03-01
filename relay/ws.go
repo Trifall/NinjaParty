@@ -22,9 +22,9 @@ type WSClient struct {
 	ctxCancel      context.CancelFunc
 }
 
-func NewWSClient(serverURL, room, token string, tlsSkipVerify bool, heartbeatIntvl time.Duration, logger *zap.Logger) *WSClient {
+func NewWSClient(serverURL, room, runnerName, token string, tlsSkipVerify bool, heartbeatIntvl time.Duration, logger *zap.Logger) *WSClient {
 	return &WSClient{
-		url:            fmt.Sprintf("%s?room=%s&token=%s", serverURL, room, token),
+		url:            fmt.Sprintf("%s?room=%s&runnerName=%s&token=%s", serverURL, room, runnerName, token),
 		tlsSkipVerify:  tlsSkipVerify,
 		heartbeatIntvl: heartbeatIntvl,
 		logger:         logger,

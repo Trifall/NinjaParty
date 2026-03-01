@@ -2,6 +2,7 @@
   "type": "stronghold_update",
   "ts": 1708455000000,
   "source": "ninjabrain-local",
+  "runnerName": "Speedrun",
   "payload": {
     "resultType": "TRIANGULATION",
     "playerPosition": {

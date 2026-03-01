@@ -2,6 +2,10 @@
 	import { Settings } from '@lucide/svelte';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import { settings } from '$lib/stores/settings.svelte';
+
+	let currentDisplayType = $derived(settings.displayType.current);
+	let currentMcVersion = $derived(settings.mcVersion.current);
+	let currentViewMode = $derived(settings.viewMode.current);
 </script>
 
 <Sheet.Root>
@@ -20,7 +24,44 @@
 		</Sheet.Header>
 
 		<div class="grid gap-6 py-6">
+			<!-- View Mode -->
 			<div class="space-y-4">
+				<h4 class="text-sm font-medium leading-none text-white">View Mode</h4>
+				<div class="flex flex-col space-y-3">
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="viewMode"
+							value="max"
+							checked={currentViewMode === 'max'}
+							onchange={() => (settings.viewMode.current = 'max')}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Max View <span class="ml-1 text-muted-foreground"
+								>- Full dashboard with all data</span
+							></span
+						>
+					</label>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="viewMode"
+							value="compact"
+							checked={currentViewMode === 'compact'}
+							onchange={() => (settings.viewMode.current = 'compact')}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Compact View <span class="ml-1 text-muted-foreground"
+								>- Location + Position only</span
+							></span
+						>
+					</label>
+				</div>
+			</div>
+
+			<div class="space-y-4 border-t border-white/10 pt-4">
 				<h4 class="text-sm font-medium leading-none text-white">Coordinate Display Type</h4>
 				<div class="flex flex-col space-y-3">
 					<label class="flex cursor-pointer items-center space-x-3">
@@ -28,7 +69,8 @@
 							type="radio"
 							name="displayType"
 							value="FOUR_FOUR"
-							bind:group={settings.displayType}
+							checked={currentDisplayType === 'FOUR_FOUR'}
+							onchange={() => (settings.displayType.current = 'FOUR_FOUR')}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
@@ -42,7 +84,8 @@
 							type="radio"
 							name="displayType"
 							value="EIGHT_EIGHT"
-							bind:group={settings.displayType}
+							checked={currentDisplayType === 'EIGHT_EIGHT'}
+							onchange={() => (settings.displayType.current = 'EIGHT_EIGHT')}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
@@ -56,7 +99,8 @@
 							type="radio"
 							name="displayType"
 							value="CHUNK"
-							bind:group={settings.displayType}
+							checked={currentDisplayType === 'CHUNK'}
+							onchange={() => (settings.displayType.current = 'CHUNK')}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
@@ -75,7 +119,8 @@
 							type="radio"
 							name="mcVersion"
 							value="PRE_119"
-							bind:group={settings.mcVersion}
+							checked={currentMcVersion === 'PRE_119'}
+							onchange={() => (settings.mcVersion.current = 'PRE_119')}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
@@ -87,7 +132,8 @@
 							type="radio"
 							name="mcVersion"
 							value="POST_119"
-							bind:group={settings.mcVersion}
+							checked={currentMcVersion === 'POST_119'}
+							onchange={() => (settings.mcVersion.current = 'POST_119')}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm">1.19 and above</span>
@@ -101,7 +147,8 @@
 					<label class="flex cursor-pointer items-center space-x-3">
 						<input
 							type="checkbox"
-							bind:checked={settings.colorNegatives}
+							checked={settings.colorNegatives.current}
+							onchange={(e) => (settings.colorNegatives.current = e.currentTarget.checked)}
 							class="h-4 w-4 rounded accent-emerald-500"
 						/>
 						<span class="text-sm"

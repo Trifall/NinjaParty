@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
-	"github.com/cenkalti/backoff/v4"
 	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
@@ -29,24 +28,44 @@ func main() {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
-	logger.Info("fetching room from server", zap.String("api", config.ServerAPIURL))
+	relay := NewRelay(config, logger)
 
-	var roomRes *RoomResponse
-	err = backoff.RetryNotify(func() error {
-		roomRes, err = createRoom(config.ServerAPIURL)
-		return err
-	}, backoff.NewExponentialBackOff(), func(err error, t time.Duration) {
-		logger.Warn("failed to connect to server, retrying", zap.Error(err), zap.Duration("delay", t))
-	})
+	state, err := loadRelayState()
 	if err != nil {
-		logger.Fatal("could not create room after retries", zap.Error(err))
+		logger.Warn("failed to load relay state", zap.Error(err))
+		state = &RelayState{}
 	}
 
-	logger.Info("room created", zap.String("code", roomRes.RoomCode))
+	if state.RunnerName != "" {
+		relay.SetRunnerName(state.RunnerName)
+	}
 
-	relay := NewRelay(config, logger)
-	if err := relay.StartRoom(roomRes.RoomCode, roomRes.WriteToken); err != nil {
-		logger.Fatal("failed to start relay", zap.Error(err))
+	// auto-rejoin if we have a saved room that still exists
+	if state.RoomCode != "" && state.RunnerName != "" {
+		if roomExists(config.ServerAPIURL, state.RoomCode) {
+			logger.Info("attempting to auto-rejoin saved room", zap.String("code", state.RoomCode))
+			roomRes, err := relay.JoinRoom(state.RoomCode, "")
+			if err != nil {
+				logger.Warn("failed to auto-rejoin room", zap.Error(err))
+				// clear the saved room code since we couldn't rejoin
+				state.RoomCode = ""
+				state.CreatorToken = ""
+				saveRelayState(state)
+			} else {
+				logger.Info("successfully auto-rejoined room", zap.String("code", roomRes.RoomCode))
+				// update state with new tokens
+				state.RoomCode = roomRes.RoomCode
+				if roomRes.CreatorToken != "" {
+					state.CreatorToken = roomRes.CreatorToken
+				}
+				saveRelayState(state)
+			}
+		} else {
+			logger.Info("saved room no longer exists", zap.String("code", state.RoomCode))
+			state.RoomCode = ""
+			state.CreatorToken = ""
+			saveRelayState(state)
+		}
 	}
 
 	ui := &UI{

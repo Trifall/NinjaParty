@@ -42,6 +42,19 @@ type UI struct {
 	newRoomRate *RateLimiter
 }
 
+type PageData struct {
+	RunnerName    string
+	RoomCode      string
+	FullLink      string
+	IsActive      bool
+	IsCreator     bool
+	StaleRoom     bool
+	ShowSetup     bool
+	ShowRejoin    bool
+	HasRunnerName bool
+	SavedRoomCode string
+}
+
 const uiTemplate = `
 <!DOCTYPE html>
 <html lang="en">
@@ -185,7 +198,7 @@ const uiTemplate = `
 			margin-bottom: 0;
 		}
 
-		input[type="text"] {
+		input[type="text"], input[type="password"] {
 			flex: 1;
 			background: rgba(255,255,255,0.04);
 			border: 1px solid rgba(255,255,255,0.08);
@@ -199,7 +212,7 @@ const uiTemplate = `
 			min-width: 0;
 		}
 
-		input[type="text"]:focus {
+		input[type="text"]:focus, input[type="password"]:focus {
 			border-color: rgba(16,185,129,0.4);
 		}
 
@@ -219,6 +232,28 @@ const uiTemplate = `
 
 		button:active { transform: scale(0.97); }
 
+		.btn-primary {
+			background: #10b981;
+			color: #fff;
+		}
+
+		.btn-primary:hover { opacity: 0.88; }
+
+		.btn-secondary {
+			background: rgba(255,255,255,0.07);
+			color: rgba(255,255,255,0.7);
+			border: 1px solid rgba(255,255,255,0.1);
+		}
+
+		.btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+		.btn-danger {
+			background: #dc2626;
+			color: #fff;
+		}
+
+		.btn-danger:hover { background: #ef4444; }
+
 		.btn-toggle {
 			background: rgba(255,255,255,0.07);
 			color: rgba(255,255,255,0.7);
@@ -234,7 +269,163 @@ const uiTemplate = `
 
 		.btn-copy:hover { opacity: 0.88; }
 
-		/* Dialog */
+		.error {
+			color: #ef4444;
+			font-size: 13px;
+			margin-top: 12px;
+			text-align: center;
+		}
+
+		.success {
+			color: #10b981;
+			font-size: 13px;
+			margin-top: 12px;
+			text-align: center;
+		}
+
+		.tabs {
+			display: flex;
+			gap: 8px;
+			margin-bottom: 24px;
+		}
+
+		.tab {
+			flex: 1;
+			padding: 12px;
+			text-align: center;
+			background: rgba(255,255,255,0.04);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 10px;
+			color: rgba(255,255,255,0.6);
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+
+		.tab.active {
+			background: rgba(16,185,129,0.15);
+			border-color: rgba(16,185,129,0.4);
+			color: #10b981;
+		}
+
+		.tab:hover:not(.active) {
+			background: rgba(255,255,255,0.08);
+		}
+
+		.panel {
+			display: none;
+		}
+
+		.panel.active {
+			display: block;
+		}
+
+		.form-group {
+			margin-bottom: 16px;
+		}
+
+		.runner-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			background: rgba(16,185,129,0.15);
+			border: 1px solid rgba(16,185,129,0.3);
+			border-radius: 8px;
+			padding: 6px 12px;
+			font-size: 14px;
+			color: #10b981;
+			margin-bottom: 16px;
+		}
+
+		.instructions-container {
+			margin-top: 32px;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.instruction {
+			font-size: 14px;
+			color: rgba(255,255,255,0.8);
+			line-height: 1.5;
+			display: flex;
+			gap: 10px;
+			text-align: left;
+			letter-spacing: -0.01em;
+		}
+
+		.instruction::before {
+			content: "•";
+			color: #10b981;
+			font-weight: 800;
+		}
+
+		.btn-help {
+			margin-top: 16px;
+			width: 100%;
+			background: rgba(16,185,129,0.15);
+			color: #10b981;
+			border: 1px solid rgba(16,185,129,0.3);
+			padding: 10px;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.btn-help:hover {
+			background: rgba(16,185,129,0.25);
+			color: #34d399;
+		}
+
+		.btn-close {
+			margin-top: 28px;
+			width: 100%;
+			padding: 12px;
+			font-size: 14px;
+			font-weight: 600;
+			justify-content: center;
+		}
+
+		.stale-room-banner {
+			background: rgba(245,158,11,0.15);
+			border: 1px solid rgba(245,158,11,0.3);
+			border-radius: 10px;
+			padding: 16px;
+			margin-bottom: 20px;
+			text-align: center;
+			color: #f59e0b;
+		}
+
+		.help-content {
+			text-align: left;
+		}
+
+		.help-content h2 {
+			font-size: 18px;
+			font-weight: 600;
+			color: #fff;
+			margin-bottom: 16px;
+			text-align: center;
+		}
+
+		.help-content ol {
+			margin: 0;
+			padding-left: 20px;
+			color: rgba(255,255,255,0.8);
+			font-size: 14px;
+			line-height: 1.8;
+		}
+
+		.help-content li {
+			margin-bottom: 8px;
+		}
+
+		.help-content img {
+			display: block;
+			max-width: 100%;
+			border-radius: 8px;
+			margin: 16px auto;
+			border: 1px solid rgba(255,255,255,0.1);
+		}
+
 		.dialog-overlay {
 			display: none;
 			position: fixed;
@@ -283,96 +474,118 @@ const uiTemplate = `
 			color: #fff;
 			padding: 9px 20px;
 		}
-
-		.btn-close {
-			background: #dc2626;
-			color: #fff;
-			margin-top: 28px;
-			width: 100%;
-			padding: 12px;
-			font-size: 14px;
-			font-weight: 600;
-			justify-content: center;
-		}
-
-		.btn-close:hover { background: #ef4444; }
-
-		.instructions-container {
-			margin-top: 32px;
-			display: flex;
-			flex-direction: column;
-			gap: 10px;
-		}
-
-		.instruction {
-			font-size: 16px;
-			color: rgba(255,255,255,0.8);
-			line-height: 1.5;
-			display: flex;
-			gap: 10px;
-			text-align: left;
-			letter-spacing: -0.01em;
-		}
-
-		.instruction::before {
-			content: "•";
-			color: #10b981;
-			font-weight: 800;
-		}
-
-		.btn-help {
-			margin-top: 16px;
-			width: 100%;
-			background: rgba(16,185,129,0.15);
-			color: #10b981;
-			border: 1px solid rgba(16,185,129,0.3);
-			padding: 10px;
-			font-size: 12px;
-			font-weight: 500;
-		}
-
-		.btn-help:hover {
-			background: rgba(16,185,129,0.25);
-			color: #34d399;
-		}
-
-		/* API Help Modal */
-		.help-content {
-			text-align: left;
-		}
-
-		.help-content h2 {
-			font-size: 18px;
-			font-weight: 600;
-			color: #fff;
-			margin-bottom: 16px;
-			text-align: center;
-		}
-
-		.help-content ol {
-			margin: 0;
-			padding-left: 20px;
-			color: rgba(255,255,255,0.8);
-			font-size: 14px;
-			line-height: 1.8;
-		}
-
-		.help-content li {
-			margin-bottom: 8px;
-		}
-
-		.help-content img {
-			display: block;
-			max-width: 100%;
-			border-radius: 8px;
-			margin: 16px auto;
-			border: 1px solid rgba(255,255,255,0.1);
-		}
 	</style>
 </head>
 <body>
 	<div class="glow"></div>
 
+	{{if .ShowSetup}}
+	<div class="card">
+		<h1>NinjaParty Setup</h1>
+		<p class="subtitle">Enter your runner name to get started</p>
+
+		<div class="form-group">
+			<p class="field-label">Runner Name</p>
+			<input type="text" id="runnerName" placeholder="Your name (max 24 chars)" maxlength="24" value="{{.RunnerName}}" />
+		</div>
+
+		<div class="tabs">
+			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create Room</div>
+			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Room</div>
+		</div>
+
+		<div class="panel active" id="panelCreate">
+			<div class="form-group">
+				<input type="password" id="createPassword" placeholder="Room password (optional)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+		</div>
+
+		<div class="panel" id="panelJoin">
+			<div class="form-group">
+				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
+			</div>
+			<div class="form-group">
+				<input type="password" id="joinPassword" placeholder="Password (if required)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+		</div>
+
+		<div id="setupError" class="error"></div>
+	</div>
+	{{else if .ShowRejoin}}
+	<div class="card">
+		<h1>NinjaParty</h1>
+		<p class="subtitle">Your previous room is still active</p>
+
+		<div class="runner-badge">
+			<span>Runner: {{.RunnerName}}</span>
+		</div>
+
+		<div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 16px; margin-bottom: 20px; text-align: center; color: #10b981;">
+			Room <strong>{{.SavedRoomCode}}</strong> is still active. You can rejoin or start fresh.
+		</div>
+
+		<button class="btn-primary" style="width:100%; margin-bottom: 12px;" onclick="rejoinRoom()">Rejoin Room {{.SavedRoomCode}}</button>
+
+		<div class="tabs" style="margin-top: 24px;">
+			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create New Room</div>
+			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Different Room</div>
+		</div>
+
+		<div class="panel active" id="panelCreate">
+			<div class="form-group">
+				<input type="password" id="createPassword" placeholder="Room password (optional)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+		</div>
+
+		<div class="panel" id="panelJoin">
+			<div class="form-group">
+				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
+			</div>
+			<div class="form-group">
+				<input type="password" id="joinPassword" placeholder="Password (if required)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+		</div>
+
+		<div id="setupError" class="error"></div>
+	</div>
+	{{else if .StaleRoom}}
+	<div class="card">
+		<h1>NinjaParty</h1>
+		<p class="subtitle">Your previous room no longer exists</p>
+
+		<div class="stale-room-banner">
+			The room you were in has expired or been closed.
+		</div>
+
+		<div class="tabs">
+			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create Room</div>
+			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Room</div>
+		</div>
+
+		<div class="panel active" id="panelCreate">
+			<div class="form-group">
+				<input type="password" id="createPassword" placeholder="Room password (optional)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+		</div>
+
+		<div class="panel" id="panelJoin">
+			<div class="form-group">
+				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
+			</div>
+			<div class="form-group">
+				<input type="password" id="joinPassword" placeholder="Password (if required)" />
+			</div>
+			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+		</div>
+
+		<div id="setupError" class="error"></div>
+	</div>
+	{{else}}
 	<div class="card">
 		<div class="status">
 			<span class="status-dot"></span>
@@ -381,6 +594,10 @@ const uiTemplate = `
 		<div id="ninjabrainStatus" class="status status-disconnected">
 			<span class="status-dot"></span>
 			<span id="ninjabrainStatusText">Waiting for Ninjabrain...</span>
+		</div>
+
+		<div class="runner-badge">
+			<span>Runner: {{.RunnerName}}</span>
 		</div>
 
 		<h1>NinjaParty</h1>
@@ -406,7 +623,11 @@ const uiTemplate = `
 			<p class="instruction">If you quit via the tray icon, everything will be closed for you!</p>
 		</div>
 		<button class="btn-help" onclick="showApiHelp()">How do I enable the Ninjabrain API?</button>
-		<button class="btn-close" onclick="showCloseDialog()">CLOSE RELAY</button>
+		{{if .IsCreator}}
+		<button class="btn-danger btn-close" onclick="showForceCloseDialog()">FORCE CLOSE ROOM</button>
+		{{else}}
+		<button class="btn-close" onclick="showCloseDialog()">LEAVE ROOM</button>
+		{{end}}
 	</div>
 
 	<div id="dialog" class="dialog-overlay">
@@ -421,10 +642,20 @@ const uiTemplate = `
 
 	<div id="closeDialog" class="dialog-overlay">
 		<div class="dialog">
-			<p>Are you sure you want to close the relay? This will disconnect all observers.</p>
+			<p>Are you sure you want to leave the room? Observers will still be able to see the last known data.</p>
 			<div class="dialog-buttons">
 				<button class="btn-cancel" onclick="closeCloseDialog()">Cancel</button>
-				<button class="btn-confirm" style="background: #dc2626;" onclick="confirmClose()">Close Relay</button>
+				<button class="btn-confirm" onclick="confirmClose()">Leave Room</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="forceCloseDialog" class="dialog-overlay">
+		<div class="dialog">
+			<p>Are you sure you want to force close the room? This will disconnect all observers and all runners.</p>
+			<div class="dialog-buttons">
+				<button class="btn-cancel" onclick="closeForceCloseDialog()">Cancel</button>
+				<button class="btn-confirm" style="background:#dc2626" onclick="confirmForceClose()">Force Close</button>
 			</div>
 		</div>
 	</div>
@@ -443,12 +674,101 @@ const uiTemplate = `
 			<button class="btn-close" onclick="closeApiHelp()">Got it</button>
 		</div>
 	</div>
+	{{end}}
 
 	<script>
 		var isHidden = false;
 		var originalRoomCode = "{{.RoomCode}}";
 		var originalLink = "{{.FullLink}}";
+		var savedRoomCode = "{{.SavedRoomCode}}";
 
+		{{if or .ShowSetup .StaleRoom .ShowRejoin}}
+		function switchTab(tab) {
+			document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+			document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+			document.getElementById('panelCreate').classList.toggle('active', tab === 'create');
+			document.getElementById('panelJoin').classList.toggle('active', tab === 'join');
+			document.getElementById('setupError').textContent = '';
+		}
+
+		async function rejoinRoom() {
+			var errorEl = document.getElementById('setupError');
+			errorEl.textContent = 'Rejoining room...';
+
+			var res = await fetch('/setup/rejoin', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ roomCode: savedRoomCode })
+			});
+
+			var data = await res.json();
+			if (!res.ok) {
+				errorEl.textContent = data.error || 'Failed to rejoin room';
+				return;
+			}
+
+			location.reload();
+		}
+
+		async function createRoom() {
+			var name = document.getElementById('runnerName').value.trim();
+			var password = document.getElementById('createPassword').value;
+			var errorEl = document.getElementById('setupError');
+
+			if (!name) {
+				errorEl.textContent = 'Please enter a runner name';
+				return;
+			}
+
+			errorEl.textContent = 'Creating room...';
+
+			var res = await fetch('/setup/create', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ runnerName: name, password: password })
+			});
+
+			var data = await res.json();
+			if (!res.ok) {
+				errorEl.textContent = data.error || 'Failed to create room';
+				return;
+			}
+
+			location.reload();
+		}
+
+		async function joinRoom() {
+			var name = document.getElementById('runnerName').value.trim();
+			var code = document.getElementById('joinRoomCode').value.trim();
+			var password = document.getElementById('joinPassword').value;
+			var errorEl = document.getElementById('setupError');
+
+			if (!name) {
+				errorEl.textContent = 'Please enter a runner name';
+				return;
+			}
+			if (!code) {
+				errorEl.textContent = 'Please enter a room code';
+				return;
+			}
+
+			errorEl.textContent = 'Joining room...';
+
+			var res = await fetch('/setup/join', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ runnerName: name, roomCode: code, password: password })
+			});
+
+			var data = await res.json();
+			if (!res.ok) {
+				errorEl.textContent = data.error || 'Failed to join room';
+				return;
+			}
+
+			location.reload();
+		}
+		{{else}}
 		function updateNinjabrainStatus() {
 			fetch('/status')
 				.then(function(response) { return response.json(); })
@@ -464,7 +784,6 @@ const uiTemplate = `
 					}
 				})
 				.catch(function() {
-					// ignore errors
 				});
 		}
 
@@ -520,14 +839,22 @@ const uiTemplate = `
 
 		function confirmClose() {
 			closeCloseDialog();
-			document.querySelector('.card').style.display = 'none';
-			document.querySelector('.glow').style.display = 'none';
-			document.body.innerHTML = 
-				'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:rgba(255,255,255,0.9);font-size:20px;gap:20px;">' +
-					'<div>Relay closed.</div>' +
-					'<button id="newRoomBtn" style="background:#10b981;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;" onclick="startNewRoom()">Start New Room</button>' +
-				'</div>';
 			fetch('/close', { method: 'POST' });
+			location.href = '/';
+		}
+
+		function showForceCloseDialog() {
+			document.getElementById('forceCloseDialog').style.display = 'flex';
+		}
+
+		function closeForceCloseDialog() {
+			document.getElementById('forceCloseDialog').style.display = 'none';
+		}
+
+		function confirmForceClose() {
+			closeForceCloseDialog();
+			fetch('/force-close', { method: 'POST' });
+			location.href = '/';
 		}
 
 		function showApiHelp() {
@@ -537,43 +864,22 @@ const uiTemplate = `
 		function closeApiHelp() {
 			document.getElementById('apiHelpDialog').style.display = 'none';
 		}
-
-		function startNewRoom() {
-			var btn = document.getElementById('newRoomBtn');
-			if (btn) {
-				btn.disabled = true;
-				btn.textContent = 'Creating...';
-			}
-			fetch('/new-room', { method: 'POST' })
-				.then(function(response) { return response.json(); })
-				.then(function(data) {
-					if (data.success) {
-						location.reload();
-					} else {
-						alert('Error: ' + data.error);
-						if (btn) {
-							btn.disabled = false;
-							btn.textContent = 'Start New Room';
-						}
-					}
-				})
-				.catch(function(err) {
-					alert('Failed to create room: ' + err);
-					if (btn) {
-						btn.disabled = false;
-						btn.textContent = 'Start New Room';
-					}
-				});
-		}
+		{{end}}
 	</script>
 </body>
 </html>
 `
 
-type CreateRoomResponse struct {
+type SetupRequest struct {
+	RunnerName string `json:"runnerName"`
+	Password   string `json:"password,omitempty"`
+	RoomCode   string `json:"roomCode,omitempty"`
+}
+
+type SetupResponse struct {
 	Success  bool   `json:"success"`
-	RoomCode string `json:"roomCode,omitempty"`
 	Error    string `json:"error,omitempty"`
+	RoomCode string `json:"roomCode,omitempty"`
 }
 
 func (u *UI) Start() error {
@@ -591,17 +897,41 @@ func (u *UI) Start() error {
 		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 		w.Header().Set("Pragma", "no-cache")
 
+		state, err := loadRelayState()
+		if err != nil {
+			state = &RelayState{}
+		}
+
+		isActive := u.relay.RoomCode() != ""
 		roomCode := u.relay.RoomCode()
-		if roomCode == "" {
-			roomCode = "connecting..."
+		fullLink := u.relay.FullLink()
+
+		showSetup := (state.RunnerName == "" || state.RoomCode == "") && !isActive
+		staleRoom := false
+		showRejoin := false
+
+		if state.RoomCode != "" && !isActive && state.RunnerName != "" {
+			exists := roomExists(u.relay.ServerAPIURL(), state.RoomCode)
+			if exists {
+				showRejoin = true
+			} else {
+				staleRoom = true
+			}
 		}
-		data := struct {
-			RoomCode string
-			FullLink string
-		}{
-			RoomCode: roomCode,
-			FullLink: u.relay.FullLink(),
+
+		data := PageData{
+			RunnerName:    state.RunnerName,
+			RoomCode:      roomCode,
+			FullLink:      fullLink,
+			IsActive:      isActive,
+			IsCreator:     u.relay.IsCreator(),
+			StaleRoom:     staleRoom,
+			ShowSetup:     showSetup,
+			ShowRejoin:    showRejoin,
+			HasRunnerName: state.RunnerName != "",
+			SavedRoomCode: state.RoomCode,
 		}
+
 		if err := tmpl.Execute(w, data); err != nil {
 			u.logger.Error("failed to render ui template", zap.Error(err))
 		}
@@ -610,32 +940,186 @@ func (u *UI) Start() error {
 	http.HandleFunc("/close", func(w http.ResponseWriter, r *http.Request) {
 		u.logger.Info("close requested via UI")
 		u.relay.Shutdown()
+		state, _ := loadRelayState()
+		state.RoomCode = ""
+		state.CreatorToken = ""
+		saveRelayState(state)
 	})
 
-	http.HandleFunc("/new-room", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/force-close", func(w http.ResponseWriter, r *http.Request) {
+		u.logger.Info("force close requested via UI")
+		u.relay.Shutdown()
+		clearRelayState()
+	})
+
+	http.HandleFunc("/setup/create", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		if !u.newRoomRate.Allow() {
 			w.WriteHeader(http.StatusTooManyRequests)
-			json.NewEncoder(w).Encode(CreateRoomResponse{
+			json.NewEncoder(w).Encode(SetupResponse{
 				Success: false,
 				Error:   "rate limit exceeded, please wait before creating another room",
 			})
 			return
 		}
 
-		roomRes, err := u.relay.CreateNewRoom()
-		if err != nil {
-			u.logger.Error("failed to create new room", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(CreateRoomResponse{
+		var req SetupRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(SetupResponse{
 				Success: false,
-				Error:   "Failed to create new room. Please try again.",
+				Error:   "invalid request",
 			})
 			return
 		}
 
-		json.NewEncoder(w).Encode(CreateRoomResponse{
+		if req.RunnerName == "" {
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "runner name is required",
+			})
+			return
+		}
+
+		u.relay.SetRunnerName(req.RunnerName)
+
+		roomRes, err := u.relay.CreateNewRoom(req.Password)
+		if err != nil {
+			u.logger.Error("failed to create room", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "Failed to create room: " + err.Error(),
+			})
+			return
+		}
+
+		state := &RelayState{
+			RunnerName:   req.RunnerName,
+			RoomCode:     roomRes.RoomCode,
+			CreatorToken: roomRes.CreatorToken,
+		}
+		saveRelayState(state)
+
+		json.NewEncoder(w).Encode(SetupResponse{
+			Success:  true,
+			RoomCode: roomRes.RoomCode,
+		})
+	})
+
+	http.HandleFunc("/setup/join", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var req SetupRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "invalid request",
+			})
+			return
+		}
+
+		if req.RunnerName == "" {
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "runner name is required",
+			})
+			return
+		}
+
+		if req.RoomCode == "" {
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "room code is required",
+			})
+			return
+		}
+
+		u.relay.SetRunnerName(req.RunnerName)
+
+		roomRes, err := u.relay.JoinRoom(req.RoomCode, req.Password)
+		if err != nil {
+			u.logger.Error("failed to join room", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   err.Error(),
+			})
+			return
+		}
+
+		state := &RelayState{
+			RunnerName: req.RunnerName,
+			RoomCode:   roomRes.RoomCode,
+		}
+		saveRelayState(state)
+
+		json.NewEncoder(w).Encode(SetupResponse{
+			Success:  true,
+			RoomCode: roomRes.RoomCode,
+		})
+	})
+
+	http.HandleFunc("/setup/rejoin", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var req SetupRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "invalid request",
+			})
+			return
+		}
+
+		if req.RoomCode == "" {
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "room code is required",
+			})
+			return
+		}
+
+		state, err := loadRelayState()
+		if err != nil || state.RunnerName == "" {
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   "no saved runner name found",
+			})
+			return
+		}
+
+		// Try to rejoin with saved credentials
+		var roomRes *RoomResponse
+		if state.CreatorToken != "" {
+			// Try as creator first
+			roomRes, err = u.relay.JoinRoom(req.RoomCode, "")
+		} else {
+			// Try as regular member
+			roomRes, err = u.relay.JoinRoom(req.RoomCode, "")
+		}
+
+		if err != nil {
+			u.logger.Error("failed to rejoin room", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(SetupResponse{
+				Success: false,
+				Error:   err.Error(),
+			})
+			return
+		}
+
+		// Update state with new tokens
+		state.RoomCode = roomRes.RoomCode
+		if roomRes.CreatorToken != "" {
+			state.CreatorToken = roomRes.CreatorToken
+		}
+		saveRelayState(state)
+
+		json.NewEncoder(w).Encode(SetupResponse{
 			Success:  true,
 			RoomCode: roomRes.RoomCode,
 		})

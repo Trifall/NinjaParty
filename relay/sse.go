@@ -16,6 +16,7 @@ import (
 type SSEClient struct {
 	url            string
 	msgType        string
+	runnerName     string
 	tlsSkipVerify  bool
 	logger         *zap.Logger
 	ctxCancel      context.CancelFunc
@@ -74,10 +75,11 @@ func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint strin
 			var payload json.RawMessage
 			if err := json.NewDecoder(resp.Body).Decode(&payload); err == nil {
 				msg := RoomMessage{
-					Type:    c.msgType,
-					Ts:      time.Now().UnixMilli(),
-					Source:  "ninjabrain-local",
-					Payload: payload,
+					Type:       c.msgType,
+					Ts:         time.Now().UnixMilli(),
+					Source:     "ninjabrain-local",
+					RunnerName: c.runnerName,
+					Payload:    payload,
 				}
 				select {
 				case out <- msg:
@@ -107,7 +109,8 @@ func (c *SSEClient) Close() {
 	}
 }
 
-func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
+func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage, runnerName string) {
+	c.runnerName = runnerName
 	ctx, c.ctxCancel = context.WithCancel(ctx)
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 0 // loop forever
@@ -167,10 +170,11 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
 				c.logger.Debug("received ninjabrain sse payload")
 
 				msg := RoomMessage{
-					Type:    c.msgType,
-					Ts:      time.Now().UnixMilli(),
-					Source:  "ninjabrain-local",
-					Payload: payload,
+					Type:       c.msgType,
+					Ts:         time.Now().UnixMilli(),
+					Source:     "ninjabrain-local",
+					RunnerName: c.runnerName,
+					Payload:    payload,
 				}
 
 				select {

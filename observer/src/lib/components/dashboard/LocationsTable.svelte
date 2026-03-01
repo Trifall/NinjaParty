@@ -18,9 +18,12 @@
 
 	let { resultType, predictions, pos }: Props = $props();
 
+	let displayType = $derived(settings.displayType.current);
+	let colorNegatives = $derived(settings.colorNegatives.current);
+
 	function getPredictionDisplayCoords(chunkX: number, chunkZ: number): [number, number] {
-		if (settings.displayType === 'FOUR_FOUR') return [16 * chunkX + 4, 16 * chunkZ + 4];
-		if (settings.displayType === 'EIGHT_EIGHT') return [16 * chunkX + 8, 16 * chunkZ + 8];
+		if (displayType === 'FOUR_FOUR') return [16 * chunkX + 4, 16 * chunkZ + 4];
+		if (displayType === 'EIGHT_EIGHT') return [16 * chunkX + 8, 16 * chunkZ + 8];
 		return [chunkX, chunkZ];
 	}
 
@@ -80,12 +83,10 @@
 				{@const certaintyCol = getCertaintyColor(pred.certainty)}
 				<tr class="border-b border-white/5 transition-colors hover:bg-white/5">
 					<td class="px-3 py-1.5 text-center">
-						(<span
-							class={settings.colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
+						(<span class={colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
 							>{coords[0]}</span
 						>,
-						<span
-							class={settings.colorNegatives && coords[1] < 0 ? 'text-red-400' : 'text-gray-200'}
+						<span class={colorNegatives && coords[1] < 0 ? 'text-red-400' : 'text-gray-200'}
 							>{coords[1]}</span
 						>)
 					</td>
@@ -98,12 +99,10 @@
 							: Math.floor(pred.overworldDistance)}
 					</td>
 					<td class="px-3 py-1.5 text-center">
-						(<span
-							class={settings.colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
+						(<span class={colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
 							>{nether[0]}</span
 						>,
-						<span
-							class={settings.colorNegatives && nether[1] < 0 ? 'text-red-400' : 'text-gray-300'}
+						<span class={colorNegatives && nether[1] < 0 ? 'text-red-400' : 'text-gray-300'}
 							>{nether[1]}</span
 						>)
 					</td>

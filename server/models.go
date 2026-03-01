@@ -5,10 +5,11 @@ import (
 )
 
 type RoomMessage struct {
-	Type    string          `json:"type"`
-	Ts      int64           `json:"ts"`
-	Source  string          `json:"source"`
-	Payload json.RawMessage `json:"payload"`
+	Type       string          `json:"type"`
+	Ts         int64           `json:"ts"`
+	Source     string          `json:"source"`
+	RunnerName string          `json:"runnerName"`
+	Payload    json.RawMessage `json:"payload"`
 }
 
 type StrongholdPayload struct {
@@ -20,6 +21,7 @@ type StrongholdPayload struct {
 
 type PresencePayload struct {
 	Status string `json:"status"` // "online" or "offline"
+	Name   string `json:"name,omitempty"`
 }
 
 type PlayerPosition struct {
@@ -46,4 +48,46 @@ type ChunkPrediction struct {
 	ChunkX            int     `json:"chunkX"`
 	ChunkZ            int     `json:"chunkZ"`
 	OverworldDistance float64 `json:"overworldDistance"`
+}
+
+type BoatPayload struct {
+	BoatAngle *float64 `json:"boatAngle,omitempty"`
+	BoatState string   `json:"boatState"`
+}
+
+type BlindPayload struct {
+	IsBlindModeEnabled bool        `json:"isBlindModeEnabled"`
+	HasDivine          bool        `json:"hasDivine"`
+	BlindResult        interface{} `json:"blindResult"`
+}
+
+type DivinePayload struct {
+	IsDivineModeEnabled bool        `json:"isDivineModeEnabled"`
+	DivineResult        interface{} `json:"divineResult"`
+}
+
+type AllAdvancementsPayload struct {
+	IsAllAdvancementsModeEnabled bool        `json:"isAllAdvancementsModeEnabled"`
+	Spawn                        interface{} `json:"spawn,omitempty"`
+	Outpost                      interface{} `json:"outpost,omitempty"`
+	Monument                     interface{} `json:"monument,omitempty"`
+	Stronghold                   interface{} `json:"stronghold,omitempty"`
+	DeepDark                     interface{} `json:"deepDark,omitempty"`
+	CityQuery                    interface{} `json:"cityQuery,omitempty"`
+	ShulkerTransport             interface{} `json:"shulkerTransport,omitempty"`
+	GeneralLocation              interface{} `json:"generalLocation,omitempty"`
+}
+
+type InformationMessagesPayload struct {
+	InformationMessages []InformationMessage `json:"informationMessages,omitempty"`
+}
+
+type InformationMessage struct {
+	Severity string `json:"severity"`
+	Type     string `json:"type"`
+	Message  string `json:"message"`
+}
+
+type RoomClosedPayload struct {
+	Message string `json:"message"`
 }

@@ -8,6 +8,8 @@
 	}
 
 	let { pos }: Props = $props();
+
+	let colorNegatives = $derived(settings.colorNegatives.current);
 </script>
 
 {#if pos}
@@ -36,14 +38,11 @@
 			>
 			<span class="text-gray-200">
 				(<span
-					class={settings.colorNegatives && displayX !== undefined && displayX < 0
-						? 'text-red-400'
-						: ''}>{displayX?.toFixed(2) ?? '?'}</span
+					class={colorNegatives && displayX !== undefined && displayX < 0 ? 'text-red-400' : ''}
+					>{displayX?.toFixed(2) ?? '?'}</span
 				>,
-				<span
-					class={settings.colorNegatives && displayZ !== undefined && displayZ < 0
-						? 'text-red-400'
-						: ''}>{displayZ?.toFixed(2) ?? '?'}</span
+				<span class={colorNegatives && displayZ !== undefined && displayZ < 0 ? 'text-red-400' : ''}
+					>{displayZ?.toFixed(2) ?? '?'}</span
 				>)
 			</span>
 		</div>

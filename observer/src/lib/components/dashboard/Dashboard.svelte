@@ -4,6 +4,7 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import type { RoomConnection } from '$lib/stores/room.svelte';
+	import { settings } from '$lib/stores/settings.svelte';
 	import AnimatedGradientText from '$components/ui/AnimatedGradientText.svelte';
 	import AllAdvancements from './AllAdvancements.svelte';
 	import BlindMode from './BlindMode.svelte';
@@ -23,9 +24,16 @@
 	let isRoomCodeHidden = $state(true);
 	let showRevealConfirm = $state(false);
 
-	let payload = $derived(roomStore.stronghold);
-	let pos = $derived(payload?.playerPosition);
-	let throws = $derived(payload?.eyeThrows || []);
+	let runners = $derived(roomStore.sortedRunners);
+	let viewMode = $derived(settings.viewMode.current);
+
+	$effect(() => {
+		console.log('Dashboard render:', {
+			status: roomStore.status,
+			runnersLength: runners.length,
+			runners: runners.map((r) => r.name),
+		});
+	});
 
 	let connectionColor = $derived(
 		roomStore.status === 'connected'
@@ -37,23 +45,19 @@
 					: 'bg-red-500 text-white border-red-500'
 	);
 
-	let runnerColor = $derived(
-		roomStore.runnerStatus === 'online'
-			? 'text-emerald-500 border-emerald-500'
-			: roomStore.runnerStatus === 'offline'
-				? 'text-red-500 border-red-500'
-				: 'text-gray-400 border-gray-400'
-	);
-
-	let boatColor = $derived(
-		roomStore.boat?.boatState === 'VALID'
-			? 'text-emerald-500 border-emerald-500'
-			: roomStore.boat?.boatState === 'MEASURING'
-				? 'text-blue-500 border-blue-500'
-				: roomStore.boat?.boatState === 'ERROR'
-					? 'text-red-500 border-red-500'
-					: 'hidden'
-	);
+	function getBoatColor(boatState: string | undefined): string {
+		if (!boatState) return 'hidden';
+		switch (boatState) {
+			case 'VALID':
+				return 'text-emerald-500 border-emerald-500';
+			case 'MEASURING':
+				return 'text-blue-500 border-blue-500';
+			case 'ERROR':
+				return 'text-red-500 border-red-500';
+			default:
+				return 'hidden';
+		}
+	}
 </script>
 
 <div class="mx-auto w-full max-w-3xl">
@@ -114,53 +118,16 @@
 					<WifiOff class="h-4 w-4" /> Offline
 				{/if}
 			</Badge>
-			<Badge variant="outline" class="flex gap-2 px-3 py-1.5 text-sm {runnerColor}">
-				<span class="relative flex h-2.5 w-2.5">
-					{#if roomStore.runnerStatus === 'online'}
-						<span
-							class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
-						></span>
-						<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-					{:else}
-						<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
-					{/if}
-				</span>
-				Runner
+			<Badge variant="outline" class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm">
+				<span class="text-gray-400">{runners.length} Runner{runners.length !== 1 ? 's' : ''}</span>
 			</Badge>
-			{#if roomStore.boat && roomStore.boat.boatState !== 'NONE'}
-				<Badge
-					variant="outline"
-					class="flex items-center gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm {boatColor}"
-				>
-					{#if roomStore.boat.boatState === 'VALID'}
-						<img
-							src="/images/boat_green.png"
-							alt="Valid"
-							class="h-4 w-4 object-contain drop-shadow"
-						/>
-					{:else if roomStore.boat.boatState === 'MEASURING'}
-						<img
-							src="/images/boat_blue.png"
-							alt="Measuring"
-							class="h-4 w-4 object-contain drop-shadow"
-						/>
-					{:else if roomStore.boat.boatState === 'ERROR'}
-						<img
-							src="/images/boat_red.png"
-							alt="Error"
-							class="h-4 w-4 object-contain drop-shadow"
-						/>
-					{/if}
-					{roomStore.boat.boatState}
-				</Badge>
-			{/if}
 			{#if !isEmbed}
 				<SettingsSheet />
 			{/if}
 		</div>
 	</div>
 
-	<!-- Main Panel -->
+	<!-- Main Panel - Multi Runner Scrollable List -->
 	<div
 		class="rounded-b-lg border border-t-0 border-white/20 bg-[#1a1a1a] text-sm text-gray-200 backdrop-blur-xl"
 	>
@@ -168,27 +135,100 @@
 			<div class="flex h-48 flex-col items-center justify-center gap-3 text-red-400">
 				<p class="text-base">This room has been closed</p>
 			</div>
-		{:else if roomStore.status === 'connected' && !payload}
+		{:else if roomStore.status === 'connected' && runners.length === 0}
 			<div class="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
 				<LoaderCircle class="h-8 w-8 animate-spin text-emerald-500" />
-				<p>Waiting for Ninjabrain Bot data...</p>
+				<p>Waiting for runner data...</p>
 			</div>
-		{:else if payload}
-			<LocationsTable
-				resultType={payload.resultType}
-				predictions={payload.predictions?.slice(0, 5) || []}
-				{pos}
-			/>
+		{:else}
+			<div class="flex flex-col gap-4 p-4">
+				{#each runners as runner (runner.name)}
+					<div
+						class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status === 'offline'
+							? 'opacity-60'
+							: ''}"
+					>
+						<!-- Runner Header -->
+						<div class="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+							<div class="flex items-center gap-2">
+								<span class="relative flex h-3 w-3">
+									{#if runner.status === 'online'}
+										<span
+											class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+										></span>
+									{/if}
+									<span
+										class="relative inline-flex h-3 w-3 rounded-full {runner.status === 'online'
+											? 'bg-emerald-500'
+											: 'bg-red-500'}"
+									></span>
+								</span>
+								<span class="text-lg font-semibold text-white">{runner.name}</span>
+								{#if runner.status === 'offline'}
+									<span class="text-xs text-red-400">(Offline)</span>
+								{/if}
+							</div>
+							{#if runner.boat && runner.boat.boatState !== 'NONE'}
+								<Badge
+									variant="outline"
+									class="flex items-center gap-2 border-white/20 bg-black/40 px-2 py-1 text-xs {getBoatColor(
+										runner.boat.boatState
+									)}"
+								>
+									{#if runner.boat.boatState === 'VALID'}
+										<img src="/images/boat_green.png" alt="Valid" class="h-3 w-3 object-contain" />
+									{:else if runner.boat.boatState === 'MEASURING'}
+										<img
+											src="/images/boat_blue.png"
+											alt="Measuring"
+											class="h-3 w-3 object-contain"
+										/>
+									{:else if runner.boat.boatState === 'ERROR'}
+										<img src="/images/boat_red.png" alt="Error" class="h-3 w-3 object-contain" />
+									{/if}
+									{runner.boat.boatState}
+								</Badge>
+							{/if}
+						</div>
 
-			<PlayerPosition {pos} />
+						<!-- Runner Data -->
+						{#if !runner.stronghold}
+							<div class="flex h-20 items-center justify-center text-muted-foreground">
+								<p>Waiting for data...</p>
+							</div>
+						{:else if viewMode === 'compact'}
+							<!-- Compact View -->
+							<div class="space-y-2">
+								<LocationsTable
+									resultType={runner.stronghold.resultType}
+									predictions={runner.stronghold.predictions?.slice(0, 1) || []}
+									pos={runner.stronghold.playerPosition}
+								/>
+								<PlayerPosition pos={runner.stronghold.playerPosition} />
+							</div>
+						{:else}
+							<!-- Max View -->
+							<div class="space-y-0">
+								<LocationsTable
+									resultType={runner.stronghold.resultType}
+									predictions={runner.stronghold.predictions?.slice(0, 5) || []}
+									pos={runner.stronghold.playerPosition}
+								/>
 
-			<EyeThrows {throws} />
+								<PlayerPosition pos={runner.stronghold.playerPosition} />
 
-			<BlindMode blind={roomStore.blind ?? undefined} />
+								<EyeThrows throws={runner.stronghold.eyeThrows || []} />
 
-			<DivineMode divine={roomStore.divine ?? undefined} />
+								<BlindMode blind={runner.blind ?? undefined} />
 
-			<AllAdvancements allAdvancements={roomStore.allAdvancements ?? undefined} />
+								<DivineMode divine={runner.divine ?? undefined} />
+
+								<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
 		{/if}
 	</div>
 

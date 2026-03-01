@@ -102,11 +102,13 @@ export interface RoomMessage {
 	type: RoomMessageType;
 	ts: number;
 	source: RoomMessageSource;
+	runnerName: string;
 	payload: any;
 }
 
 export interface PresencePayload {
 	status: 'online' | 'offline';
+	name?: string;
 }
 
 export interface RoomClosedPayload {
