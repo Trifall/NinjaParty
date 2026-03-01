@@ -81,7 +81,8 @@ func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint strin
 				}
 				select {
 				case out <- msg:
-					c.logger.Info("fetched initial state", zap.String("type", c.msgType))
+					c.logger.Info("fetched initial state from Ninjabrain")
+					c.logger.Debug("initial state value: ", zap.String("type", c.msgType))
 				case <-ctx.Done():
 				default:
 				}
@@ -163,7 +164,7 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage) {
 					continue
 				}
 
-				c.logger.Info("received ninjabrain sse payload")
+				c.logger.Debug("received ninjabrain sse payload")
 
 				msg := RoomMessage{
 					Type:    c.msgType,

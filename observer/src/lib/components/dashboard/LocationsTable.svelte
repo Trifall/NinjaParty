@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ChunkPrediction, PlayerPosition, ResultType } from '$lib/types/stronghold';
 	import { settings } from '$lib/stores/settings.svelte';
+	import type { ChunkPrediction, PlayerPosition, ResultType } from '$lib/types/stronghold';
 	import {
 		chunkToNether,
 		getAngleDiffColor,
@@ -81,14 +81,12 @@
 				<tr class="border-b border-white/5 transition-colors hover:bg-white/5">
 					<td class="px-3 py-1.5 text-center">
 						(<span
-							class={settings.colorNegatives && coords[0] < 0
-								? 'text-red-400'
-								: 'text-gray-200'}>{coords[0]}</span
+							class={settings.colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
+							>{coords[0]}</span
 						>,
 						<span
-							class={settings.colorNegatives && coords[1] < 0
-								? 'text-red-400'
-								: 'text-gray-200'}>{coords[1]}</span
+							class={settings.colorNegatives && coords[1] < 0 ? 'text-red-400' : 'text-gray-200'}
+							>{coords[1]}</span
 						>)
 					</td>
 					<td class="px-3 py-1.5 text-center font-semibold" style="color: {certaintyCol}">
@@ -101,21 +99,17 @@
 					</td>
 					<td class="px-3 py-1.5 text-center">
 						(<span
-							class={settings.colorNegatives && nether[0] < 0
-								? 'text-red-400'
-								: 'text-gray-300'}>{nether[0]}</span
+							class={settings.colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
+							>{nether[0]}</span
 						>,
 						<span
-							class={settings.colorNegatives && nether[1] < 0
-								? 'text-red-400'
-								: 'text-gray-300'}>{nether[1]}</span
+							class={settings.colorNegatives && nether[1] < 0 ? 'text-red-400' : 'text-gray-300'}
+							>{nether[1]}</span
 						>)
 					</td>
 					<td class="whitespace-nowrap px-3 py-1.5 text-center">
 						{#if travel.angle !== null && travel.diff !== null}
-							<span class="text-gray-200"
-								>{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span
-							>
+							<span class="text-gray-200">{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span>
 							<span style="color: {getAngleDiffColor(travel.diff)}" class="ml-1.5"
 								>({travel.diff > 0 ? '→' : '←'} {Math.abs(travel.diff).toFixed(1)})</span
 							>

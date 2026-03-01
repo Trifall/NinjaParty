@@ -102,9 +102,6 @@ func (r *Relay) startClients() {
 }
 
 func (r *Relay) stopClientsLocked() {
-	if r.cancel != nil {
-		r.cancel()
-	}
 	for _, client := range r.sseClients {
 		client.Close()
 	}
@@ -115,6 +112,13 @@ func (r *Relay) stopClientsLocked() {
 		r.wsClient.Close()
 		r.wsClient = nil
 	}
+}
+
+func (r *Relay) stopAllClientsLocked() {
+	if r.cancel != nil {
+		r.cancel()
+	}
+	r.stopClientsLocked()
 }
 
 func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
@@ -130,14 +134,14 @@ func (r *Relay) CreateNewRoom() (*RoomResponse, error) {
 		return nil, err
 	}
 
+	r.ctx, r.cancel = context.WithCancel(context.Background())
+
 	r.roomRes = &RoomResponse{
 		RoomCode:   roomRes.RoomCode,
 		WriteToken: roomRes.WriteToken,
 	}
 
-	r.logger.Info("starting clients for new room", zap.String("code", roomRes.RoomCode))
-
-	r.ctx, r.cancel = context.WithCancel(context.Background())
+	r.logger.Info("room created", zap.String("code", roomRes.RoomCode))
 
 	endpoints := map[string]string{
 		"/api/v1/stronghold/events":       "stronghold_update",
@@ -204,8 +208,8 @@ func (r *Relay) FullLink() string {
 }
 
 func (r *Relay) Shutdown() {
-	r.logger.Info("shutting down relay")
+	r.logger.Info("closing room", zap.String("code", r.RoomCode()))
 	r.clientsMu.Lock()
 	defer r.clientsMu.Unlock()
-	r.stopClientsLocked()
+	r.stopAllClientsLocked()
 }

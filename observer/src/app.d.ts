@@ -2,15 +2,13 @@
 // for information about these interfaces
 declare global {
 	namespace App {
-		interface Locals {
-			user: DBUser | null;
-			isAdmin: boolean;
-		}
-		interface Platform {
+		// interface Locals {
+		// }
+		/* 		interface Platform {
 			env: {
-				PORTFOLIO_CACHE: KVNamespace;
 			};
 		}
+ */
 	}
 }
 

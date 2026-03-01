@@ -16,7 +16,12 @@ import (
 )
 
 func main() {
-	logger, _ := zap.NewDevelopment()
+	var logger *zap.Logger
+	if os.Getenv("DEBUG") == "1" {
+		logger, _ = zap.NewDevelopmentConfig().Build()
+	} else {
+		logger, _ = zap.NewDevelopment()
+	}
 	defer logger.Sync()
 
 	config, err := LoadConfig()
@@ -69,6 +74,7 @@ func main() {
 			systray.AddSeparator()
 			mOpen := systray.AddMenuItem("Open UI", "Open the relay UI")
 			mCopyCode := systray.AddMenuItem("Copy Room Code", "Copy the room code to clipboard")
+			mCopyLink := systray.AddMenuItem("Copy Link", "Copy the room link to clipboard")
 			mQuit := systray.AddMenuItem("Quit", "Close the relay")
 			mQuit.SetTooltip("Quit the relay application")
 
@@ -78,6 +84,8 @@ func main() {
 					browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
 				case <-mCopyCode.ClickedCh:
 					clipboard.WriteAll(relay.RoomCode())
+				case <-mCopyLink.ClickedCh:
+					clipboard.WriteAll(relay.FullLink())
 				case <-mQuit.ClickedCh:
 					logger.Info("shutting down relay via tray")
 					relay.Shutdown()

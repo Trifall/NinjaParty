@@ -62,6 +62,7 @@ func (api *API) Router() chi.Router {
 }
 
 func (api *API) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
+	api.logger.Debug("HandleCreateRoom called")
 	code, token, err := api.rooms.CreateRoom()
 	if err != nil {
 		api.logger.Error("failed to create room", zap.Error(err))
@@ -127,7 +128,7 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		CompressionMode:    websocket.CompressionNoContextTakeover,
-		InsecureSkipVerify: true, // We do our own origin validation above
+		InsecureSkipVerify: true, // own origin validation above
 	})
 	if err != nil {
 		api.logger.Error("websocket upgrade failed", zap.Error(err))
@@ -141,15 +142,17 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if isWriter {
 		api.handleWriter(ctx, c, room)
 	} else {
-		api.handleSpectator(ctx, c, room)
+		api.handleObserver(ctx, c, room)
 	}
 }
 
 func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomState) {
-	api.logger.Info("writer connected", zap.String("room", room.code))
+	api.logger.Info("runner connected", zap.String("room", room.code))
 
 	// ensure presence offline is sent on disconnect
 	defer func() {
+		api.logger.Debug("defer: starting cleanup", zap.String("room", room.code))
+
 		offlineMsg := RoomMessage{
 			Type:    "presence",
 			Ts:      time.Now().UnixMilli(),
@@ -157,10 +160,11 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 			Payload: json.RawMessage(`{"status":"offline"}`),
 		}
 		data, _ := json.Marshal(offlineMsg)
+		api.logger.Debug("defer: calling UpdateSnapshot", zap.String("room", room.code))
 		room.UpdateSnapshot("presence", data)
-		api.logger.Info("writer disconnected", zap.String("room", room.code))
+		api.logger.Debug("defer: runner disconnected", zap.String("room", room.code))
 
-		// Notify spectators that room is closing, then close the room
+		// notify observers that room is closing, then close the room
 		roomClosedMsg := RoomMessage{
 			Type:    "room_closed",
 			Ts:      time.Now().UnixMilli(),
@@ -168,10 +172,13 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 			Payload: json.RawMessage(`{"message":"The runner has closed the relay. This room is no longer active."}`),
 		}
 		roomClosedData, _ := json.Marshal(roomClosedMsg)
-		room.BroadcastToSpectators(roomClosedData)
+		api.logger.Debug("defer: before broadcast", zap.String("room", room.code))
+		room.BroadcastToObservers(roomClosedData)
+		api.logger.Debug("defer: after broadcast", zap.String("room", room.code))
 
-		// Close the room and kick all spectators - runner has left
+		// close the room and kick all observers - runner has left
 		api.rooms.CloseRoom(room.code)
+		api.logger.Debug("defer: room closed successfully", zap.String("room", room.code))
 	}()
 
 	// send online presence immediately
@@ -199,21 +206,21 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 			continue
 		}
 
-		// When wsjson.Read completes it parses it to []byte, no need to wrap again.
+		// when wsjson.Read completes it parses it to []byte, no need to wrap again
 		room.UpdateSnapshot(msgType.Type, v)
 	}
 }
 
-func (api *API) handleSpectator(ctx context.Context, c *websocket.Conn, room *RoomState) {
-	api.logger.Info("spectator connected", zap.String("room", room.code))
+func (api *API) handleObserver(ctx context.Context, c *websocket.Conn, room *RoomState) {
+	api.logger.Info("observer connected", zap.String("room", room.code))
 
-	spec := &SpectatorClient{
+	spec := &ObserverClient{
 		ch:   make(chan []byte, 16),
 		stop: make(chan struct{}),
 	}
 
-	lastSnaps := room.AddSpectator(spec)
-	defer room.RemoveSpectator(spec)
+	lastSnaps := api.rooms.AddObserver(room.code, spec)
+	defer api.rooms.RemoveObserver(room.code, spec)
 
 	// send all last snapshots immediately
 	for _, snap := range lastSnaps {
@@ -222,9 +229,23 @@ func (api *API) handleSpectator(ctx context.Context, c *websocket.Conn, room *Ro
 		}
 	}
 
+	// read from WebSocket to detect disconnect
+	disconnected := make(chan struct{})
+	go func() {
+		defer close(disconnected)
+		for {
+			_, _, err := c.Read(ctx)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-disconnected:
 			return
 		case <-spec.stop:
 			c.Close(4000, "room closed")

@@ -37,6 +37,12 @@ export class RoomConnection {
 	constructor(code: string, isEmbed: boolean = false) {
 		this.code = code;
 		this.isEmbed = isEmbed;
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('beforeunload', () => {
+				this.disconnect();
+			});
+		}
 	}
 
 	connect() {

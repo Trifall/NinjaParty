@@ -2,7 +2,9 @@
 	import type { DivineResult } from '$lib/types/stronghold';
 
 	interface Props {
-		divine: { isDivineModeEnabled: boolean; divineResult: DivineResult | Record<string, never> } | undefined;
+		divine:
+			| { isDivineModeEnabled: boolean; divineResult: DivineResult | Record<string, never> }
+			| undefined;
 	}
 
 	let { divine }: Props = $props();
@@ -29,8 +31,7 @@
 		</div>
 		<div class="flex items-center gap-6 text-sm">
 			<span class="text-gray-400"
-				>Fossil X: <span class="font-semibold text-amber-300"
-					>{result.fossilXCoordinate}</span
+				>Fossil X: <span class="font-semibold text-amber-300">{result.fossilXCoordinate}</span
 				></span
 			>
 			<span class="text-gray-400"

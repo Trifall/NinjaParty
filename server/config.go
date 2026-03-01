@@ -18,7 +18,7 @@ func LoadConfig() (*Config, error) {
 	godotenv.Load()
 
 	viper.SetDefault("LISTEN_ADDR", ":8080")
-	viper.SetDefault("OBSERVER_URL", "https://np.trifall.com")
+	viper.SetDefault("OBSERVER_URL", "https://np.trifall.com/")
 	viper.SetDefault("ROOM_TTL", 2*time.Hour) // 2 hour inactivity TTL
 
 	viper.AutomaticEnv()

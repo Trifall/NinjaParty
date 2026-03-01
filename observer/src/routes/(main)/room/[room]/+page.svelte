@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>Room {data.room.toUpperCase()} - NinjaParty</title>
+	<title>Room - NinjaParty</title>
 </svelte:head>
 
 <div class="h-full min-h-[calc(100vh-64px)] w-full p-4 lg:p-8">

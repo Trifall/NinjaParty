@@ -9,10 +9,16 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	logger, _ := zap.NewDevelopment()
+	var logger *zap.Logger
+	if os.Getenv("DEBUG") == "1" {
+		logger, _ = zap.NewDevelopmentConfig().Build(zap.AddStacktrace(zapcore.FatalLevel))
+	} else {
+		logger, _ = zap.NewDevelopment()
+	}
 	defer logger.Sync()
 
 	config, err := LoadConfig()
@@ -20,7 +26,7 @@ func main() {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
-	rm := NewRoomManager(config.RoomTTL)
+	rm := NewRoomManager(config.RoomTTL, logger)
 	api := NewAPI(config, logger, rm)
 
 	srv := &http.Server{
@@ -33,7 +39,7 @@ func main() {
 
 	go rm.StartEvictionTicker(ctx, 5*time.Minute) // check for idle rooms every 5 min
 
-	logger.Info("Starting server", zap.String("addr", config.ListenAddr))
+	logger.Info("starting server", zap.String("addr", config.ListenAddr))
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -42,7 +48,7 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	logger.Info("Shutting down gracefully...")
+	logger.Info("shutting down gracefully...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -51,5 +57,5 @@ func main() {
 		logger.Fatal("server forced to shutdown", zap.Error(err))
 	}
 
-	logger.Info("Server exiting")
+	logger.Info("server exiting")
 }

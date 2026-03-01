@@ -27,20 +27,13 @@
 			All Advancements
 		</div>
 		<div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-			{#each [
-				{ label: 'Spawn', data: allAdvancements.spawn },
-				{ label: 'Outpost', data: allAdvancements.outpost },
-				{ label: 'Monument', data: allAdvancements.monument },
-				{ label: 'Stronghold', data: allAdvancements.stronghold },
-				{ label: 'Deep Dark', data: allAdvancements.deepDark },
-			] as item (item.label)}
+			{#each [{ label: 'Spawn', data: allAdvancements.spawn }, { label: 'Outpost', data: allAdvancements.outpost }, { label: 'Monument', data: allAdvancements.monument }, { label: 'Stronghold', data: allAdvancements.stronghold }, { label: 'Deep Dark', data: allAdvancements.deepDark }] as item (item.label)}
 				<span class="text-gray-400"
 					>{item.label}:
 					{#if item.data && 'xInOverworld' in item.data}
 						<span class="text-cyan-300"
-							>({item.data.xInOverworld?.toFixed(0) ?? '?'}, {item.data.zInOverworld?.toFixed(
-								0
-							) ?? '?'})</span
+							>({item.data.xInOverworld?.toFixed(0) ?? '?'}, {item.data.zInOverworld?.toFixed(0) ??
+								'?'})</span
 						>
 					{:else}
 						<span class="text-gray-500">-</span>

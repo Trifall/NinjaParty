@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { PlayerPosition } from '$lib/types/stronghold';
 	import { settings } from '$lib/stores/settings.svelte';
+	import type { PlayerPosition } from '$lib/types/stronghold';
 	import { normalizeMinecraftAngle } from '$lib/utils/stronghold';
 
 	interface Props {
@@ -12,13 +12,9 @@
 
 {#if pos}
 	{@const displayX =
-		pos.isInNether && pos.xInOverworld !== undefined
-			? pos.xInOverworld / 8
-			: pos.xInOverworld}
+		pos.isInNether && pos.xInOverworld !== undefined ? pos.xInOverworld / 8 : pos.xInOverworld}
 	{@const displayZ =
-		pos.isInNether && pos.zInOverworld !== undefined
-			? pos.zInOverworld / 8
-			: pos.zInOverworld}
+		pos.isInNether && pos.zInOverworld !== undefined ? pos.zInOverworld / 8 : pos.zInOverworld}
 	<div
 		class="flex items-center justify-between border-t border-white/20 bg-white/[0.02] px-4 py-2.5 text-base"
 	>

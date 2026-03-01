@@ -100,7 +100,8 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 				}
 
 				payloadBytes, _ := json.Marshal(msg.Payload)
-				c.logger.Info("sent payload to central websocket", zap.String("payload", string(payloadBytes)))
+				c.logger.Info("sent payload for " + msg.Type + " to central server")
+				c.logger.Debug("payload: ", zap.String("payload", string(payloadBytes)))
 			}
 		}
 	}, b, func(err error, t time.Duration) {

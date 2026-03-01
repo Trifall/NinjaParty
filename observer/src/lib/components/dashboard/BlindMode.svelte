@@ -2,7 +2,9 @@
 	import type { BlindResult } from '$lib/types/stronghold';
 
 	interface Props {
-		blind: { isBlindModeEnabled: boolean; blindResult: BlindResult | Record<string, never> } | undefined;
+		blind:
+			| { isBlindModeEnabled: boolean; blindResult: BlindResult | Record<string, never> }
+			| undefined;
 	}
 
 	let { blind }: Props = $props();
@@ -74,7 +76,10 @@
 		</div>
 		<div class="flex flex-col gap-1 text-sm">
 			<span class="text-gray-200">
-				Blind coords ({roundedX}, {roundedZ}) are <span class={getEvaluationColor(result.evaluation)}>{getEvaluationText(result.evaluation)}</span>.
+				Blind coords ({roundedX}, {roundedZ}) are
+				<span class={getEvaluationColor(result.evaluation)}
+					>{getEvaluationText(result.evaluation)}</span
+				>.
 			</span>
 			<span class="text-gray-200">
 				{highrollPct}% chance of &lt;{threshold} block blind

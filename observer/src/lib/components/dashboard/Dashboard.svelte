@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Eye, EyeOff, Home, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { Eye, EyeOff, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
