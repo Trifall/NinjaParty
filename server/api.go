@@ -57,6 +57,7 @@ func (api *API) Router() chi.Router {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/rooms", api.HandleCreateRoom)
 		r.Post("/rooms/{code}/join", api.HandleJoinRoom)
+		r.Post("/rooms/{code}/force-close", api.HandleForceCloseRoom)
 		r.Get("/rooms/{code}/exists", api.HandleRoomExists)
 	})
 
@@ -102,7 +103,7 @@ func (api *API) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, writeToken, creatorToken, err := api.rooms.CreateRoom(req.RunnerName, req.Password)
+	code, writeToken, createdAt, err := api.rooms.CreateRoom(req.RunnerName, req.Password)
 	if err != nil {
 		api.logger.Error("failed to create room", zap.Error(err))
 		http.Error(w, "failed to create room", http.StatusInternalServerError)
@@ -110,16 +111,18 @@ func (api *API) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"roomCode":     code,
-		"writeToken":   writeToken,
-		"creatorToken": creatorToken,
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"roomCode":   code,
+		"writeToken": writeToken,
+		"createdAt":  createdAt,
+		"isCreator":  true,
 	})
 }
 
 type JoinRoomRequest struct {
 	RunnerName string `json:"runnerName"`
 	Password   string `json:"password,omitempty"`
+	PrevToken  string `json:"prevToken,omitempty"`
 }
 
 func (api *API) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +145,7 @@ func (api *API) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeToken, err := api.rooms.JoinRoom(code, req.RunnerName, req.Password)
+	writeToken, isCreator, createdAt, err := api.rooms.JoinRoom(code, req.RunnerName, req.Password, req.PrevToken)
 	if err != nil {
 		api.logger.Warn("failed to join room", zap.String("code", code), zap.Error(err))
 		if strings.Contains(err.Error(), "room not found") {
@@ -158,8 +161,10 @@ func (api *API) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"writeToken": writeToken,
+		"createdAt":  createdAt,
+		"isCreator":  isCreator,
 	})
 }
 
@@ -171,6 +176,39 @@ func (api *API) HandleRoomExists(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "room not found", http.StatusNotFound)
 	}
+}
+
+type ForceCloseRequest struct {
+	WriteToken string `json:"writeToken"`
+}
+
+func (api *API) HandleForceCloseRoom(w http.ResponseWriter, r *http.Request) {
+	code := chi.URLParam(r, "code")
+
+	var req ForceCloseRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.WriteToken == "" {
+		http.Error(w, "writeToken is required", http.StatusBadRequest)
+		return
+	}
+
+	err := api.rooms.ForceCloseRoom(code, req.WriteToken)
+	if err != nil {
+		if strings.Contains(err.Error(), "room not found") {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else if strings.Contains(err.Error(), "unauthorized") {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -246,41 +284,63 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomState, runnerName, token string) {
 	api.logger.Info("runner connected", zap.String("room", room.code), zap.String("runner", runnerName))
 
+	isCreator := room.IsWriterTokenCreator(token)
+
+	// mark as connected
+	room.mu.Lock()
+	if w, ok := room.writers[runnerName]; ok {
+		w.connected = true
+	}
+	room.mu.Unlock()
+
+	writerCtx, writerCancel := context.WithCancel(ctx)
+	defer writerCancel()
+
+	go func() {
+		select {
+		case <-writerCtx.Done():
+		case <-room.stop:
+			c.Close(websocket.StatusCode(4000), "room closed")
+		}
+	}()
+
 	defer func() {
+		// mark as disconnected
+		room.mu.Lock()
+		if w, ok := room.writers[runnerName]; ok {
+			w.connected = false
+		}
+		room.mu.Unlock()
+
+		presencePayload := PresencePayload{
+			Status:    "offline",
+			IsCreator: isCreator,
+		}
+		payloadBytes, _ := json.Marshal(presencePayload)
 		offlineMsg := RoomMessage{
 			Type:       "presence",
 			Ts:         time.Now().UnixMilli(),
 			Source:     "server",
 			RunnerName: runnerName,
-			Payload:    json.RawMessage(`{"status":"offline"}`),
+			Payload:    payloadBytes,
 		}
 		data, _ := json.Marshal(offlineMsg)
 		room.UpdateSnapshot(runnerName, "presence", data)
 
-		if room.IsCreator(runnerName, token) {
-			// cancel grace period before closing room
-			room.cancelGracePeriod()
-			roomClosedMsg := RoomMessage{
-				Type:       "room_closed",
-				Ts:         time.Now().UnixMilli(),
-				Source:     "server",
-				RunnerName: runnerName,
-				Payload:    json.RawMessage(`{"message":"The room creator has closed the relay. This room is no longer active."}`),
-			}
-			roomClosedData, _ := json.Marshal(roomClosedMsg)
-			room.BroadcastToObservers(roomClosedData)
-			api.rooms.CloseRoom(room.code)
-		} else {
-			room.WriterDisconnected(runnerName)
-		}
+		room.WriterDisconnected(runnerName)
 	}()
 
+	presencePayload := PresencePayload{
+		Status:    "online",
+		IsCreator: isCreator,
+	}
+	payloadBytes, _ := json.Marshal(presencePayload)
 	onlineMsg := RoomMessage{
 		Type:       "presence",
 		Ts:         time.Now().UnixMilli(),
 		Source:     "server",
 		RunnerName: runnerName,
-		Payload:    json.RawMessage(`{"status":"online"}`),
+		Payload:    payloadBytes,
 	}
 	data, _ := json.Marshal(onlineMsg)
 	room.UpdateSnapshot(runnerName, "presence", data)
@@ -307,6 +367,23 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 
 func (api *API) handleObserver(ctx context.Context, c *websocket.Conn, room *RoomState) {
 	api.logger.Info("observer connected", zap.String("room", room.code))
+
+	// send room info first
+	room.mu.RLock()
+	createdAt := room.createdAt
+	room.mu.RUnlock()
+
+	infoMsg := RoomMessage{
+		Type:       "room_info",
+		Ts:         time.Now().UnixMilli(),
+		Source:     "server",
+		RunnerName: "",
+		Payload:    json.RawMessage(fmt.Sprintf(`{"createdAt":%d}`, createdAt.UnixMilli())),
+	}
+	infoData, _ := json.Marshal(infoMsg)
+	if err := c.Write(ctx, websocket.MessageText, infoData); err != nil {
+		return
+	}
 
 	spec := &ObserverClient{
 		ch:   make(chan []byte, 16),
@@ -340,7 +417,7 @@ func (api *API) handleObserver(ctx context.Context, c *websocket.Conn, room *Roo
 		case <-disconnected:
 			return
 		case <-spec.stop:
-			c.Close(4000, "room closed")
+			c.Close(websocket.StatusCode(4000), "room closed")
 			return
 		case msg := <-spec.ch:
 			if err := c.Write(ctx, websocket.MessageText, msg); err != nil {

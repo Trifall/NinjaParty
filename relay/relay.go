@@ -9,11 +9,12 @@ import (
 )
 
 type Relay struct {
-	config      *Config
-	logger      *zap.Logger
-	runnerName  string
-	roomRes     *RoomResponse
-	messageChan chan RoomMessage
+	config        *Config
+	logger        *zap.Logger
+	runnerName    string
+	roomRes       *RoomResponse
+	roomCreatedAt time.Time
+	messageChan   chan RoomMessage
 
 	clientsMu             sync.Mutex
 	sseClients            []*SSEClient
@@ -40,11 +41,11 @@ func (r *Relay) SetRunnerName(name string) {
 	r.runnerName = name
 }
 
-func (r *Relay) StartRoom(roomCode, writeToken, creatorToken string) error {
+func (r *Relay) StartRoom(roomCode, writeToken string) error {
 	r.roomRes = &RoomResponse{
-		RoomCode:     roomCode,
-		WriteToken:   writeToken,
-		CreatorToken: creatorToken,
+		RoomCode:   roomCode,
+		WriteToken: writeToken,
+		IsCreator:  true,
 	}
 
 	r.logger.Info("starting clients for room", zap.String("code", roomCode))
@@ -104,6 +105,10 @@ func (r *Relay) startClients() {
 		r.config.TLSSkipVerify,
 		time.Duration(r.config.HeartbeatIntvl)*time.Second,
 		r.logger,
+		func() {
+			r.logger.Info("room closed by server, shutting down relay")
+			go r.Shutdown()
+		},
 	)
 	go r.wsClient.Run(r.ctx, r.messageChan)
 }
@@ -141,10 +146,12 @@ func (r *Relay) CreateNewRoom(password string) (*RoomResponse, error) {
 	}
 
 	r.roomRes = &RoomResponse{
-		RoomCode:     roomRes.RoomCode,
-		WriteToken:   roomRes.WriteToken,
-		CreatorToken: roomRes.CreatorToken,
+		RoomCode:   roomRes.RoomCode,
+		WriteToken: roomRes.WriteToken,
+		CreatedAt:  roomRes.CreatedAt,
+		IsCreator:  roomRes.IsCreator,
 	}
+	r.roomCreatedAt = time.UnixMilli(roomRes.CreatedAt)
 
 	r.logger.Info("room created", zap.String("code", roomRes.RoomCode))
 
@@ -153,14 +160,14 @@ func (r *Relay) CreateNewRoom(password string) (*RoomResponse, error) {
 	return roomRes, nil
 }
 
-func (r *Relay) JoinRoom(roomCode, password string) (*RoomResponse, error) {
+func (r *Relay) JoinRoom(roomCode, password, prevWriteToken string) (*RoomResponse, error) {
 	r.logger.Info("joining room", zap.String("code", roomCode))
 
 	r.clientsMu.Lock()
 	r.stopClientsLocked()
 	r.clientsMu.Unlock()
 
-	roomRes, err := joinRoom(r.config.ServerAPIURL, roomCode, r.runnerName, password)
+	roomRes, err := joinRoom(r.config.ServerAPIURL, roomCode, r.runnerName, password, prevWriteToken)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +175,10 @@ func (r *Relay) JoinRoom(roomCode, password string) (*RoomResponse, error) {
 	r.roomRes = &RoomResponse{
 		RoomCode:   roomRes.RoomCode,
 		WriteToken: roomRes.WriteToken,
+		CreatedAt:  roomRes.CreatedAt,
+		IsCreator:  roomRes.IsCreator,
 	}
+	r.roomCreatedAt = time.UnixMilli(roomRes.CreatedAt)
 
 	r.logger.Info("joined room", zap.String("code", roomRes.RoomCode))
 
@@ -189,7 +199,7 @@ func (r *Relay) RunnerName() string {
 }
 
 func (r *Relay) IsCreator() bool {
-	return r.roomRes != nil && r.roomRes.CreatorToken != ""
+	return r.roomRes != nil && r.roomRes.IsCreator
 }
 
 func (r *Relay) NinjabrainConnected() bool {
@@ -202,11 +212,17 @@ func (r *Relay) FullLink() string {
 	return r.config.ObserverURL + r.RoomCode()
 }
 
+func (r *Relay) RoomCreatedAt() time.Time {
+	return r.roomCreatedAt
+}
+
 func (r *Relay) Shutdown() {
 	r.logger.Info("closing room", zap.String("code", r.RoomCode()))
 	r.clientsMu.Lock()
 	defer r.clientsMu.Unlock()
 	r.stopAllClientsLocked()
+	r.roomRes = nil
+	r.roomCreatedAt = time.Time{}
 }
 
 func (r *Relay) ServerAPIURL() string {

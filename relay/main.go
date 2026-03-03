@@ -44,26 +44,24 @@ func main() {
 	if state.RoomCode != "" && state.RunnerName != "" {
 		if roomExists(config.ServerAPIURL, state.RoomCode) {
 			logger.Info("attempting to auto-rejoin saved room", zap.String("code", state.RoomCode))
-			roomRes, err := relay.JoinRoom(state.RoomCode, "")
+			roomRes, err := relay.JoinRoom(state.RoomCode, state.Password, state.WriteToken)
 			if err != nil {
 				logger.Warn("failed to auto-rejoin room", zap.Error(err))
 				// clear the saved room code since we couldn't rejoin
 				state.RoomCode = ""
-				state.CreatorToken = ""
+				state.WriteToken = ""
 				saveRelayState(state)
 			} else {
 				logger.Info("successfully auto-rejoined room", zap.String("code", roomRes.RoomCode))
 				// update state with new tokens
 				state.RoomCode = roomRes.RoomCode
-				if roomRes.CreatorToken != "" {
-					state.CreatorToken = roomRes.CreatorToken
-				}
+				state.WriteToken = roomRes.WriteToken
 				saveRelayState(state)
 			}
 		} else {
 			logger.Info("saved room no longer exists", zap.String("code", state.RoomCode))
 			state.RoomCode = ""
-			state.CreatorToken = ""
+			state.WriteToken = ""
 			saveRelayState(state)
 		}
 	}

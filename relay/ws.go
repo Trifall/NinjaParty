@@ -20,14 +20,16 @@ type WSClient struct {
 	heartbeatIntvl time.Duration
 	logger         *zap.Logger
 	ctxCancel      context.CancelFunc
+	onRoomClosed   func()
 }
 
-func NewWSClient(serverURL, room, runnerName, token string, tlsSkipVerify bool, heartbeatIntvl time.Duration, logger *zap.Logger) *WSClient {
+func NewWSClient(serverURL, room, runnerName, token string, tlsSkipVerify bool, heartbeatIntvl time.Duration, logger *zap.Logger, onRoomClosed func()) *WSClient {
 	return &WSClient{
 		url:            fmt.Sprintf("%s?room=%s&runnerName=%s&token=%s", serverURL, room, runnerName, token),
 		tlsSkipVerify:  tlsSkipVerify,
 		heartbeatIntvl: heartbeatIntvl,
 		logger:         logger,
+		onRoomClosed:   onRoomClosed,
 	}
 }
 
@@ -55,10 +57,17 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 			},
 		}
 
-		conn, _, err := websocket.Dial(ctx, c.url, &websocket.DialOptions{
+		conn, resp, err := websocket.Dial(ctx, c.url, &websocket.DialOptions{
 			HTTPClient: client,
 		})
 		if err != nil {
+			if resp != nil && resp.StatusCode == http.StatusNotFound {
+				c.logger.Info("websocket dial returned 404, room is closed")
+				if c.onRoomClosed != nil {
+					c.onRoomClosed()
+				}
+				return backoff.Permanent(err)
+			}
 			return err
 		}
 		defer conn.CloseNow()
@@ -72,6 +81,12 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 				// by discarding the data, coder/websocket's internal frame parser completes the ping
 				_, _, err := conn.Read(readCtx)
 				if err != nil {
+					if websocket.CloseStatus(err) == websocket.StatusCode(4000) {
+						c.logger.Info("received room closed close frame")
+						if c.onRoomClosed != nil {
+							c.onRoomClosed()
+						}
+					}
 					readCancel()
 					return
 				}

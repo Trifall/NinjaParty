@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -105,25 +106,37 @@ const uiTemplate = `
 			to   { opacity: 1; transform: translateY(0); }
 		}
 
+		/* ── Status Grid ─────────────────────────────────── */
+		.status-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 8px;
+			margin-bottom: 24px;
+		}
+
 		.status {
-			display: inline-flex;
+			display: flex;
 			align-items: center;
+			justify-content: center;
 			gap: 7px;
-			font-size: 12px;
-			font-weight: 500;
+			font-size: 11px;
+			font-weight: 600;
 			color: #10b981;
-			background: rgba(16,185,129,0.1);
+			background: rgba(16,185,129,0.08);
 			border: 1px solid rgba(16,185,129,0.2);
-			border-radius: 999px;
-			padding: 4px 12px;
-			margin-bottom: 20px;
-			letter-spacing: 0.04em;
+			border-radius: 10px;
+			padding: 10px 14px;
+			letter-spacing: 0.05em;
 			text-transform: uppercase;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 
 		.status-dot {
 			width: 6px;
 			height: 6px;
+			flex-shrink: 0;
 			background: #10b981;
 			border-radius: 50%;
 			animation: pulse 2s ease infinite;
@@ -131,12 +144,27 @@ const uiTemplate = `
 
 		.status-disconnected {
 			color: #f59e0b;
-			background: rgba(245,158,11,0.1);
+			background: rgba(245,158,11,0.08);
 			border-color: rgba(245,158,11,0.2);
 		}
 
 		.status-disconnected .status-dot {
 			background: #f59e0b;
+		}
+
+		.status-uptime {
+			color: #6366f1;
+			background: rgba(99,102,241,0.08);
+			border-color: rgba(99,102,241,0.2);
+		}
+
+		.status-runner {
+			color: #10b981;
+			background: rgba(16,185,129,0.08);
+			border-color: rgba(16,185,129,0.2);
+			font-size: 11px;
+			letter-spacing: 0.03em;
+			text-transform: none;
 		}
 
 		@keyframes pulse {
@@ -203,11 +231,11 @@ const uiTemplate = `
 			background: rgba(255,255,255,0.04);
 			border: 1px solid rgba(255,255,255,0.08);
 			border-radius: 10px;
-			padding: 11px 14px;
+			padding: 12px 14px;
 			font-size: 13px;
 			color: rgba(255,255,255,0.8);
 			outline: none;
-			cursor: pointer;
+			cursor: text;
 			transition: border-color 0.2s;
 			min-width: 0;
 		}
@@ -298,6 +326,8 @@ const uiTemplate = `
 			border-radius: 10px;
 			color: rgba(255,255,255,0.6);
 			cursor: pointer;
+			font-size: 13px;
+			font-weight: 500;
 			transition: all 0.2s;
 		}
 
@@ -321,6 +351,11 @@ const uiTemplate = `
 
 		.form-group {
 			margin-bottom: 16px;
+		}
+
+		.btn-action-row {
+			display: flex;
+			justify-content: flex-end;
 		}
 
 		.runner-badge {
@@ -498,7 +533,9 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
+			</div>
 		</div>
 
 		<div class="panel" id="panelJoin">
@@ -508,7 +545,9 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="joinPassword" placeholder="Password (if required)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
+			</div>
 		</div>
 
 		<div id="setupError" class="error"></div>
@@ -521,14 +560,17 @@ const uiTemplate = `
 		<div class="runner-badge">
 			<span>Runner: {{.RunnerName}}</span>
 		</div>
+		<input type="hidden" id="runnerName" value="{{.RunnerName}}" />
 
-		<div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 16px; margin-bottom: 20px; text-align: center; color: #10b981;">
+		<div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center; color: #10b981;">
 			Room <strong>{{.SavedRoomCode}}</strong> is still active. You can rejoin or start fresh.
 		</div>
 
-		<button class="btn-primary" style="width:100%; margin-bottom: 12px;" onclick="rejoinRoom()">Rejoin Room {{.SavedRoomCode}}</button>
+		<div class="btn-action-row" style="margin-bottom: 24px;">
+			<button class="btn-primary" onclick="rejoinRoom()">↩ Rejoin Room {{.SavedRoomCode}}</button>
+		</div>
 
-		<div class="tabs" style="margin-top: 24px;">
+		<div class="tabs">
 			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create New Room</div>
 			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Different Room</div>
 		</div>
@@ -537,7 +579,9 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
+			</div>
 		</div>
 
 		<div class="panel" id="panelJoin">
@@ -547,7 +591,9 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="joinPassword" placeholder="Password (if required)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
+			</div>
 		</div>
 
 		<div id="setupError" class="error"></div>
@@ -561,6 +607,10 @@ const uiTemplate = `
 			The room you were in has expired or been closed.
 		</div>
 
+		<div class="form-group">
+			<input type="text" id="runnerName" placeholder="Your name (max 24 chars)" maxlength="24" value="{{.RunnerName}}" />
+		</div>
+
 		<div class="tabs">
 			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create Room</div>
 			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Room</div>
@@ -570,7 +620,9 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="createRoom()">Create Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
+			</div>
 		</div>
 
 		<div class="panel" id="panelJoin">
@@ -580,25 +632,35 @@ const uiTemplate = `
 			<div class="form-group">
 				<input type="password" id="joinPassword" placeholder="Password (if required)" />
 			</div>
-			<button class="btn-primary" style="width:100%" onclick="joinRoom()">Join Room</button>
+			<div class="btn-action-row">
+				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
+			</div>
 		</div>
 
 		<div id="setupError" class="error"></div>
 	</div>
 	{{else}}
 	<div class="card">
-		<div class="status">
-			<span class="status-dot"></span>
-			Relay Active
+		<!-- ── 2×2 status grid ── -->
+		<div class="status-grid">
+			<div class="status">
+				<span class="status-dot"></span>
+				Relay Active
+			</div>
+			<div id="ninjabrainStatus" class="status status-disconnected">
+				<span class="status-dot"></span>
+				<span id="ninjabrainStatusText">Waiting for Ninjabrain…</span>
+			</div>
+			<div class="status status-uptime">
+				<span class="status-dot" style="background:#6366f1;animation:none;"></span>
+				<span id="uptime">--:--:--</span>
+			</div>
+			<div class="status status-runner">
+				<span class="status-dot" style="background:#10b981;animation:none;"></span>
+				Runner: {{.RunnerName}}
+			</div>
 		</div>
-		<div id="ninjabrainStatus" class="status status-disconnected">
-			<span class="status-dot"></span>
-			<span id="ninjabrainStatusText">Waiting for Ninjabrain...</span>
-		</div>
-
-		<div class="runner-badge">
-			<span>Runner: {{.RunnerName}}</span>
-		</div>
+		<input type="hidden" id="runnerName" value="{{.RunnerName}}" />
 
 		<h1>NinjaParty</h1>
 		<p class="subtitle">Share the link below with your observer to get started.</p>
@@ -624,7 +686,8 @@ const uiTemplate = `
 		</div>
 		<button class="btn-help" onclick="showApiHelp()">How do I enable the Ninjabrain API?</button>
 		{{if .IsCreator}}
-		<button class="btn-danger btn-close" onclick="showForceCloseDialog()">FORCE CLOSE ROOM</button>
+		<button class="btn-close" onclick="showCloseDialog()">LEAVE ROOM</button>
+		<button class="btn-danger btn-close" style="margin-top: 8px;" onclick="showForceCloseDialog()">FORCE CLOSE ROOM</button>
 		{{else}}
 		<button class="btn-close" onclick="showCloseDialog()">LEAVE ROOM</button>
 		{{end}}
@@ -769,23 +832,47 @@ const uiTemplate = `
 			location.reload();
 		}
 		{{else}}
+		var roomCreatedAt = 0;
+
+		function formatUptime() {
+			if (!roomCreatedAt) return '--:--:--';
+			var totalSeconds = Math.floor((Date.now() - roomCreatedAt) / 1000);
+			var hours = Math.floor(totalSeconds / 3600);
+			var minutes = Math.floor((totalSeconds % 3600) / 60);
+			var seconds = totalSeconds % 60;
+			return [hours, minutes, seconds].map(function(v) { return String(v).padStart(2, '0'); }).join(':');
+		}
+
 		function updateNinjabrainStatus() {
 			fetch('/status')
 				.then(function(response) { return response.json(); })
 				.then(function(data) {
+					if (data.isActive === false && originalRoomCode !== "") {
+						location.reload();
+						return;
+					}
+
 					var statusEl = document.getElementById('ninjabrainStatus');
 					var statusText = document.getElementById('ninjabrainStatusText');
 					if (data.ninjabrainConnected) {
 						statusEl.classList.remove('status-disconnected');
-						statusText.textContent = 'Ninjabrain API Connected';
+						statusText.textContent = 'Ninjabrain Connected';
 					} else {
 						statusEl.classList.add('status-disconnected');
-						statusText.textContent = 'Waiting for Ninjabrain...';
+						statusText.textContent = 'Waiting for Ninjabrain…';
+					}
+					if (data.roomCreatedAt) {
+						roomCreatedAt = data.roomCreatedAt;
 					}
 				})
 				.catch(function() {
 				});
 		}
+
+		setInterval(function() {
+			var uptimeEl = document.getElementById('uptime');
+			if (uptimeEl) uptimeEl.textContent = formatUptime();
+		}, 1000);
 
 		setInterval(updateNinjabrainStatus, 2000);
 		updateNinjabrainStatus();
@@ -837,9 +924,9 @@ const uiTemplate = `
 			document.getElementById('closeDialog').style.display = 'none';
 		}
 
-		function confirmClose() {
+		async function confirmClose() {
 			closeCloseDialog();
-			fetch('/close', { method: 'POST' });
+			await fetch('/close', { method: 'POST' });
 			location.href = '/';
 		}
 
@@ -851,9 +938,9 @@ const uiTemplate = `
 			document.getElementById('forceCloseDialog').style.display = 'none';
 		}
 
-		function confirmForceClose() {
+		async function confirmForceClose() {
 			closeForceCloseDialog();
-			fetch('/force-close', { method: 'POST' });
+			await fetch('/force-close', { method: 'POST' });
 			location.href = '/';
 		}
 
@@ -910,7 +997,15 @@ func (u *UI) Start() error {
 		staleRoom := false
 		showRejoin := false
 
-		if state.RoomCode != "" && !isActive && state.RunnerName != "" {
+		// check if room still exists even if we think we're active
+		if roomCode != "" && isActive {
+			if !roomExists(u.relay.ServerAPIURL(), roomCode) {
+				staleRoom = true
+				isActive = false
+				u.relay.Shutdown()
+				clearRelayState()
+			}
+		} else if state.RoomCode != "" && !isActive && state.RunnerName != "" {
 			exists := roomExists(u.relay.ServerAPIURL(), state.RoomCode)
 			if exists {
 				showRejoin = true
@@ -940,14 +1035,28 @@ func (u *UI) Start() error {
 	http.HandleFunc("/close", func(w http.ResponseWriter, r *http.Request) {
 		u.logger.Info("close requested via UI")
 		u.relay.Shutdown()
-		state, _ := loadRelayState()
-		state.RoomCode = ""
-		state.CreatorToken = ""
-		saveRelayState(state)
 	})
 
 	http.HandleFunc("/force-close", func(w http.ResponseWriter, r *http.Request) {
 		u.logger.Info("force close requested via UI")
+
+		roomCode := u.relay.RoomCode()
+		writeToken := ""
+		if u.relay.IsCreator() {
+			state, err := loadRelayState()
+			if err == nil {
+				writeToken = state.WriteToken
+			}
+		}
+
+		if writeToken != "" {
+			reqBody, _ := json.Marshal(map[string]string{"writeToken": writeToken})
+			resp, err := http.Post(u.relay.ServerAPIURL()+"/rooms/"+roomCode+"/force-close", "application/json", bytes.NewReader(reqBody))
+			if err != nil || resp.StatusCode != http.StatusOK {
+				u.logger.Warn("server force-close failed, closing locally anyway")
+			}
+		}
+
 		u.relay.Shutdown()
 		clearRelayState()
 	})
@@ -996,9 +1105,10 @@ func (u *UI) Start() error {
 		}
 
 		state := &RelayState{
-			RunnerName:   req.RunnerName,
-			RoomCode:     roomRes.RoomCode,
-			CreatorToken: roomRes.CreatorToken,
+			RunnerName: req.RunnerName,
+			RoomCode:   roomRes.RoomCode,
+			WriteToken: roomRes.WriteToken,
+			Password:   req.Password,
 		}
 		saveRelayState(state)
 
@@ -1039,7 +1149,7 @@ func (u *UI) Start() error {
 
 		u.relay.SetRunnerName(req.RunnerName)
 
-		roomRes, err := u.relay.JoinRoom(req.RoomCode, req.Password)
+		roomRes, err := u.relay.JoinRoom(req.RoomCode, req.Password, "")
 		if err != nil {
 			u.logger.Error("failed to join room", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
@@ -1053,7 +1163,14 @@ func (u *UI) Start() error {
 		state := &RelayState{
 			RunnerName: req.RunnerName,
 			RoomCode:   roomRes.RoomCode,
+			WriteToken: roomRes.WriteToken,
+			Password:   req.Password,
 		}
+
+		u.logger.Info("saving relay state",
+			zap.String("roomCode", state.RoomCode),
+			zap.String("writeToken", state.WriteToken),
+		)
 		saveRelayState(state)
 
 		json.NewEncoder(w).Encode(SetupResponse{
@@ -1092,15 +1209,8 @@ func (u *UI) Start() error {
 			return
 		}
 
-		// Try to rejoin with saved credentials
-		var roomRes *RoomResponse
-		if state.CreatorToken != "" {
-			// Try as creator first
-			roomRes, err = u.relay.JoinRoom(req.RoomCode, "")
-		} else {
-			// Try as regular member
-			roomRes, err = u.relay.JoinRoom(req.RoomCode, "")
-		}
+		// try to rejoin with saved credentials
+		roomRes, err := u.relay.JoinRoom(req.RoomCode, state.Password, state.WriteToken)
 
 		if err != nil {
 			u.logger.Error("failed to rejoin room", zap.Error(err))
@@ -1112,11 +1222,14 @@ func (u *UI) Start() error {
 			return
 		}
 
-		// Update state with new tokens
+		// update state with new tokens
 		state.RoomCode = roomRes.RoomCode
-		if roomRes.CreatorToken != "" {
-			state.CreatorToken = roomRes.CreatorToken
-		}
+		state.WriteToken = roomRes.WriteToken
+
+		u.logger.Info("saving relay state",
+			zap.String("roomCode", state.RoomCode),
+			zap.String("writeToken", state.WriteToken),
+		)
 		saveRelayState(state)
 
 		json.NewEncoder(w).Encode(SetupResponse{
@@ -1127,8 +1240,13 @@ func (u *UI) Start() error {
 
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]bool{
+
+		isActive := u.relay.RoomCode() != ""
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
 			"ninjabrainConnected": u.relay.NinjabrainConnected(),
+			"roomCreatedAt":       u.relay.RoomCreatedAt().UnixMilli(),
+			"isActive":            isActive,
 		})
 	})
 

@@ -96,13 +96,14 @@ export type RoomMessageType =
 	| 'divine_update'
 	| 'all_advancements_update'
 	| 'information_messages_update'
-	| 'room_closed';
+	| 'room_closed'
+	| 'room_info';
 
 export interface RoomMessage {
 	type: RoomMessageType;
 	ts: number;
 	source: RoomMessageSource;
-	runnerName: string;
+	runnerName?: string;
 	payload: any;
 }
 
@@ -113,6 +114,10 @@ export interface PresencePayload {
 
 export interface RoomClosedPayload {
 	message: string;
+}
+
+export interface RoomInfoPayload {
+	createdAt: number;
 }
 
 export interface StrongholdPayload {

@@ -16,5 +16,5 @@
 </svelte:head>
 
 <div class="flex-1">
-	{@render children()}
+	{@render children?.()}
 </div>

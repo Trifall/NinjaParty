@@ -44,10 +44,11 @@ func createRoom(serverAPI, runnerName, password string) (*RoomResponse, error) {
 	return &parsed, nil
 }
 
-func joinRoom(serverAPI, roomCode, runnerName, password string) (*RoomResponse, error) {
+func joinRoom(serverAPI, roomCode, runnerName, password, prevToken string) (*RoomResponse, error) {
 	reqBody := JoinRoomRequest{
 		RunnerName: runnerName,
 		Password:   password,
+		PrevToken:  prevToken,
 	}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
@@ -86,6 +87,8 @@ func joinRoom(serverAPI, roomCode, runnerName, password string) (*RoomResponse, 
 	return &RoomResponse{
 		RoomCode:   roomCode,
 		WriteToken: parsed.WriteToken,
+		CreatedAt:  parsed.CreatedAt,
+		IsCreator:  parsed.IsCreator,
 	}, nil
 }
 

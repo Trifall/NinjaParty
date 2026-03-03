@@ -10,6 +10,7 @@ import type {
 	InformationMessagesPayload,
 	PresencePayload,
 	RoomClosedPayload,
+	RoomInfoPayload,
 	RoomMessage,
 	StrongholdPayload,
 } from '../types/stronghold';
@@ -36,6 +37,7 @@ export class RoomConnection {
 	ws: WebSocket | null = null;
 	status = $state<'connecting' | 'connected' | 'reconnecting' | 'offline' | 'error'>('offline');
 	roomClosed = $state(false);
+	createdAt = $state<number | null>(null);
 
 	runners = new SvelteMap<string, RunnerState>();
 	runnerJoinOrder: string[] = [];
@@ -132,7 +134,13 @@ export class RoomConnection {
 		this.ws.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data) as RoomMessage;
-				console.log('WS message received:', data.type, 'runnerName:', data.runnerName);
+				// handle server-level messages before runnerName check
+				if (data.type === 'room_info') {
+					this.createdAt = (data.payload as RoomInfoPayload).createdAt;
+					return;
+				}
+
+				console.log('WS message received:', data.type);
 				const runnerName = data.runnerName;
 
 				if (!runnerName) {

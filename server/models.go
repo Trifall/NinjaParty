@@ -20,8 +20,13 @@ type StrongholdPayload struct {
 }
 
 type PresencePayload struct {
-	Status string `json:"status"` // "online" or "offline"
-	Name   string `json:"name,omitempty"`
+	Status    string `json:"status"` // "online" or "offline"
+	Name      string `json:"name,omitempty"`
+	IsCreator bool   `json:"isCreator"`
+}
+
+type RoomInfoPayload struct {
+	CreatedAt int64 `json:"createdAt"`
 }
 
 type PlayerPosition struct {

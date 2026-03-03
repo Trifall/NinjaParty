@@ -24,6 +24,7 @@ type WriterState struct {
 	name       string
 	writeToken string
 	lastSeen   time.Time
+	connected  bool
 }
 
 type RoomState struct {
@@ -31,7 +32,8 @@ type RoomState struct {
 	code          string
 	passwordHash  string
 	creatorName   string
-	creatorToken  string
+	creatorToken  string // the writeToken of the creator
+	createdAt     time.Time
 	lastSnapshots map[string]map[string][]byte // runnerName -> msgType -> data
 	lastUpdated   time.Time
 	writers       map[string]*WriterState
@@ -40,6 +42,7 @@ type RoomState struct {
 	gracePeriodMu    sync.Mutex
 
 	observers map[*ObserverClient]bool
+	stop      chan struct{}
 }
 
 type ObserverClient struct {
@@ -70,20 +73,16 @@ func GenerateRandomHex(n int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (rm *RoomManager) CreateRoom(creatorName, password string) (string, string, string, error) {
+func (rm *RoomManager) CreateRoom(creatorName, password string) (string, string, int64, error) {
 	const maxAttempts = 100
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		code, err := GenerateRandomHex(3)
 		if err != nil {
-			return "", "", "", err
+			return "", "", 0, err
 		}
 		writeToken, err := GenerateRandomHex(16)
 		if err != nil {
-			return "", "", "", err
-		}
-		creatorToken, err := GenerateRandomHex(16)
-		if err != nil {
-			return "", "", "", err
+			return "", "", 0, err
 		}
 
 		rm.mu.Lock()
@@ -98,7 +97,7 @@ func (rm *RoomManager) CreateRoom(creatorName, password string) (string, string,
 			b, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 			if err != nil {
 				rm.mu.Unlock()
-				return "", "", "", err
+				return "", "", 0, err
 			}
 			hash = string(b)
 		}
@@ -107,40 +106,43 @@ func (rm *RoomManager) CreateRoom(creatorName, password string) (string, string,
 			code:          code,
 			passwordHash:  hash,
 			creatorName:   creatorName,
-			creatorToken:  creatorToken,
+			creatorToken:  writeToken, // creator's writeToken is also the creatorToken
+			createdAt:     time.Now(),
 			lastUpdated:   time.Now(),
 			lastSnapshots: make(map[string]map[string][]byte),
 			writers:       make(map[string]*WriterState),
 			observers:     make(map[*ObserverClient]bool),
+			stop:          make(chan struct{}),
 		}
 		room.writers[creatorName] = &WriterState{
 			name:       creatorName,
 			writeToken: writeToken,
 			lastSeen:   time.Now(),
+			connected:  true,
 		}
 
 		rm.rooms[code] = room
 
 		rm.mu.Unlock()
 		rm.logRoomStats("room created")
-		return code, writeToken, creatorToken, nil
+		return code, writeToken, room.createdAt.UnixMilli(), nil
 	}
 
-	return "", "", "", fmt.Errorf("failed to generate unique room code after %d attempts", maxAttempts)
+	return "", "", 0, fmt.Errorf("failed to generate unique room code after %d attempts", maxAttempts)
 }
 
-func (rm *RoomManager) JoinRoom(code, runnerName, password string) (string, error) {
+func (rm *RoomManager) JoinRoom(code, runnerName, password, prevToken string) (string, bool, int64, error) {
 	rm.mu.Lock()
 	room, exists := rm.rooms[code]
 	rm.mu.Unlock()
 
 	if !exists {
-		return "", fmt.Errorf("room not found")
+		return "", false, 0, fmt.Errorf("room not found")
 	}
 
 	if room.passwordHash != "" {
 		if err := bcrypt.CompareHashAndPassword([]byte(room.passwordHash), []byte(password)); err != nil {
-			return "", fmt.Errorf("invalid password")
+			return "", false, 0, fmt.Errorf("invalid password")
 		}
 	}
 
@@ -148,29 +150,44 @@ func (rm *RoomManager) JoinRoom(code, runnerName, password string) (string, erro
 	defer room.mu.Unlock()
 
 	if len(room.writers) >= maxWritersPerRoom {
-		return "", fmt.Errorf("room is full")
+		return "", false, 0, fmt.Errorf("room is full")
 	}
 
 	lowerName := strings.ToLower(runnerName)
+	var existingWriter *WriterState
 	for name, writer := range room.writers {
 		if strings.ToLower(name) == lowerName {
-			if time.Since(writer.lastSeen) > gracePeriodDuration {
+			// if prevToken matches, this is the same runner reconnecting - always allow
+			if prevToken != "" && prevToken == writer.writeToken {
+				existingWriter = writer
+				break
+			} else if time.Since(writer.lastSeen) > gracePeriodDuration {
+				// grace period expired - allow different runner to take the name
 				delete(room.writers, name)
 			} else {
-				return "", fmt.Errorf("runner name already taken")
+				return "", false, 0, fmt.Errorf("runner name already taken")
 			}
 		}
 	}
 
-	writeToken, err := GenerateRandomHex(16)
-	if err != nil {
-		return "", err
+	var writeToken string
+	if existingWriter != nil {
+		// reuse the existing token for reconnection
+		writeToken = existingWriter.writeToken
+	} else {
+		// new writer - generate a token
+		var err error
+		writeToken, err = GenerateRandomHex(16)
+		if err != nil {
+			return "", false, 0, err
+		}
 	}
 
 	room.writers[runnerName] = &WriterState{
 		name:       runnerName,
 		writeToken: writeToken,
 		lastSeen:   time.Now(),
+		connected:  true,
 	}
 
 	if room.lastSnapshots[runnerName] == nil {
@@ -179,7 +196,10 @@ func (rm *RoomManager) JoinRoom(code, runnerName, password string) (string, erro
 
 	room.cancelGracePeriod()
 
-	return writeToken, nil
+	isCreator := room.creatorToken != "" && subtle.ConstantTimeCompare([]byte(room.creatorToken), []byte(writeToken)) == 1
+
+	rm.logger.Debug("JoinRoom: completed", zap.String("code", code), zap.String("runner", runnerName), zap.Bool("isCreator", isCreator))
+	return writeToken, isCreator, room.createdAt.UnixMilli(), nil
 }
 
 func (rm *RoomManager) GetRoom(code string) *RoomState {
@@ -226,10 +246,28 @@ func (rm *RoomManager) CloseRoom(code string) {
 	rm.mu.Unlock()
 
 	if exists {
-		rm.logger.Debug("CloseRoom: closing observers", zap.String("code", code))
+		rm.logger.Debug("CloseRoom: closing observers and writers", zap.String("code", code))
 		room.closeObservers()
+		room.closeWriters()
 		rm.logRoomStats("room closed")
 	}
+}
+
+func (rm *RoomManager) ForceCloseRoom(code, writeToken string) error {
+	rm.mu.Lock()
+	room, exists := rm.rooms[code]
+	rm.mu.Unlock()
+
+	if !exists {
+		return fmt.Errorf("room not found")
+	}
+
+	if !room.IsWriterTokenCreator(writeToken) {
+		return fmt.Errorf("unauthorized: only the creator can force close the room")
+	}
+
+	rm.CloseRoom(code)
+	return nil
 }
 
 func (r *RoomState) closeObservers() {
@@ -240,6 +278,16 @@ func (r *RoomState) closeObservers() {
 		close(spec.stop)
 	}
 	r.observers = make(map[*ObserverClient]bool)
+}
+
+func (r *RoomState) closeWriters() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	select {
+	case <-r.stop:
+	default:
+		close(r.stop)
+	}
 }
 
 func (rm *RoomManager) StartEvictionTicker(ctx context.Context, interval time.Duration) {
@@ -276,6 +324,7 @@ func (rm *RoomManager) evictIdleRooms() {
 
 	for i, room := range toEvict {
 		room.closeObservers()
+		room.closeWriters()
 		rm.logger.Info("room evicted", zap.String("code", toEvictCodes[i]))
 	}
 	if len(toEvict) > 0 {
@@ -298,6 +347,15 @@ func (r *RoomState) IsCreator(runnerName, token string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.creatorName == runnerName && subtle.ConstantTimeCompare([]byte(r.creatorToken), []byte(token)) == 1
+}
+
+func (r *RoomState) IsWriterTokenCreator(token string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.creatorToken == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(r.creatorToken), []byte(token)) == 1
 }
 
 func (r *RoomState) cancelGracePeriod() {
@@ -431,16 +489,15 @@ func (r *RoomState) WriterDisconnected(runnerName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	writer, exists := r.writers[runnerName]
+	_, exists := r.writers[runnerName]
 	if !exists {
 		return
 	}
-	writer.lastSeen = time.Now()
 
-	// count writers seen recently
+	// count truly connected runners (WebSocket active)
 	connectedCount := 0
 	for name, w := range r.writers {
-		if name != runnerName && time.Since(w.lastSeen) < gracePeriodDuration {
+		if name != runnerName && w.connected {
 			connectedCount++
 		}
 	}
@@ -471,6 +528,7 @@ func BroadcastRoomClosed(code, message string) {
 		data, _ := json.Marshal(roomClosedMsg)
 		room.BroadcastToObservers(data)
 		room.closeObservers()
+		room.closeWriters()
 		RoomManagerInstance.logRoomStats("room closed (grace period)")
 	}
 }

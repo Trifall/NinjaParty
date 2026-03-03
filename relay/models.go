@@ -44,23 +44,28 @@ type ChunkPrediction struct {
 }
 
 type RoomResponse struct {
-	RoomCode     string `json:"roomCode"`
-	WriteToken   string `json:"writeToken"`
-	CreatorToken string `json:"creatorToken,omitempty"`
+	RoomCode   string `json:"roomCode"`
+	WriteToken string `json:"writeToken"`
+	CreatedAt  int64  `json:"createdAt"`
+	IsCreator  bool   `json:"isCreator"`
 }
 
 type JoinRoomRequest struct {
 	RunnerName string `json:"runnerName"`
 	Password   string `json:"password,omitempty"`
+	PrevToken  string `json:"prevToken,omitempty"`
 }
 
 type JoinRoomResponse struct {
 	WriteToken string `json:"writeToken,omitempty"`
+	CreatedAt  int64  `json:"createdAt"`
 	Error      string `json:"error,omitempty"`
+	IsCreator  bool   `json:"isCreator"`
 }
 
 type RelayState struct {
-	RunnerName   string `json:"runnerName"`
-	RoomCode     string `json:"roomCode,omitempty"`
-	CreatorToken string `json:"creatorToken,omitempty"`
+	RunnerName string `json:"runnerName"`
+	RoomCode   string `json:"roomCode,omitempty"`
+	WriteToken string `json:"writeToken,omitempty"`
+	Password   string `json:"password,omitempty"`
 }
