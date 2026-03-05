@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	_ "embed"
@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/NinjaParty/relay/core"
 )
 
 //go:embed ui.html
@@ -15,9 +18,9 @@ var uiTemplateHTML string
 
 type UI struct {
 	addr        string
-	relay       *Relay
+	relay       *core.Relay
 	logger      *zap.Logger
-	newRoomRate *RateLimiter
+	newRoomRate *core.RateLimiter
 	tmpl        *template.Template
 }
 
@@ -44,6 +47,15 @@ type SetupResponse struct {
 	Success  bool   `json:"success"`
 	Error    string `json:"error,omitempty"`
 	RoomCode string `json:"roomCode,omitempty"`
+}
+
+func New(addr string, relay *core.Relay, logger *zap.Logger, newRoomRateInterval time.Duration) *UI {
+	return &UI{
+		addr:        addr,
+		relay:       relay,
+		newRoomRate: core.NewRateLimiter(newRoomRateInterval),
+		logger:      logger,
+	}
 }
 
 func (u *UI) Start() error {

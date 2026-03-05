@@ -47,7 +47,6 @@
 			to   { opacity: 1; transform: translateY(0); }
 		}
 
-		/* ── Status Grid ─────────────────────────────────── */
 		.status-grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
@@ -201,62 +200,21 @@
 
 		button:active { transform: scale(0.97); }
 
-		.btn-primary {
-			background: #10b981;
-			color: #fff;
-		}
-
+		.btn-primary { background: #10b981; color: #fff; }
 		.btn-primary:hover { opacity: 0.88; }
-
-		.btn-secondary {
-			background: rgba(255,255,255,0.07);
-			color: rgba(255,255,255,0.7);
-			border: 1px solid rgba(255,255,255,0.1);
-		}
-
+		.btn-secondary { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); }
 		.btn-secondary:hover { background: rgba(255,255,255,0.12); }
-
-		.btn-danger {
-			background: #dc2626;
-			color: #fff;
-		}
-
+		.btn-danger { background: #dc2626; color: #fff; }
 		.btn-danger:hover { background: #ef4444; }
-
-		.btn-toggle {
-			background: rgba(255,255,255,0.07);
-			color: rgba(255,255,255,0.7);
-			border: 1px solid rgba(255,255,255,0.1);
-		}
-
+		.btn-toggle { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); }
 		.btn-toggle:hover { background: rgba(255,255,255,0.12); }
-
-		.btn-copy {
-			background: #10b981;
-			color: #fff;
-		}
-
+		.btn-copy { background: #10b981; color: #fff; }
 		.btn-copy:hover { opacity: 0.88; }
 
-		.error {
-			color: #ef4444;
-			font-size: 13px;
-			margin-top: 12px;
-			text-align: center;
-		}
+		.error { color: #ef4444; font-size: 13px; margin-top: 12px; text-align: center; }
+		.success { color: #10b981; font-size: 13px; margin-top: 12px; text-align: center; }
 
-		.success {
-			color: #10b981;
-			font-size: 13px;
-			margin-top: 12px;
-			text-align: center;
-		}
-
-		.tabs {
-			display: flex;
-			gap: 8px;
-			margin-bottom: 24px;
-		}
+		.tabs { display: flex; gap: 8px; margin-bottom: 24px; }
 
 		.tab {
 			flex: 1;
@@ -272,32 +230,13 @@
 			transition: all 0.2s;
 		}
 
-		.tab.active {
-			background: rgba(16,185,129,0.15);
-			border-color: rgba(16,185,129,0.4);
-			color: #10b981;
-		}
+		.tab.active { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #10b981; }
+		.tab:hover:not(.active) { background: rgba(255,255,255,0.08); }
 
-		.tab:hover:not(.active) {
-			background: rgba(255,255,255,0.08);
-		}
-
-		.panel {
-			display: none;
-		}
-
-		.panel.active {
-			display: block;
-		}
-
-		.form-group {
-			margin-bottom: 16px;
-		}
-
-		.btn-action-row {
-			display: flex;
-			justify-content: flex-end;
-		}
+		.panel { display: none; }
+		.panel.active { display: block; }
+		.form-group { margin-bottom: 16px; }
+		.btn-action-row { display: flex; justify-content: flex-end; }
 
 		.runner-badge {
 			display: inline-flex;
@@ -312,12 +251,7 @@
 			margin-bottom: 16px;
 		}
 
-		.instructions-container {
-			margin-top: 32px;
-			display: flex;
-			flex-direction: column;
-			gap: 10px;
-		}
+		.instructions-container { margin-top: 32px; display: flex; flex-direction: column; gap: 10px; }
 
 		.instruction {
 			font-size: 14px;
@@ -329,11 +263,7 @@
 			letter-spacing: -0.01em;
 		}
 
-		.instruction::before {
-			content: "•";
-			color: #10b981;
-			font-weight: 800;
-		}
+		.instruction::before { content: "•"; color: #10b981; font-weight: 800; }
 
 		.btn-help {
 			margin-top: 16px;
@@ -346,19 +276,8 @@
 			font-weight: 500;
 		}
 
-		.btn-help:hover {
-			background: rgba(16,185,129,0.25);
-			color: #34d399;
-		}
-
-		.btn-close {
-			margin-top: 28px;
-			width: 100%;
-			padding: 12px;
-			font-size: 14px;
-			font-weight: 600;
-			justify-content: center;
-		}
+		.btn-help:hover { background: rgba(16,185,129,0.25); color: #34d399; }
+		.btn-close { margin-top: 28px; width: 100%; padding: 12px; font-size: 14px; font-weight: 600; justify-content: center; }
 
 		.stale-room-banner {
 			background: rgba(245,158,11,0.15);
@@ -370,37 +289,11 @@
 			color: #f59e0b;
 		}
 
-		.help-content {
-			text-align: left;
-		}
-
-		.help-content h2 {
-			font-size: 18px;
-			font-weight: 600;
-			color: #fff;
-			margin-bottom: 16px;
-			text-align: center;
-		}
-
-		.help-content ol {
-			margin: 0;
-			padding-left: 20px;
-			color: rgba(255,255,255,0.8);
-			font-size: 14px;
-			line-height: 1.8;
-		}
-
-		.help-content li {
-			margin-bottom: 8px;
-		}
-
-		.help-content img {
-			display: block;
-			max-width: 100%;
-			border-radius: 8px;
-			margin: 16px auto;
-			border: 1px solid rgba(255,255,255,0.1);
-		}
+		.help-content { text-align: left; }
+		.help-content h2 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 16px; text-align: center; }
+		.help-content ol { margin: 0; padding-left: 20px; color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8; }
+		.help-content li { margin-bottom: 8px; }
+		.help-content img { display: block; max-width: 100%; border-radius: 8px; margin: 16px auto; border: 1px solid rgba(255,255,255,0.1); }
 
 		.dialog-overlay {
 			display: none;
@@ -425,31 +318,10 @@
 			animation: fadeUp 0.2s ease both;
 		}
 
-		.dialog p {
-			font-size: 15px;
-			color: rgba(255,255,255,0.8);
-			margin-bottom: 20px;
-			line-height: 1.5;
-		}
-
-		.dialog-buttons {
-			display: flex;
-			gap: 10px;
-			justify-content: center;
-		}
-
-		.btn-cancel {
-			background: rgba(255,255,255,0.07);
-			color: rgba(255,255,255,0.6);
-			border: 1px solid rgba(255,255,255,0.1);
-			padding: 9px 20px;
-		}
-
-		.btn-confirm {
-			background: #10b981;
-			color: #fff;
-			padding: 9px 20px;
-		}
+		.dialog p { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 20px; line-height: 1.5; }
+		.dialog-buttons { display: flex; gap: 10px; justify-content: center; }
+		.btn-cancel { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); padding: 9px 20px; }
+		.btn-confirm { background: #10b981; color: #fff; padding: 9px 20px; }
 	</style>
 </head>
 <body>
@@ -459,17 +331,14 @@
 	<div class="card">
 		<h1>NinjaParty Setup</h1>
 		<p class="subtitle">Enter your runner name to get started</p>
-
 		<div class="form-group">
 			<p class="field-label">Runner Name</p>
 			<input type="text" id="runnerName" placeholder="Your name (max 24 chars)" maxlength="24" value="{{.RunnerName}}" />
 		</div>
-
 		<div class="tabs">
 			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create Room</div>
 			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Room</div>
 		</div>
-
 		<div class="panel active" id="panelCreate">
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
@@ -478,7 +347,6 @@
 				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
 			</div>
 		</div>
-
 		<div class="panel" id="panelJoin">
 			<div class="form-group">
 				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
@@ -490,32 +358,26 @@
 				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
 			</div>
 		</div>
-
 		<div id="setupError" class="error"></div>
 	</div>
 	{{else if .ShowRejoin}}
 	<div class="card">
 		<h1>NinjaParty</h1>
 		<p class="subtitle">Your previous room is still active</p>
-
 		<div class="runner-badge">
 			<span>Runner: {{.RunnerName}}</span>
 		</div>
 		<input type="hidden" id="runnerName" value="{{.RunnerName}}" />
-
 		<div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center; color: #10b981;">
 			Room <strong>{{.SavedRoomCode}}</strong> is still active. You can rejoin or start fresh.
 		</div>
-
 		<div class="btn-action-row" style="margin-bottom: 24px;">
 			<button class="btn-primary" onclick="rejoinRoom()">↩ Rejoin Room {{.SavedRoomCode}}</button>
 		</div>
-
 		<div class="tabs">
 			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create New Room</div>
 			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Different Room</div>
 		</div>
-
 		<div class="panel active" id="panelCreate">
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
@@ -524,7 +386,6 @@
 				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
 			</div>
 		</div>
-
 		<div class="panel" id="panelJoin">
 			<div class="form-group">
 				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
@@ -536,27 +397,20 @@
 				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
 			</div>
 		</div>
-
 		<div id="setupError" class="error"></div>
 	</div>
 	{{else if .StaleRoom}}
 	<div class="card">
 		<h1>NinjaParty</h1>
 		<p class="subtitle">Your previous room no longer exists</p>
-
-		<div class="stale-room-banner">
-			The room you were in has expired or been closed.
-		</div>
-
+		<div class="stale-room-banner">The room you were in has expired or been closed.</div>
 		<div class="form-group">
 			<input type="text" id="runnerName" placeholder="Your name (max 24 chars)" maxlength="24" value="{{.RunnerName}}" />
 		</div>
-
 		<div class="tabs">
 			<div class="tab active" onclick="switchTab('create')" id="tabCreate">Create Room</div>
 			<div class="tab" onclick="switchTab('join')" id="tabJoin">Join Room</div>
 		</div>
-
 		<div class="panel active" id="panelCreate">
 			<div class="form-group">
 				<input type="password" id="createPassword" placeholder="Room password (optional)" />
@@ -565,7 +419,6 @@
 				<button class="btn-primary" onclick="createRoom()">Create Room →</button>
 			</div>
 		</div>
-
 		<div class="panel" id="panelJoin">
 			<div class="form-group">
 				<input type="text" id="joinRoomCode" placeholder="Room code" maxlength="6" />
@@ -577,49 +430,30 @@
 				<button class="btn-primary" onclick="joinRoom()">Join Room →</button>
 			</div>
 		</div>
-
 		<div id="setupError" class="error"></div>
 	</div>
 	{{else}}
 	<div class="card">
-		<!-- ── 2×2 status grid ── -->
 		<div class="status-grid">
-			<div class="status">
-				<span class="status-dot"></span>
-				Relay Active
-			</div>
-			<div id="ninjabrainStatus" class="status status-disconnected">
-				<span class="status-dot"></span>
-				<span id="ninjabrainStatusText">Waiting for Ninjabrain…</span>
-			</div>
-			<div class="status status-uptime">
-				<span class="status-dot" style="background:#6366f1;animation:none;"></span>
-				<span id="uptime">--:--:--</span>
-			</div>
-			<div class="status status-runner">
-				<span class="status-dot" style="background:#10b981;animation:none;"></span>
-				Runner: {{.RunnerName}}
-			</div>
+			<div class="status"><span class="status-dot"></span>Relay Active</div>
+			<div id="ninjabrainStatus" class="status status-disconnected"><span class="status-dot"></span><span id="ninjabrainStatusText">Waiting for Ninjabrain…</span></div>
+			<div class="status status-uptime"><span class="status-dot" style="background:#6366f1;animation:none;"></span><span id="uptime">--:--:--</span></div>
+			<div class="status status-runner"><span class="status-dot" style="background:#10b981;animation:none;"></span>Runner: {{.RunnerName}}</div>
 		</div>
 		<input type="hidden" id="runnerName" value="{{.RunnerName}}" />
-
 		<h1>NinjaParty</h1>
 		<p class="subtitle">Share the link below with your observer to get started.</p>
-
 		<hr class="divider" />
-
 		<p class="field-label">Room Code</p>
 		<div class="room-row">
 			<span id="roomCode">{{.RoomCode}}</span>
 			<button id="toggleBtn" class="btn-toggle" onclick="toggleRoomCode()">Hide</button>
 		</div>
-
 		<p class="field-label">Observer Link</p>
 		<div class="link-row">
 			<input type="text" id="link" value="{{.FullLink}}" readonly onclick="this.select()" />
 			<button id="copyBtn" class="btn-copy" onclick="copyLink()">Copy</button>
 		</div>
-
 		<div class="instructions-container">
 			<p class="instruction">Once you give out the code / link, you can close this window.</p>
 			<p class="instruction">You can open this page again manually or by clicking the tray icon.</p>
@@ -698,19 +532,9 @@
 		async function rejoinRoom() {
 			var errorEl = document.getElementById('setupError');
 			errorEl.textContent = 'Rejoining room...';
-
-			var res = await fetch('/setup/rejoin', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ roomCode: savedRoomCode })
-			});
-
+			var res = await fetch('/setup/rejoin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roomCode: savedRoomCode }) });
 			var data = await res.json();
-			if (!res.ok) {
-				errorEl.textContent = data.error || 'Failed to rejoin room';
-				return;
-			}
-
+			if (!res.ok) { errorEl.textContent = data.error || 'Failed to rejoin room'; return; }
 			location.reload();
 		}
 
@@ -718,26 +542,11 @@
 			var name = document.getElementById('runnerName').value.trim();
 			var password = document.getElementById('createPassword').value;
 			var errorEl = document.getElementById('setupError');
-
-			if (!name) {
-				errorEl.textContent = 'Please enter a runner name';
-				return;
-			}
-
+			if (!name) { errorEl.textContent = 'Please enter a runner name'; return; }
 			errorEl.textContent = 'Creating room...';
-
-			var res = await fetch('/setup/create', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ runnerName: name, password: password })
-			});
-
+			var res = await fetch('/setup/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ runnerName: name, password: password }) });
 			var data = await res.json();
-			if (!res.ok) {
-				errorEl.textContent = data.error || 'Failed to create room';
-				return;
-			}
-
+			if (!res.ok) { errorEl.textContent = data.error || 'Failed to create room'; return; }
 			location.reload();
 		}
 
@@ -746,30 +555,12 @@
 			var code = document.getElementById('joinRoomCode').value.trim();
 			var password = document.getElementById('joinPassword').value;
 			var errorEl = document.getElementById('setupError');
-
-			if (!name) {
-				errorEl.textContent = 'Please enter a runner name';
-				return;
-			}
-			if (!code) {
-				errorEl.textContent = 'Please enter a room code';
-				return;
-			}
-
+			if (!name) { errorEl.textContent = 'Please enter a runner name'; return; }
+			if (!code) { errorEl.textContent = 'Please enter a room code'; return; }
 			errorEl.textContent = 'Joining room...';
-
-			var res = await fetch('/setup/join', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ runnerName: name, roomCode: code, password: password })
-			});
-
+			var res = await fetch('/setup/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ runnerName: name, roomCode: code, password: password }) });
 			var data = await res.json();
-			if (!res.ok) {
-				errorEl.textContent = data.error || 'Failed to join room';
-				return;
-			}
-
+			if (!res.ok) { errorEl.textContent = data.error || 'Failed to join room'; return; }
 			location.reload();
 		}
 		{{else}}
@@ -785,116 +576,35 @@
 		}
 
 		function updateNinjabrainStatus() {
-			fetch('/status')
-				.then(function(response) { return response.json(); })
-				.then(function(data) {
-					if (data.isActive === false && originalRoomCode !== "") {
-						location.reload();
-						return;
-					}
-
-					var statusEl = document.getElementById('ninjabrainStatus');
-					var statusText = document.getElementById('ninjabrainStatusText');
-					if (data.ninjabrainConnected) {
-						statusEl.classList.remove('status-disconnected');
-						statusText.textContent = 'Ninjabrain Connected';
-					} else {
-						statusEl.classList.add('status-disconnected');
-						statusText.textContent = 'Waiting for Ninjabrain…';
-					}
-					if (data.roomCreatedAt) {
-						roomCreatedAt = data.roomCreatedAt;
-					}
-				})
-				.catch(function() {
-				});
+			fetch('/status').then(function(response) { return response.json(); }).then(function(data) {
+				if (data.isActive === false && originalRoomCode !== "") { location.reload(); return; }
+				var statusEl = document.getElementById('ninjabrainStatus');
+				var statusText = document.getElementById('ninjabrainStatusText');
+				if (data.ninjabrainConnected) { statusEl.classList.remove('status-disconnected'); statusText.textContent = 'Ninjabrain Connected'; }
+				else { statusEl.classList.add('status-disconnected'); statusText.textContent = 'Waiting for Ninjabrain…'; }
+				if (data.roomCreatedAt) { roomCreatedAt = data.roomCreatedAt; }
+			}).catch(function() {});
 		}
 
-		setInterval(function() {
-			var uptimeEl = document.getElementById('uptime');
-			if (uptimeEl) uptimeEl.textContent = formatUptime();
-		}, 1000);
-
+		setInterval(function() { var uptimeEl = document.getElementById('uptime'); if (uptimeEl) uptimeEl.textContent = formatUptime(); }, 1000);
 		setInterval(updateNinjabrainStatus, 2000);
 		updateNinjabrainStatus();
 
-		function toggleRoomCode() {
-			if (isHidden) {
-				document.getElementById('dialog').style.display = 'flex';
-			} else {
-				hideRoomCode();
-			}
-		}
-
-		function confirmReveal() {
-			closeDialog();
-			showRoomCode();
-		}
-
-		function closeDialog() {
-			document.getElementById('dialog').style.display = 'none';
-		}
-
-		function hideRoomCode() {
-			isHidden = true;
-			document.getElementById('roomCode').textContent = '••••••';
-			document.getElementById('link').value = '••••••';
-			document.getElementById('toggleBtn').textContent = 'Reveal';
-		}
-
-		function showRoomCode() {
-			isHidden = false;
-			document.getElementById('roomCode').textContent = originalRoomCode;
-			document.getElementById('link').value = originalLink;
-			document.getElementById('toggleBtn').textContent = 'Hide';
-		}
-
-		function copyLink() {
-			navigator.clipboard.writeText(originalLink).then(function() {
-				var btn = document.getElementById('copyBtn');
-				btn.textContent = 'Copied!';
-				setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
-			});
-		}
-
-		function showCloseDialog() {
-			document.getElementById('closeDialog').style.display = 'flex';
-		}
-
-		function closeCloseDialog() {
-			document.getElementById('closeDialog').style.display = 'none';
-		}
-
-		async function confirmClose() {
-			closeCloseDialog();
-			await fetch('/close', { method: 'POST' });
-			location.href = '/';
-		}
-
-		function showForceCloseDialog() {
-			document.getElementById('forceCloseDialog').style.display = 'flex';
-		}
-
-		function closeForceCloseDialog() {
-			document.getElementById('forceCloseDialog').style.display = 'none';
-		}
-
-		async function confirmForceClose() {
-			closeForceCloseDialog();
-			await fetch('/force-close', { method: 'POST' });
-			location.href = '/';
-		}
-
-		function showApiHelp() {
-			document.getElementById('apiHelpDialog').style.display = 'flex';
-		}
-
-		function closeApiHelp() {
-			document.getElementById('apiHelpDialog').style.display = 'none';
-		}
+		function toggleRoomCode() { if (isHidden) { document.getElementById('dialog').style.display = 'flex'; } else { hideRoomCode(); } }
+		function confirmReveal() { closeDialog(); showRoomCode(); }
+		function closeDialog() { document.getElementById('dialog').style.display = 'none'; }
+		function hideRoomCode() { isHidden = true; document.getElementById('roomCode').textContent = '••••••'; document.getElementById('link').value = '••••••'; document.getElementById('toggleBtn').textContent = 'Reveal'; }
+		function showRoomCode() { isHidden = false; document.getElementById('roomCode').textContent = originalRoomCode; document.getElementById('link').value = originalLink; document.getElementById('toggleBtn').textContent = 'Hide'; }
+		function copyLink() { navigator.clipboard.writeText(originalLink).then(function() { var btn = document.getElementById('copyBtn'); btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy'; }, 2000); }); }
+		function showCloseDialog() { document.getElementById('closeDialog').style.display = 'flex'; }
+		function closeCloseDialog() { document.getElementById('closeDialog').style.display = 'none'; }
+		async function confirmClose() { closeCloseDialog(); await fetch('/close', { method: 'POST' }); location.href = '/'; }
+		function showForceCloseDialog() { document.getElementById('forceCloseDialog').style.display = 'flex'; }
+		function closeForceCloseDialog() { document.getElementById('forceCloseDialog').style.display = 'none'; }
+		async function confirmForceClose() { closeForceCloseDialog(); await fetch('/force-close', { method: 'POST' }); location.href = '/'; }
+		function showApiHelp() { document.getElementById('apiHelpDialog').style.display = 'flex'; }
+		function closeApiHelp() { document.getElementById('apiHelpDialog').style.display = 'none'; }
 		{{end}}
 	</script>
 </body>
 </html>
-
-

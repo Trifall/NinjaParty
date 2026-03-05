@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func createRoom(serverAPI, runnerName, password string) (*RoomResponse, error) {
+func CreateRoom(serverAPI, runnerName, password string) (*RoomResponse, error) {
 	reqBody := JoinRoomRequest{
 		RunnerName: runnerName,
 		Password:   password,
@@ -44,7 +44,7 @@ func createRoom(serverAPI, runnerName, password string) (*RoomResponse, error) {
 	return &parsed, nil
 }
 
-func joinRoom(serverAPI, roomCode, runnerName, password, prevToken string) (*RoomResponse, error) {
+func JoinRoom(serverAPI, roomCode, runnerName, password, prevToken string) (*RoomResponse, error) {
 	reqBody := JoinRoomRequest{
 		RunnerName: runnerName,
 		Password:   password,
@@ -92,7 +92,7 @@ func joinRoom(serverAPI, roomCode, runnerName, password, prevToken string) (*Roo
 	}, nil
 }
 
-func roomExists(serverAPI, roomCode string) bool {
+func RoomExists(serverAPI, roomCode string) bool {
 	resp, err := http.Get(serverAPI + "/rooms/" + roomCode + "/exists")
 	if err != nil {
 		return false

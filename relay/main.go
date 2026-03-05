@@ -12,6 +12,9 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
+
+	"github.com/NinjaParty/relay/core"
+	"github.com/NinjaParty/relay/ui"
 )
 
 func main() {
@@ -23,17 +26,17 @@ func main() {
 	}
 	defer logger.Sync()
 
-	config, err := LoadConfig()
+	config, err := core.LoadConfig()
 	if err != nil {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
-	relay := NewRelay(config, logger)
+	relay := core.NewRelay(config, logger)
 
-	state, err := loadRelayState()
+	state, err := core.LoadRelayState()
 	if err != nil {
 		logger.Warn("failed to load relay state", zap.Error(err))
-		state = &RelayState{}
+		state = &core.RelayState{}
 	}
 
 	if state.RunnerName != "" {
@@ -42,38 +45,31 @@ func main() {
 
 	// auto-rejoin if we have a saved room that still exists
 	if state.RoomCode != "" && state.RunnerName != "" {
-		if roomExists(config.ServerAPIURL, state.RoomCode) {
+		if core.RoomExists(config.ServerAPIURL, state.RoomCode) {
 			logger.Info("attempting to auto-rejoin saved room", zap.String("code", state.RoomCode))
 			roomRes, err := relay.JoinRoom(state.RoomCode, state.Password, state.WriteToken)
 			if err != nil {
 				logger.Warn("failed to auto-rejoin room", zap.Error(err))
-				// clear the saved room code since we couldn't rejoin
 				state.RoomCode = ""
 				state.WriteToken = ""
-				saveRelayState(state)
+				core.SaveRelayState(state)
 			} else {
 				logger.Info("successfully auto-rejoined room", zap.String("code", roomRes.RoomCode))
-				// update state with new tokens
 				state.RoomCode = roomRes.RoomCode
 				state.WriteToken = roomRes.WriteToken
-				saveRelayState(state)
+				core.SaveRelayState(state)
 			}
 		} else {
 			logger.Info("saved room no longer exists", zap.String("code", state.RoomCode))
 			state.RoomCode = ""
 			state.WriteToken = ""
-			saveRelayState(state)
+			core.SaveRelayState(state)
 		}
 	}
 
-	ui := &UI{
-		addr:        config.LocalUIAddr,
-		relay:       relay,
-		logger:      logger,
-		newRoomRate: NewRateLimiter(5 * time.Second),
-	}
+	uiInstance := ui.New(config.LocalUIAddr, relay, logger, 5*time.Second)
 	go func() {
-		if err := ui.Start(); err != nil {
+		if err := uiInstance.Start(); err != nil {
 			logger.Fatal("ui server failed", zap.Error(err))
 		}
 	}()

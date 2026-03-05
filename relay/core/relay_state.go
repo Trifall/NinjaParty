@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 
 const relayStateFile = "relay_state.json"
 
-func loadRelayState() (*RelayState, error) {
+func LoadRelayState() (*RelayState, error) {
 	data, err := os.ReadFile(relayStateFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -23,7 +23,7 @@ func loadRelayState() (*RelayState, error) {
 	return &state, nil
 }
 
-func saveRelayState(state *RelayState) error {
+func SaveRelayState(state *RelayState) error {
 	dir := filepath.Dir(relayStateFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
@@ -35,7 +35,7 @@ func saveRelayState(state *RelayState) error {
 	return os.WriteFile(relayStateFile, data, 0600)
 }
 
-func clearRelayState() error {
+func ClearRelayState() error {
 	if _, err := os.Stat(relayStateFile); err == nil {
 		return os.Remove(relayStateFile)
 	}

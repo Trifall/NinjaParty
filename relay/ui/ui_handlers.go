@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"bytes"
@@ -6,15 +6,17 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
+
+	"github.com/NinjaParty/relay/core"
 )
 
 func (u *UI) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 	w.Header().Set("Pragma", "no-cache")
 
-	state, err := loadRelayState()
+	state, err := core.LoadRelayState()
 	if err != nil {
-		state = &RelayState{}
+		state = &core.RelayState{}
 	}
 
 	isActive := u.relay.RoomCode() != ""
@@ -26,14 +28,14 @@ func (u *UI) handleIndex(w http.ResponseWriter, r *http.Request) {
 	showRejoin := false
 
 	if roomCode != "" && isActive {
-		if !roomExists(u.relay.ServerAPIURL(), roomCode) {
+		if !core.RoomExists(u.relay.ServerAPIURL(), roomCode) {
 			staleRoom = true
 			isActive = false
 			u.relay.Shutdown()
-			clearRelayState()
+			core.ClearRelayState()
 		}
 	} else if state.RoomCode != "" && !isActive && state.RunnerName != "" {
-		if roomExists(u.relay.ServerAPIURL(), state.RoomCode) {
+		if core.RoomExists(u.relay.ServerAPIURL(), state.RoomCode) {
 			showRejoin = true
 		} else {
 			staleRoom = true
@@ -61,7 +63,6 @@ func (u *UI) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (u *UI) handleClose(w http.ResponseWriter, r *http.Request) {
 	u.logger.Info("close requested via UI")
 	u.relay.Shutdown()
-	clearRelayState()
 }
 
 func (u *UI) handleForceClose(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +70,7 @@ func (u *UI) handleForceClose(w http.ResponseWriter, r *http.Request) {
 	roomCode := u.relay.RoomCode()
 	writeToken := ""
 	if u.relay.IsCreator() {
-		state, err := loadRelayState()
+		state, err := core.LoadRelayState()
 		if err == nil {
 			writeToken = state.WriteToken
 		}
@@ -84,7 +85,13 @@ func (u *UI) handleForceClose(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.relay.Shutdown()
-	clearRelayState()
+	state, _ := core.LoadRelayState()
+	if state != nil {
+		state.RoomCode = ""
+		state.WriteToken = ""
+		state.Password = ""
+		core.SaveRelayState(state)
+	}
 }
 
 func (u *UI) handleCreate(w http.ResponseWriter, r *http.Request) {
@@ -118,13 +125,13 @@ func (u *UI) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state := &RelayState{
+	state := &core.RelayState{
 		RunnerName: req.RunnerName,
 		RoomCode:   roomRes.RoomCode,
 		WriteToken: roomRes.WriteToken,
 		Password:   req.Password,
 	}
-	saveRelayState(state)
+	core.SaveRelayState(state)
 
 	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
 }
@@ -154,13 +161,13 @@ func (u *UI) handleJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state := &RelayState{
+	state := &core.RelayState{
 		RunnerName: req.RunnerName,
 		RoomCode:   roomRes.RoomCode,
 		WriteToken: roomRes.WriteToken,
 		Password:   req.Password,
 	}
-	saveRelayState(state)
+	core.SaveRelayState(state)
 
 	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
 }
@@ -175,7 +182,7 @@ func (u *UI) handleRejoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, err := loadRelayState()
+	state, err := core.LoadRelayState()
 	if err != nil || state.RunnerName == "" {
 		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "no saved runner name found"})
 		return
@@ -191,7 +198,7 @@ func (u *UI) handleRejoin(w http.ResponseWriter, r *http.Request) {
 
 	state.RoomCode = roomRes.RoomCode
 	state.WriteToken = roomRes.WriteToken
-	saveRelayState(state)
+	core.SaveRelayState(state)
 
 	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
 }
