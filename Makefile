@@ -14,10 +14,10 @@ dev-observer:
 	cd $(OBSERVER_DIR) && bun run dev
 
 build-relay:
-	cd $(RELAY_DIR) && go build -o bin/NinjaParty-Relay .
+	goreleaser build --snapshot --clean --single-target -f relay/.goreleaser.yaml
 
 build-server:
-	cd $(SERVER_DIR) && go build -o bin/NinjaParty-Server .
+	goreleaser build --snapshot --clean --single-target -f server/.goreleaser.yaml
 
 build-observer:
 	cd $(OBSERVER_DIR) && bun run build
@@ -28,8 +28,8 @@ test:
 	cd $(OBSERVER_DIR) && bun run test
 
 clean:
-	rm -rf $(RELAY_DIR)/bin
-	rm -rf $(SERVER_DIR)/bin
+	rm -rf $(RELAY_DIR)/dist
+	rm -rf $(SERVER_DIR)/dist
 	rm -rf $(OBSERVER_DIR)/.svelte-kit
 	rm -rf $(OBSERVER_DIR)/build
 

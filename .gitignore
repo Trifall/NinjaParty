@@ -52,3 +52,4 @@ local-testing/
 relay/dist/
 server/dist/
 observer/dist/
+dist/

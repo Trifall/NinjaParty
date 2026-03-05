@@ -1,15 +1,69 @@
-# .goreleaser.yaml
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
 project_name: NinjaParty-Relay
+dist: relay/dist
 builds:
-  - id: relay
+  - id: relay-linux
+    dir: relay
     main: ./
     binary: NinjaParty-Relay
     goos:
       - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+  - id: relay-windows
+    dir: relay
+    main: ./
+    binary: NinjaParty-Relay
+    goos:
       - windows
-      - darwin
     goarch:
       - amd64
       - arm64
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+  - id: relay-darwin
+    dir: relay
+    main: ./
+    binary: NinjaParty-Relay
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

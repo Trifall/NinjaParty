@@ -1,0 +1,88 @@
+name: Release Relay
+
+on:
+  push:
+    tags:
+      - 'relay/v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libayatana-appindicator3-dev gcc-mingw-w64
+
+      - name: Extract version
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME#relay/}" >> $GITHUB_OUTPUT
+        
+      - name: Run GoReleaser (Linux & Windows)
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean -f relay/.goreleaser.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}
+
+  goreleaser-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Extract version
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME#relay/}" >> $GITHUB_OUTPUT
+
+      - name: Run GoReleaser (macOS)
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: build --clean -f relay/.goreleaser.yaml --id relay-darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}
+          
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-macos
+          path: relay/dist/relay-darwin_darwin_*/NinjaParty-Relay*
+
+  attach-macos:
+    needs: [goreleaser, goreleaser-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: relay-macos
+          path: macos-dist/
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" macos-dist/** --repo "$GITHUB_REPOSITORY"
