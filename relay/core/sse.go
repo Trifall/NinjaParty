@@ -69,7 +69,7 @@ func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint strin
 			time.Sleep(retryInterval)
 			continue
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode == http.StatusOK {
 			var payload json.RawMessage
@@ -138,7 +138,7 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage, runnerName 
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		c.logger.Info("connected to ninjabrain SSE")
 		if c.onConnected != nil {

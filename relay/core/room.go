@@ -22,7 +22,7 @@ func CreateRoom(serverAPI, runnerName, password string) (*RoomResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
@@ -59,7 +59,7 @@ func JoinRoom(serverAPI, roomCode, runnerName, password, prevToken string) (*Roo
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		// read plain text error message first
@@ -97,6 +97,6 @@ func RoomExists(serverAPI, roomCode string) bool {
 	if err != nil {
 		return false
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	return resp.StatusCode == http.StatusOK
 }

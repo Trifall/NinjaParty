@@ -32,7 +32,9 @@ func (u *UI) handleIndex(w http.ResponseWriter, r *http.Request) {
 			staleRoom = true
 			isActive = false
 			u.relay.Shutdown()
-			core.ClearRelayState()
+			if err := core.ClearRelayState(); err != nil {
+				u.logger.Warn("failed to clear relay state", zap.Error(err))
+			}
 		}
 	} else if state.RoomCode != "" && !isActive && state.RunnerName != "" {
 		if core.RoomExists(u.relay.ServerAPIURL(), state.RoomCode) {
@@ -90,28 +92,35 @@ func (u *UI) handleForceClose(w http.ResponseWriter, r *http.Request) {
 		state.RoomCode = ""
 		state.WriteToken = ""
 		state.Password = ""
-		core.SaveRelayState(state)
+		if err := core.SaveRelayState(state); err != nil {
+			u.logger.Warn("failed to save relay state", zap.Error(err))
+		}
 	}
 }
 
 func (u *UI) handleCreate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	encodeErr := func(status int, msg string) {
+		w.WriteHeader(status)
+		if err := json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: msg}); err != nil {
+			u.logger.Error("failed to encode error response", zap.Error(err))
+		}
+	}
+
 	if !u.newRoomRate.Allow() {
-		w.WriteHeader(http.StatusTooManyRequests)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "rate limit exceeded"})
+		encodeErr(http.StatusTooManyRequests, "rate limit exceeded")
 		return
 	}
 
 	var req SetupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "invalid request"})
+		encodeErr(http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if req.RunnerName == "" {
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "runner name is required"})
+		encodeErr(http.StatusBadRequest, "runner name is required")
 		return
 	}
 
@@ -120,8 +129,7 @@ func (u *UI) handleCreate(w http.ResponseWriter, r *http.Request) {
 	roomRes, err := u.relay.CreateNewRoom(req.Password)
 	if err != nil {
 		u.logger.Error("failed to create room", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "Failed to create room: " + err.Error()})
+		encodeErr(http.StatusInternalServerError, "Failed to create room: "+err.Error())
 		return
 	}
 
@@ -131,23 +139,33 @@ func (u *UI) handleCreate(w http.ResponseWriter, r *http.Request) {
 		WriteToken: roomRes.WriteToken,
 		Password:   req.Password,
 	}
-	core.SaveRelayState(state)
+	if err := core.SaveRelayState(state); err != nil {
+		u.logger.Warn("failed to save relay state", zap.Error(err))
+	}
 
-	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
+	if err := json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode}); err != nil {
+		u.logger.Error("failed to encode create response", zap.Error(err))
+	}
 }
 
 func (u *UI) handleJoin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	encodeErr := func(status int, msg string) {
+		w.WriteHeader(status)
+		if err := json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: msg}); err != nil {
+			u.logger.Error("failed to encode error response", zap.Error(err))
+		}
+	}
+
 	var req SetupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "invalid request"})
+		encodeErr(http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if req.RunnerName == "" || req.RoomCode == "" {
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "runner name and room code are required"})
+		encodeErr(http.StatusBadRequest, "runner name and room code are required")
 		return
 	}
 
@@ -156,8 +174,7 @@ func (u *UI) handleJoin(w http.ResponseWriter, r *http.Request) {
 	roomRes, err := u.relay.JoinRoom(req.RoomCode, req.Password, "")
 	if err != nil {
 		u.logger.Error("failed to join room", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: err.Error()})
+		encodeErr(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -167,48 +184,63 @@ func (u *UI) handleJoin(w http.ResponseWriter, r *http.Request) {
 		WriteToken: roomRes.WriteToken,
 		Password:   req.Password,
 	}
-	core.SaveRelayState(state)
+	if err := core.SaveRelayState(state); err != nil {
+		u.logger.Warn("failed to save relay state", zap.Error(err))
+	}
 
-	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
+	if err := json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode}); err != nil {
+		u.logger.Error("failed to encode join response", zap.Error(err))
+	}
 }
 
 func (u *UI) handleRejoin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	encodeErr := func(status int, msg string) {
+		w.WriteHeader(status)
+		if err := json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: msg}); err != nil {
+			u.logger.Error("failed to encode error response", zap.Error(err))
+		}
+	}
+
 	var req SetupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "invalid request"})
+		encodeErr(http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	state, err := core.LoadRelayState()
 	if err != nil || state.RunnerName == "" {
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: "no saved runner name found"})
+		encodeErr(http.StatusBadRequest, "no saved runner name found")
 		return
 	}
 
 	roomRes, err := u.relay.JoinRoom(req.RoomCode, state.Password, state.WriteToken)
 	if err != nil {
 		u.logger.Error("failed to rejoin room", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(SetupResponse{Success: false, Error: err.Error()})
+		encodeErr(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	state.RoomCode = roomRes.RoomCode
 	state.WriteToken = roomRes.WriteToken
-	core.SaveRelayState(state)
+	if err := core.SaveRelayState(state); err != nil {
+		u.logger.Warn("failed to save relay state", zap.Error(err))
+	}
 
-	json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode})
+	if err := json.NewEncoder(w).Encode(SetupResponse{Success: true, RoomCode: roomRes.RoomCode}); err != nil {
+		u.logger.Error("failed to encode rejoin response", zap.Error(err))
+	}
 }
 
 func (u *UI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	isActive := u.relay.RoomCode() != ""
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"ninjabrainConnected": u.relay.NinjabrainConnected(),
 		"roomCreatedAt":       u.relay.RoomCreatedAt().UnixMilli(),
 		"isActive":            isActive,
-	})
+	}); err != nil {
+		u.logger.Error("failed to encode status response", zap.Error(err))
+	}
 }

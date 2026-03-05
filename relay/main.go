@@ -28,7 +28,7 @@ func main() {
 	} else {
 		logger, _ = zap.NewDevelopment()
 	}
-	defer logger.Sync()
+	defer func() { _ = logger.Sync() }()
 
 	logger.Info("Starting NinjaParty Relay",
 		zap.String("version", version),
@@ -62,18 +62,24 @@ func main() {
 				logger.Warn("failed to auto-rejoin room", zap.Error(err))
 				state.RoomCode = ""
 				state.WriteToken = ""
-				core.SaveRelayState(state)
+				if err := core.SaveRelayState(state); err != nil {
+					logger.Warn("failed to save relay state", zap.Error(err))
+				}
 			} else {
 				logger.Info("successfully auto-rejoined room", zap.String("code", roomRes.RoomCode))
 				state.RoomCode = roomRes.RoomCode
 				state.WriteToken = roomRes.WriteToken
-				core.SaveRelayState(state)
+				if err := core.SaveRelayState(state); err != nil {
+					logger.Warn("failed to save relay state", zap.Error(err))
+				}
 			}
 		} else {
 			logger.Info("saved room no longer exists", zap.String("code", state.RoomCode))
 			state.RoomCode = ""
 			state.WriteToken = ""
-			core.SaveRelayState(state)
+			if err := core.SaveRelayState(state); err != nil {
+				logger.Warn("failed to save relay state", zap.Error(err))
+			}
 		}
 	}
 
@@ -84,7 +90,9 @@ func main() {
 		}
 	}()
 
-	browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
+	if err := browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr)); err != nil {
+		logger.Warn("failed to open browser", zap.Error(err))
+	}
 
 	go runTray(relay, config.LocalUIAddr, logger)
 

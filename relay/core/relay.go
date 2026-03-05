@@ -22,7 +22,8 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	godotenv.Load()
+	// intentionally ignore error: .env file is optional
+	_ = godotenv.Load()
 
 	viper.SetDefault("NINJABRAIN_URL", "http://127.0.0.1:52533")
 	viper.SetDefault("SERVER_API_URL", "http://np-server.trifall.com/api/v1")

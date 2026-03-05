@@ -70,7 +70,11 @@ func (c *WSClient) Run(ctx context.Context, in <-chan RoomMessage) {
 			}
 			return err
 		}
-		defer conn.CloseNow()
+		defer func() {
+			if err := conn.CloseNow(); err != nil {
+				c.logger.Debug("websocket CloseNow error", zap.Error(err))
+			}
+		}()
 
 		readCtx, readCancel := context.WithCancel(ctx)
 		defer readCancel()

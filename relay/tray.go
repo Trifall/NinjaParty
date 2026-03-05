@@ -57,14 +57,20 @@ func runTray(relay *core.Relay, localUIAddr string, logger *zap.Logger) {
 		for {
 			select {
 			case <-mOpen.ClickedCh:
-				browser.OpenURL(fmt.Sprintf("http://%s", localUIAddr))
+				if err := browser.OpenURL(fmt.Sprintf("http://%s", localUIAddr)); err != nil {
+					logger.Warn("failed to open browser", zap.Error(err))
+				}
 			case <-mCopyCode.ClickedCh:
 				if relay.RoomCode() != "" {
-					clipboard.WriteAll(relay.RoomCode())
+					if err := clipboard.WriteAll(relay.RoomCode()); err != nil {
+						logger.Warn("failed to copy room code to clipboard", zap.Error(err))
+					}
 				}
 			case <-mCopyLink.ClickedCh:
 				if relay.RoomCode() != "" {
-					clipboard.WriteAll(relay.FullLink())
+					if err := clipboard.WriteAll(relay.FullLink()); err != nil {
+						logger.Warn("failed to copy link to clipboard", zap.Error(err))
+					}
 				}
 			case <-mQuit.ClickedCh:
 				logger.Info("shutting down relay via tray")
