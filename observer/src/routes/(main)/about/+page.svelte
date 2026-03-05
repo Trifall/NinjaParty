@@ -30,7 +30,7 @@
 				<h1
 					class="bg-gradient-to-br from-white via-white/90 to-white/50 bg-clip-text text-4xl font-black leading-tight tracking-tight text-transparent"
 				>
-					Ninjabrain<br />Party
+					Ninjabrain Party
 				</h1>
 				<p class="mt-2 text-sm font-medium uppercase tracking-wide text-emerald-400/80">
 					Observation tool for Ninjabrain Bot

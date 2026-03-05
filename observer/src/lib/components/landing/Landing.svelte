@@ -89,11 +89,11 @@
 				{/if}
 
 				<Button
-					class="group relative h-14 w-full overflow-hidden rounded-lg bg-white font-bold text-black transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+					class="group relative h-14 w-full overflow-hidden rounded-lg bg-white font-bold text-black transition-all hover:bg-emerald-500 disabled:opacity-50"
 					onclick={joinRoom}
 					disabled={isLoading || roomCode.length !== 6}
 				>
-					<div class="absolute inset-0 flex h-full w-full justify-center [filter:blur(1px)]">
+					<div class="absolute inset-0 flex h-full w-full justify-center">
 						<div
 							class="absolute inset-0 h-full w-full bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-0 transition-opacity duration-300 group-hover:opacity-20"
 						></div>
