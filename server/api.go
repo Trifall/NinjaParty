@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,9 @@ import (
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 )
+
+var validRoomCode = regexp.MustCompile(`^[0-9a-fA-F]{3,20}$`)
+var validRunnerName = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,24}$`)
 
 func normalizeOrigin(o string) string {
 	o = strings.TrimSpace(o)
@@ -72,13 +76,8 @@ type CreateRoomRequest struct {
 }
 
 func ValidateRunnerName(name string) error {
-	if len(name) > 24 {
-		return fmt.Errorf("runner name must be 24 characters or less")
-	}
-	for _, c := range name {
-		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_') {
-			return fmt.Errorf("runner name must contain only alphanumeric characters, hyphens, and underscores")
-		}
+	if !validRunnerName.MatchString(name) {
+		return fmt.Errorf("runner name must be 1–24 alphanumeric characters, hyphens, or underscores")
 	}
 	return nil
 }
@@ -111,12 +110,14 @@ func (api *API) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"roomCode":   code,
 		"writeToken": writeToken,
 		"createdAt":  createdAt,
 		"isCreator":  true,
-	})
+	}); err != nil {
+		api.logger.Error("failed to encode create room response", zap.Error(err))
+	}
 }
 
 type JoinRoomRequest struct {
@@ -161,11 +162,13 @@ func (api *API) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"writeToken": writeToken,
 		"createdAt":  createdAt,
 		"isCreator":  isCreator,
-	})
+	}); err != nil {
+		api.logger.Error("failed to encode join room response", zap.Error(err))
+	}
 }
 
 func (api *API) HandleRoomExists(w http.ResponseWriter, r *http.Request) {
@@ -218,16 +221,9 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(roomCode) > 20 || len(roomCode) < 3 {
-		http.Error(w, "invalid room code length", http.StatusBadRequest)
+	if !validRoomCode.MatchString(roomCode) {
+		http.Error(w, "invalid room code format", http.StatusBadRequest)
 		return
-	}
-
-	for _, c := range roomCode {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			http.Error(w, "invalid room code format", http.StatusBadRequest)
-			return
-		}
 	}
 
 	room := api.rooms.GetRoom(roomCode)
@@ -269,7 +265,11 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		api.logger.Error("websocket upgrade failed", zap.Error(err))
 		return
 	}
-	defer c.CloseNow()
+	defer func() {
+		if err := c.CloseNow(); err != nil {
+			api.logger.Debug("websocket CloseNow error", zap.Error(err))
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
@@ -300,7 +300,9 @@ func (api *API) handleWriter(ctx context.Context, c *websocket.Conn, room *RoomS
 		select {
 		case <-writerCtx.Done():
 		case <-room.stop:
-			c.Close(websocket.StatusCode(4000), "room closed")
+			if err := c.Close(websocket.StatusCode(4000), "room closed"); err != nil {
+				api.logger.Debug("writer close error", zap.Error(err))
+			}
 		}
 	}()
 
@@ -417,7 +419,9 @@ func (api *API) handleObserver(ctx context.Context, c *websocket.Conn, room *Roo
 		case <-disconnected:
 			return
 		case <-spec.stop:
-			c.Close(websocket.StatusCode(4000), "room closed")
+			if err := c.Close(websocket.StatusCode(4000), "room closed"); err != nil {
+				api.logger.Debug("observer close error", zap.Error(err))
+			}
 			return
 		case msg := <-spec.ch:
 			if err := c.Write(ctx, websocket.MessageText, msg); err != nil {

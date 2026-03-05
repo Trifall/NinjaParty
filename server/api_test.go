@@ -32,7 +32,9 @@ func TestAPI_HandleCreateRoom(t *testing.T) {
 	}
 
 	var resp map[string]interface{}
-	json.NewDecoder(rr.Body).Decode(&resp)
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 
 	if resp["code"] == "" || resp["writeToken"] == "" || resp["createdAt"] == nil {
 		t.Errorf("missing expected fields in response: %v", resp)
@@ -81,7 +83,9 @@ func TestAPI_HandleJoinRoom(t *testing.T) {
 	}
 
 	var resp map[string]interface{}
-	json.NewDecoder(rr.Body).Decode(&resp)
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 	if resp["writeToken"] == "" || resp["isCreator"] == true {
 		t.Errorf("unexpected response: %v", resp)
 	}

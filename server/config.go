@@ -15,13 +15,15 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	godotenv.Load()
+	// intentionally ignore error: .env file is optional
+	_ = godotenv.Load()
 
 	viper.SetDefault("LISTEN_ADDR", ":8080")
 	viper.SetDefault("OBSERVER_URL", "https://np.trifall.com/")
 	viper.SetDefault("ROOM_TTL", 2*time.Hour) // 2 hour inactivity TTL
 
 	viper.AutomaticEnv()
+
 	// allow UI_DOMAIN=http://foo,http://bar
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
