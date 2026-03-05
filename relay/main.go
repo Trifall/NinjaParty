@@ -8,13 +8,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/atotto/clipboard"
-	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
 
 	"github.com/NinjaParty/relay/core"
 	"github.com/NinjaParty/relay/ui"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 func main() {
@@ -25,6 +29,12 @@ func main() {
 		logger, _ = zap.NewDevelopment()
 	}
 	defer logger.Sync()
+
+	logger.Info("Starting NinjaParty Relay",
+		zap.String("version", version),
+		zap.String("commit", commit),
+		zap.String("date", date),
+	)
 
 	config, err := core.LoadConfig()
 	if err != nil {
@@ -76,39 +86,7 @@ func main() {
 
 	browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
 
-	go func() {
-		systray.Run(func() {
-			systray.SetIcon(iconData)
-			systray.SetTitle("NinjaParty Relay")
-			systray.SetTooltip("NinjaParty Relay")
-
-			mTitle := systray.AddMenuItem("NinjaParty Relay", "")
-			mTitle.Disable()
-			systray.AddSeparator()
-			mOpen := systray.AddMenuItem("Open UI", "Open the relay UI")
-			mCopyCode := systray.AddMenuItem("Copy Room Code", "Copy the room code to clipboard")
-			mCopyLink := systray.AddMenuItem("Copy Link", "Copy the room link to clipboard")
-			mQuit := systray.AddMenuItem("Quit", "Close the relay")
-			mQuit.SetTooltip("Quit the relay application")
-
-			for {
-				select {
-				case <-mOpen.ClickedCh:
-					browser.OpenURL(fmt.Sprintf("http://%s", config.LocalUIAddr))
-				case <-mCopyCode.ClickedCh:
-					clipboard.WriteAll(relay.RoomCode())
-				case <-mCopyLink.ClickedCh:
-					clipboard.WriteAll(relay.FullLink())
-				case <-mQuit.ClickedCh:
-					logger.Info("shutting down relay via tray")
-					relay.Shutdown()
-					os.Exit(0)
-				}
-			}
-		}, func() {
-			logger.Info("systray exited")
-		})
-	}()
+	go runTray(relay, config.LocalUIAddr, logger)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

@@ -12,6 +12,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	var logger *zap.Logger
 	if os.Getenv("DEBUG") == "1" {
@@ -20,6 +26,12 @@ func main() {
 		logger, _ = zap.NewDevelopment()
 	}
 	defer logger.Sync()
+
+	logger.Info("Starting NinjaParty Server",
+		zap.String("version", version),
+		zap.String("commit", commit),
+		zap.String("date", date),
+	)
 
 	config, err := LoadConfig()
 	if err != nil {
