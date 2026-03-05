@@ -48,3 +48,7 @@ logs/
 
 local-testing/
 **relay_state.json
+
+relay/dist/
+server/dist/
+observer/dist/
