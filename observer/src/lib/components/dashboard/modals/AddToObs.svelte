@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Monitor } from '@lucide/svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
 	interface Props {
 		roomCode: string;
@@ -11,10 +12,33 @@
 	let showObsModal = $state(false);
 	let copiedLink = $state(false);
 
-	let obsUrl = $derived(`/room/${roomCode}?embed=1`);
+	let obsUrl = $derived(() => {
+		const params = new URLSearchParams({ embed: '1' });
+
+		const viewMode = settings.viewMode.current;
+		if (viewMode !== VIEW_MODE.MAX) {
+			params.set('viewMode', viewMode);
+		}
+
+		const displayType = settings.displayType.current;
+		if (displayType !== 'FOUR_FOUR') {
+			params.set('displayType', displayType);
+		}
+
+		if (!settings.colorNegatives.current) {
+			params.set('colorNegatives', 'false');
+		}
+
+		const autoHide = settings.embedAutoHide.current;
+		if (autoHide > 0) {
+			params.set('autoHide', String(autoHide));
+		}
+
+		return `/room/${roomCode}?${params.toString()}`;
+	});
 
 	function copyLink() {
-		navigator.clipboard.writeText(window.location.origin + obsUrl);
+		navigator.clipboard.writeText(window.location.origin + obsUrl());
 		copiedLink = true;
 		setTimeout(() => (copiedLink = false), 2000);
 	}
@@ -59,16 +83,21 @@
 				<AlertDialog.Description class="space-y-4">
 					<div class="flex flex-col gap-2">
 						<span class="text-sm font-medium text-white">1. Copy this link:</span>
-						<div class="flex items-center gap-2">
+						<p class="text-xs text-white/50">
+							All your current settings are baked into this URL — the OBS browser source will
+							display exactly as you've configured it.
+						</p>
+						<div style="display:grid; grid-template-columns: 1fr auto; gap: 0.5rem; min-width:0;">
 							<code
-								class="flex-1 truncate rounded border border-white/10 bg-black px-3 py-2 text-sm text-emerald-400"
+								style="overflow-x:auto; white-space:nowrap; min-width:0;"
+								class="rounded border border-white/10 bg-black px-3 py-2 text-sm text-emerald-400"
 							>
-								{window.location.origin}{obsUrl}
+								{window.location.origin}{obsUrl()}
 							</code>
 							<button
 								type="button"
 								onclick={copyLink}
-								class="shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+								class="self-center rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
 							>
 								{copiedLink ? 'Copied!' : 'Copy'}
 							</button>

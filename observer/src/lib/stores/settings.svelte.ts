@@ -1,8 +1,14 @@
 import { PersistedState } from 'runed';
-import type { McVersion } from '$lib/utils/stronghold';
 
 export type CoordinateDisplayType = 'FOUR_FOUR' | 'EIGHT_EIGHT' | 'CHUNK';
-export type ViewMode = 'max' | 'compact';
+
+export const VIEW_MODE = {
+	MAX: 'max',
+	COMPACT: 'compact',
+	ULTRA_COMPACT: 'ultra-compact',
+} as const;
+
+export type ViewMode = (typeof VIEW_MODE)[keyof typeof VIEW_MODE];
 
 function createPersistedSafe<T>(key: string, defaultValue: T): PersistedState<T> {
 	try {
@@ -18,9 +24,10 @@ class AppSettings {
 		'ninjabrain_settings_display_type',
 		'FOUR_FOUR'
 	);
-	mcVersion = createPersistedSafe<McVersion>('ninjabrain_settings_mc_version', 'PRE_119');
-	colorNegatives = createPersistedSafe<boolean>('ninjabrain_settings_color_negatives', false);
-	viewMode = createPersistedSafe<ViewMode>('ninjabrain_settings_view_mode', 'max');
+	colorNegatives = createPersistedSafe<boolean>('ninjabrain_settings_color_negatives', true);
+	viewMode = createPersistedSafe<ViewMode>('ninjabrain_settings_view_mode', VIEW_MODE.MAX);
+	// 0 = disabled, otherwise seconds of inactivity before embed fades out
+	embedAutoHide = createPersistedSafe<number>('ninjabrain_settings_embed_auto_hide', 0);
 }
 
 export const settings = new AppSettings();

@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { settings } from '$lib/stores/settings.svelte';
+	import {
+		type CoordinateDisplayType,
+		VIEW_MODE,
+		type ViewMode,
+		settings,
+	} from '$lib/stores/settings.svelte';
 	import type {
 		ChunkPrediction,
 		EyeThrow,
@@ -25,13 +30,29 @@
 		predictions: ChunkPrediction[];
 		pos: PlayerPosition | undefined;
 		eyeThrows?: EyeThrow[];
-		isCompact?: boolean;
+		viewMode?: ViewMode;
+		// optional overrides — provided by Dashboard in embed mode
+		// falls back to the settings store when not set (normal mode)
+		displayType?: CoordinateDisplayType;
+		colorNegatives?: boolean;
 	}
 
-	let { resultType, predictions, pos, eyeThrows = [], isCompact = false }: Props = $props();
+	let {
+		resultType,
+		predictions,
+		pos,
+		eyeThrows = [],
+		viewMode = VIEW_MODE.MAX,
+		displayType: displayTypeProp,
+		colorNegatives: colorNegativesProp,
+	}: Props = $props();
 
-	let displayType = $derived(settings.displayType.current);
-	let colorNegatives = $derived(settings.colorNegatives.current);
+	let isCompact = $derived(viewMode === VIEW_MODE.COMPACT || viewMode === VIEW_MODE.ULTRA_COMPACT);
+	let isUltraCompact = $derived(viewMode === VIEW_MODE.ULTRA_COMPACT);
+
+	// use prop if provided, otherwise fall back to store
+	let displayType = $derived(displayTypeProp ?? settings.displayType.current);
+	let colorNegatives = $derived(colorNegativesProp ?? settings.colorNegatives.current);
 
 	function getPredictionDisplayCoords(chunkX: number, chunkZ: number): [number, number] {
 		if (displayType === 'FOUR_FOUR') return [16 * chunkX + 4, 16 * chunkZ + 4];
@@ -122,13 +143,21 @@
 {#if resultType !== 'FAILED' && predictions.length > 0}
 	<table class="w-full border-collapse text-base">
 		<thead>
-			<tr class="border-b border-white/20 text-gray-400">
-				<th class="w-[22%] px-3 py-2 text-center font-normal">Location</th>
-				<th class="w-[12%] px-3 py-2 text-center font-normal">%</th>
-				<th class="w-[12%] px-3 py-2 text-center font-normal">Dist.</th>
-				<th class="w-[14%] px-3 py-2 text-center font-normal">Nether</th>
-				<th class="w-[18%] px-3 py-2 text-center font-normal">Angle</th>
-				{#if isCompact}
+			<tr class="border-b border-white/20 text-gray-400 {isUltraCompact ? 'text-xs' : ''}">
+				<th class="w-[22%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+					>Location</th
+				>
+				<th class="w-[12%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal">%</th>
+				<th class="w-[12%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+					>Dist.</th
+				>
+				<th class="w-[14%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+					>Nether</th
+				>
+				<th class="w-[18%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+					>Angle</th
+				>
+				{#if isCompact && !isUltraCompact}
 					<th class="w-[12%] px-3 py-2 text-center font-normal">
 						<span class="inline-flex items-center gap-1">
 							Error
@@ -164,8 +193,12 @@
 				{@const nether = chunkToNether(pred.chunkX, pred.chunkZ)}
 				{@const travel = getTravelAngleInfo(pred.chunkX, pred.chunkZ)}
 				{@const certaintyCol = getCertaintyColor(pred.certainty)}
-				<tr class="border-b border-white/5 transition-colors hover:bg-white/5">
-					<td class="px-3 py-1.5 text-center">
+				<tr
+					class="border-b border-white/5 transition-colors hover:bg-white/5 {isUltraCompact
+						? 'text-xs'
+						: ''}"
+				>
+					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						(<span class={colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
 							>{coords[0]}</span
 						>,
@@ -173,15 +206,18 @@
 							>{coords[1]}</span
 						>)
 					</td>
-					<td class="px-3 py-1.5 text-center font-semibold" style="color: {certaintyCol}">
+					<td
+						class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center font-semibold"
+						style="color: {certaintyCol}"
+					>
 						{(pred.certainty * 100).toFixed(1)}%
 					</td>
-					<td class="px-3 py-1.5 text-center text-gray-200">
+					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center text-gray-200">
 						{pos?.isInNether
 							? Math.floor(pred.overworldDistance / 8)
 							: Math.floor(pred.overworldDistance)}
 					</td>
-					<td class="px-3 py-1.5 text-center">
+					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						(<span class={colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
 							>{nether[0]}</span
 						>,
@@ -189,17 +225,19 @@
 							>{nether[1]}</span
 						>)
 					</td>
-					<td class="whitespace-nowrap px-3 py-1.5 text-center">
+					<td class="whitespace-nowrap px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						{#if travel.angle !== null && travel.diff !== null}
 							<span class="text-gray-200">{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span>
-							<span style="color: {getAngleDiffColor(travel.diff)}" class="ml-1.5"
-								>({travel.diff > 0 ? '→' : '←'} {Math.abs(travel.diff).toFixed(1)})</span
-							>
+							{#if !isUltraCompact}
+								<span style="color: {getAngleDiffColor(travel.diff)}" class="ml-1.5"
+									>({travel.diff > 0 ? '→' : '←'} {Math.abs(travel.diff).toFixed(1)})</span
+								>
+							{/if}
 						{:else}
 							<span class="text-gray-500">-</span>
 						{/if}
 					</td>
-					{#if isCompact}
+					{#if isCompact && !isUltraCompact}
 						<td class="whitespace-nowrap px-3 py-1.5 text-center">
 							{#if maxErrorInfo.error !== null}
 								<span class="inline-flex items-center gap-1">

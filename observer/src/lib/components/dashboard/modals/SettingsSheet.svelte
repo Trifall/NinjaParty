@@ -1,11 +1,19 @@
 <script lang="ts">
 	import { Settings } from '@lucide/svelte';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import { settings } from '$lib/stores/settings.svelte';
+	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
 	let currentDisplayType = $derived(settings.displayType.current);
-	let currentMcVersion = $derived(settings.mcVersion.current);
 	let currentViewMode = $derived(settings.viewMode.current);
+	let currentEmbedAutoHide = $derived(settings.embedAutoHide.current);
+
+	const AUTO_HIDE_OPTIONS = [
+		{ value: 0, label: 'Disabled' },
+		{ value: 5, label: '5 seconds' },
+		{ value: 15, label: '15 seconds' },
+		{ value: 30, label: '30 seconds' },
+		{ value: 60, label: '60 seconds' },
+	];
 </script>
 
 <Sheet.Root>
@@ -32,9 +40,9 @@
 						<input
 							type="radio"
 							name="viewMode"
-							value="max"
-							checked={currentViewMode === 'max'}
-							onchange={() => (settings.viewMode.current = 'max')}
+							value={VIEW_MODE.MAX}
+							checked={currentViewMode === VIEW_MODE.MAX}
+							onchange={() => (settings.viewMode.current = VIEW_MODE.MAX)}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
@@ -47,15 +55,28 @@
 						<input
 							type="radio"
 							name="viewMode"
-							value="compact"
-							checked={currentViewMode === 'compact'}
-							onchange={() => (settings.viewMode.current = 'compact')}
+							value={VIEW_MODE.COMPACT}
+							checked={currentViewMode === VIEW_MODE.COMPACT}
+							onchange={() => (settings.viewMode.current = VIEW_MODE.COMPACT)}
 							class="h-4 w-4 accent-emerald-500"
 						/>
 						<span class="text-sm"
 							>Compact View <span class="ml-1 text-muted-foreground"
 								>- Location + Position only</span
 							></span
+						>
+					</label>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="viewMode"
+							value={VIEW_MODE.ULTRA_COMPACT}
+							checked={currentViewMode === VIEW_MODE.ULTRA_COMPACT}
+							onchange={() => (settings.viewMode.current = VIEW_MODE.ULTRA_COMPACT)}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Ultra Compact <span class="ml-1 text-muted-foreground">- Minimal display</span></span
 						>
 					</label>
 				</div>
@@ -112,36 +133,6 @@
 			</div>
 
 			<div class="space-y-4 border-t border-white/10 pt-4">
-				<h4 class="text-sm font-medium leading-none text-white">Minecraft Version</h4>
-				<div class="flex flex-col space-y-3">
-					<label class="flex cursor-pointer items-center space-x-3">
-						<input
-							type="radio"
-							name="mcVersion"
-							value="PRE_119"
-							checked={currentMcVersion === 'PRE_119'}
-							onchange={() => (settings.mcVersion.current = 'PRE_119')}
-							class="h-4 w-4 accent-emerald-500"
-						/>
-						<span class="text-sm"
-							>1.18 and below <span class="ml-1 text-muted-foreground">- Most common</span></span
-						>
-					</label>
-					<label class="flex cursor-pointer items-center space-x-3">
-						<input
-							type="radio"
-							name="mcVersion"
-							value="POST_119"
-							checked={currentMcVersion === 'POST_119'}
-							onchange={() => (settings.mcVersion.current = 'POST_119')}
-							class="h-4 w-4 accent-emerald-500"
-						/>
-						<span class="text-sm">1.19 and above</span>
-					</label>
-				</div>
-			</div>
-
-			<div class="space-y-4 border-t border-white/10 pt-4">
 				<h4 class="text-sm font-medium leading-none text-white">Display Options</h4>
 				<div class="flex flex-col space-y-3">
 					<label class="flex cursor-pointer items-center space-x-3">
@@ -157,6 +148,31 @@
 							></span
 						>
 					</label>
+				</div>
+			</div>
+
+			<!-- Embed Auto-Hide -->
+			<div class="space-y-4 border-t border-white/10 pt-4">
+				<div>
+					<h4 class="text-sm font-medium leading-none text-white">Embed Auto-Hide</h4>
+					<p class="mt-1.5 text-xs text-muted-foreground">
+						In OBS embed mode, fade out the overlay after this long with no runner data changes.
+					</p>
+				</div>
+				<div class="flex flex-col space-y-3">
+					{#each AUTO_HIDE_OPTIONS as option}
+						<label class="flex cursor-pointer items-center space-x-3">
+							<input
+								type="radio"
+								name="embedAutoHide"
+								value={option.value}
+								checked={currentEmbedAutoHide === option.value}
+								onchange={() => (settings.embedAutoHide.current = option.value)}
+								class="h-4 w-4 accent-emerald-500"
+							/>
+							<span class="text-sm">{option.label}</span>
+						</label>
+					{/each}
 				</div>
 			</div>
 		</div>

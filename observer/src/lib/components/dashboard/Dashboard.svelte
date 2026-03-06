@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { Clock, Eye, EyeOff, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
 	import type { RoomConnection } from '$lib/stores/room.svelte';
-	import { settings } from '$lib/stores/settings.svelte';
+	import { type ViewMode, settings } from '$lib/stores/settings.svelte';
 	import { formatUptime } from '$src/lib/utils/format';
+	import { embedParamsSchema } from '$components/dashboard/embed-params';
 	import AnimatedGradientText from '$components/ui/AnimatedGradientText.svelte';
 	import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '$components/ui/tooltip';
 	import AllAdvancements from './AllAdvancements.svelte';
@@ -27,9 +29,49 @@
 	let showRevealConfirm = $state(false);
 
 	let runners = $derived(roomStore.sortedRunners);
-	let viewMode = $derived(settings.viewMode.current);
 
 	let now = $state(Date.now());
+
+	let embedParams = $derived(() => {
+		const sp = $page.url.searchParams;
+		const result = embedParamsSchema.safeParse({
+			viewMode: sp.get('viewMode') ?? undefined,
+			displayType: sp.get('displayType') ?? undefined,
+			colorNegatives: sp.get('colorNegatives') ?? undefined,
+			autoHide: sp.get('autoHide') ?? undefined,
+		});
+		return result.success ? result.data : embedParamsSchema.parse({});
+	});
+
+	// in embed mode, URL params are the source of truth
+	// in normal mode, use the persisted settings store
+	let viewMode = $derived(
+		isEmbed ? (embedParams().viewMode as ViewMode) : (settings.viewMode.current as ViewMode)
+	);
+	let displayType = $derived(isEmbed ? embedParams().displayType : settings.displayType.current);
+	let colorNegatives = $derived(
+		isEmbed ? embedParams().colorNegatives : settings.colorNegatives.current
+	);
+	let autoHideSeconds = $derived(isEmbed ? embedParams().autoHide : settings.embedAutoHide.current);
+
+	// auto-hide state
+	let isHidden = $state(false);
+	let autoHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// snapshot of only meaningful runner fields
+	let runnerDataSnapshot = $derived(
+		JSON.stringify(
+			runners.map((r) => ({
+				name: r.name,
+				status: r.status,
+				stronghold: r.stronghold,
+				boat: r.boat,
+				blind: r.blind,
+				divine: r.divine,
+				allAdvancements: r.allAdvancements,
+			}))
+		)
+	);
 
 	$effect(() => {
 		console.log('Dashboard render:', {
@@ -44,6 +86,30 @@
 			now = Date.now();
 		}, 1000);
 		return () => clearInterval(interval);
+	});
+
+	$effect(() => {
+		runnerDataSnapshot;
+
+		if (autoHideSeconds === 0) {
+			if (autoHideTimer) clearTimeout(autoHideTimer);
+			autoHideTimer = null;
+			isHidden = false;
+			return;
+		}
+
+		isHidden = false;
+		if (autoHideTimer) clearTimeout(autoHideTimer);
+		autoHideTimer = setTimeout(() => {
+			isHidden = true;
+		}, autoHideSeconds * 1000);
+
+		return () => {
+			if (autoHideTimer) {
+				clearTimeout(autoHideTimer);
+				autoHideTimer = null;
+			}
+		};
 	});
 
 	let connectionColor = $derived(
@@ -72,7 +138,11 @@
 </script>
 
 <TooltipProvider>
-	<div class="mx-auto w-full max-w-3xl">
+	<div
+		class="mx-auto w-full max-w-3xl transition-opacity duration-700 {isEmbed && isHidden
+			? 'opacity-0'
+			: 'opacity-100'}"
+	>
 		<!-- Header -->
 		<div
 			class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black px-5 py-3 backdrop-blur-xl"
@@ -164,99 +234,193 @@
 					<p>Waiting for runner data...</p>
 				</div>
 			{:else}
-				<div class="flex flex-col gap-4 p-4">
+				<div class="flex flex-col {viewMode === 'ultra-compact' ? 'gap-1.5 p-2' : 'gap-4 p-4'}">
 					{#each runners as runner (runner.name)}
-						<div
-							class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status === 'offline'
-								? 'opacity-60'
-								: ''}"
-						>
-							<!-- Runner Header -->
-							<div class="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
-								<div class="flex items-center gap-2">
-									<span class="relative flex h-3 w-3">
-										{#if runner.status === 'online'}
+						{#if viewMode === 'ultra-compact'}
+							<!-- Ultra-Compact: no card header, name inline with data -->
+							<div
+								class="rounded-md border border-white/10 bg-black/40 {runner.status === 'offline'
+									? 'opacity-60'
+									: ''}"
+							>
+								{#if !runner.stronghold}
+									<div class="flex items-center gap-3 px-3 py-1.5 text-xs">
+										<div class="flex items-center gap-1.5">
+											<span class="relative flex h-2 w-2">
+												{#if runner.status === 'online'}
+													<span
+														class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+													></span>
+												{/if}
+												<span
+													class="relative inline-flex h-2 w-2 rounded-full {runner.status ===
+													'online'
+														? 'bg-emerald-500'
+														: 'bg-red-500'}"
+												></span>
+											</span>
+											<span class="font-semibold text-white">{runner.name}</span>
+											{#if runner.status === 'offline'}
+												<span class="text-xs text-red-400">(Offline)</span>
+											{/if}
+										</div>
+										{#if runner.boat && runner.boat.boatState !== 'NONE'}
+											<img
+												src="/images/boat_{runner.boat.boatState === 'VALID'
+													? 'green'
+													: runner.boat.boatState === 'MEASURING'
+														? 'blue'
+														: 'red'}.png"
+												alt={runner.boat.boatState}
+												class="h-3 w-3 object-contain"
+											/>
+										{/if}
+										<span class="ml-auto text-muted-foreground">Waiting for data...</span>
+									</div>
+								{:else}
+									<div class="flex items-center gap-2 border-b border-white/5 px-3 py-1">
+										<span class="relative flex h-2 w-2 shrink-0">
+											{#if runner.status === 'online'}
+												<span
+													class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+												></span>
+											{/if}
 											<span
-												class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+												class="relative inline-flex h-2 w-2 rounded-full {runner.status === 'online'
+													? 'bg-emerald-500'
+													: 'bg-red-500'}"
 											></span>
+										</span>
+										<span class="text-sm font-semibold text-white">{runner.name}</span>
+										{#if runner.status === 'offline'}
+											<span class="text-xs text-red-400">(Offline)</span>
 										{/if}
-										<span
-											class="relative inline-flex h-3 w-3 rounded-full {runner.status === 'online'
-												? 'bg-emerald-500'
-												: 'bg-red-500'}"
-										></span>
-									</span>
-									<span class="text-lg font-semibold text-white">{runner.name}</span>
-									{#if runner.status === 'offline'}
-										<span class="text-xs text-red-400">(Offline)</span>
-									{/if}
-								</div>
-								{#if runner.boat && runner.boat.boatState !== 'NONE'}
-									<Badge
-										variant="outline"
-										class="flex items-center gap-2 border-white/20 bg-black/40 px-2 py-1 text-xs {getBoatColor(
-											runner.boat.boatState
-										)}"
-									>
-										{#if runner.boat.boatState === 'VALID'}
-											<img
-												src="/images/boat_green.png"
-												alt="Valid"
-												class="h-3 w-3 object-contain"
+										<div class="ml-auto flex items-center gap-2">
+											<PlayerPosition
+												pos={runner.stronghold.playerPosition}
+												inline={true}
+												{colorNegatives}
 											/>
-										{:else if runner.boat.boatState === 'MEASURING'}
-											<img
-												src="/images/boat_blue.png"
-												alt="Measuring"
-												class="h-3 w-3 object-contain"
-											/>
-										{:else if runner.boat.boatState === 'ERROR'}
-											<img src="/images/boat_red.png" alt="Error" class="h-3 w-3 object-contain" />
-										{/if}
-										{runner.boat.boatState}
-									</Badge>
-								{/if}
-							</div>
-
-							<!-- Runner Data -->
-							{#if !runner.stronghold}
-								<div class="flex h-20 items-center justify-center text-muted-foreground">
-									<p>Waiting for data...</p>
-								</div>
-							{:else if viewMode === 'compact'}
-								<!-- Compact View -->
-								<div class="space-y-2">
+											{#if runner.boat && runner.boat.boatState !== 'NONE'}
+												<img
+													src="/images/boat_{runner.boat.boatState === 'VALID'
+														? 'green'
+														: runner.boat.boatState === 'MEASURING'
+															? 'blue'
+															: 'red'}.png"
+													alt={runner.boat.boatState}
+													class="h-3 w-3 object-contain"
+												/>
+											{/if}
+										</div>
+									</div>
 									<LocationsTable
 										resultType={runner.stronghold.resultType}
 										predictions={runner.stronghold.predictions?.slice(0, 1) || []}
 										pos={runner.stronghold.playerPosition}
 										eyeThrows={runner.stronghold.eyeThrows || []}
-										isCompact={true}
+										{viewMode}
+										{displayType}
+										{colorNegatives}
 									/>
-									<PlayerPosition pos={runner.stronghold.playerPosition} />
+								{/if}
+							</div>
+						{:else}
+							<!-- Standard card layout (max / compact) -->
+							<div
+								class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status ===
+								'offline'
+									? 'opacity-60'
+									: ''}"
+							>
+								<!-- Runner Header -->
+								<div class="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+									<div class="flex items-center gap-2">
+										<span class="relative flex h-3 w-3">
+											{#if runner.status === 'online'}
+												<span
+													class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+												></span>
+											{/if}
+											<span
+												class="relative inline-flex h-3 w-3 rounded-full {runner.status === 'online'
+													? 'bg-emerald-500'
+													: 'bg-red-500'}"
+											></span>
+										</span>
+										<span class="text-lg font-semibold text-white">{runner.name}</span>
+										{#if runner.status === 'offline'}
+											<span class="text-xs text-red-400">(Offline)</span>
+										{/if}
+									</div>
+									{#if runner.boat && runner.boat.boatState !== 'NONE'}
+										<Badge
+											variant="outline"
+											class="flex items-center gap-2 border-white/20 bg-black/40 px-2 py-1 text-xs {getBoatColor(
+												runner.boat.boatState
+											)}"
+										>
+											{#if runner.boat.boatState === 'VALID'}
+												<img
+													src="/images/boat_green.png"
+													alt="Valid"
+													class="h-3 w-3 object-contain"
+												/>
+											{:else if runner.boat.boatState === 'MEASURING'}
+												<img
+													src="/images/boat_blue.png"
+													alt="Measuring"
+													class="h-3 w-3 object-contain"
+												/>
+											{:else if runner.boat.boatState === 'ERROR'}
+												<img
+													src="/images/boat_red.png"
+													alt="Error"
+													class="h-3 w-3 object-contain"
+												/>
+											{/if}
+											{runner.boat.boatState}
+										</Badge>
+									{/if}
 								</div>
-							{:else}
-								<!-- Max View -->
-								<div class="space-y-0">
-									<LocationsTable
-										resultType={runner.stronghold.resultType}
-										predictions={runner.stronghold.predictions?.slice(0, 5) || []}
-										pos={runner.stronghold.playerPosition}
-										isCompact={false}
-									/>
 
-									<PlayerPosition pos={runner.stronghold.playerPosition} />
-
-									<EyeThrows throws={runner.stronghold.eyeThrows || []} />
-
-									<BlindMode blind={runner.blind ?? undefined} />
-
-									<DivineMode divine={runner.divine ?? undefined} />
-
-									<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
-								</div>
-							{/if}
-						</div>
+								<!-- Runner Data -->
+								{#if !runner.stronghold}
+									<div class="flex h-20 items-center justify-center text-muted-foreground">
+										<p>Waiting for data...</p>
+									</div>
+								{:else if viewMode === 'compact'}
+									<div class="space-y-2">
+										<LocationsTable
+											resultType={runner.stronghold.resultType}
+											predictions={runner.stronghold.predictions?.slice(0, 1) || []}
+											pos={runner.stronghold.playerPosition}
+											eyeThrows={runner.stronghold.eyeThrows || []}
+											{viewMode}
+											{displayType}
+											{colorNegatives}
+										/>
+										<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
+									</div>
+								{:else}
+									<div class="space-y-0">
+										<LocationsTable
+											resultType={runner.stronghold.resultType}
+											predictions={runner.stronghold.predictions?.slice(0, 5) || []}
+											pos={runner.stronghold.playerPosition}
+											{viewMode}
+											{displayType}
+											{colorNegatives}
+										/>
+										<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
+										<EyeThrows throws={runner.stronghold.eyeThrows || []} />
+										<BlindMode blind={runner.blind ?? undefined} />
+										<DivineMode divine={runner.divine ?? undefined} />
+										<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
+									</div>
+								{/if}
+							</div>
+						{/if}
 					{/each}
 				</div>
 			{/if}
