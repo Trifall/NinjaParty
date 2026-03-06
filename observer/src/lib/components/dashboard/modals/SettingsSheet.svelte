@@ -3,6 +3,12 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
+	interface Props {
+		compact?: boolean;
+	}
+
+	let { compact = false }: Props = $props();
+
 	let currentDisplayType = $derived(settings.displayType.current);
 	let currentViewMode = $derived(settings.viewMode.current);
 	let currentEmbedAutoHide = $derived(settings.embedAutoHide.current);
@@ -18,9 +24,11 @@
 
 <Sheet.Root>
 	<Sheet.Trigger
-		class="inline-flex h-7 w-7 items-center justify-center whitespace-nowrap rounded-md border border-white/10 bg-black/40 text-sm font-medium text-white ring-offset-background backdrop-blur-xl transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+		class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-white/10 bg-black/40 font-medium text-white ring-offset-background backdrop-blur-xl transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 {compact
+			? 'h-6 w-6 text-xs'
+			: 'h-7 w-7 text-sm'}"
 	>
-		<Settings class="h-4 w-4" />
+		<Settings class={compact ? 'h-3 w-3' : 'h-4 w-4'} />
 	</Sheet.Trigger>
 	<Sheet.Content class="border-l-white/10 bg-black/95 text-white backdrop-blur-xl">
 		<Sheet.Header>

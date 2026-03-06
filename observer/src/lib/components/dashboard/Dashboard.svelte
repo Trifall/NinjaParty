@@ -145,14 +145,23 @@
 	>
 		<!-- Header -->
 		<div
-			class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black px-5 py-3 backdrop-blur-xl"
+			class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black backdrop-blur-xl {viewMode ===
+			'ultra-compact'
+				? 'px-2 pb-0.5 pt-1'
+				: 'px-5 py-3'}"
 		>
 			<div class="flex items-center gap-2">
-				<span class="flex items-center gap-1 text-sm text-gray-800 dark:text-gray-200 md:text-lg">
+				<span
+					class="flex items-center gap-1 {viewMode === 'ultra-compact'
+						? 'text-xs'
+						: 'text-sm text-gray-800 dark:text-gray-200 md:text-lg'}"
+				>
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
-						spanClassName="text-sm font-bold mb-0 md:text-lg pb-0"
+						spanClassName="{viewMode === 'ultra-compact'
+							? 'text-xs'
+							: 'text-sm'} font-bold mb-0 md:text-lg pb-0"
 					>
 						NinjaParty
 					</AnimatedGradientText>
@@ -160,13 +169,20 @@
 
 				{#if !isEmbed}
 					<span class="text-gray-400">|</span>
-					<span class="text-base text-gray-400">Room:</span>
+					<span class="{viewMode === 'ultra-compact' ? 'text-xs' : 'text-base'} text-gray-400"
+						>Room:</span
+					>
 					{#if isRoomCodeHidden}
-						<span class="text-base font-bold uppercase tracking-wider text-emerald-400">******</span
+						<span
+							class="{viewMode === 'ultra-compact'
+								? 'text-xs'
+								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">******</span
 						>
 					{:else}
-						<span class="text-base font-bold uppercase tracking-wider text-emerald-400"
-							>{roomCode}</span
+						<span
+							class="{viewMode === 'ultra-compact'
+								? 'text-xs'
+								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span
 						>
 					{/if}
 					<button
@@ -182,40 +198,59 @@
 						title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
 					>
 						{#if isRoomCodeHidden}
-							<EyeOff class="mt-1 h-4 w-4" />
+							<EyeOff class={viewMode === 'ultra-compact' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
 						{:else}
-							<Eye class="mt-1 h-4 w-4" />
+							<Eye class={viewMode === 'ultra-compact' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
 						{/if}
 					</button>
 				{/if}
 			</div>
 			<div class="flex items-center gap-3">
-				<Badge variant="outline" class="flex gap-2 px-3 py-1.5 text-sm {connectionColor}">
+				<Badge
+					variant="outline"
+					class="flex gap-2 {viewMode === 'ultra-compact'
+						? 'px-1.5 py-0.5 text-xs'
+						: 'px-3 py-1.5 text-sm'} {connectionColor}"
+				>
 					{#if roomStore.status === 'connected'}
-						<Wifi class="h-4 w-4" /> Live
+						<Wifi class={viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} /> Live
 					{:else if roomStore.status === 'reconnecting'}
-						<LoaderCircle class="h-4 w-4 animate-spin" /> Reconnecting
+						<LoaderCircle
+							class="{viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+						/> Reconnecting
 					{:else if roomStore.status === 'connecting'}
-						<LoaderCircle class="h-4 w-4 animate-spin" /> Connecting
+						<LoaderCircle
+							class="{viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+						/> Connecting
 					{:else}
-						<WifiOff class="h-4 w-4" /> Offline
+						<WifiOff class={viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} /> Offline
 					{/if}
 				</Badge>
-				<Badge variant="outline" class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm">
+				<Badge
+					variant="outline"
+					class="flex gap-2 border-white/20 bg-black/40 {viewMode === 'ultra-compact'
+						? 'px-1.5 py-0.5 text-xs'
+						: 'px-3 py-1.5 text-sm'}"
+				>
 					<span class="text-gray-400">{runners.length} Runner{runners.length !== 1 ? 's' : ''}</span
 					>
 				</Badge>
-				<Badge variant="outline" class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm">
-					<Tooltip delayDuration={0}>
-						<TooltipTrigger class="flex items-center gap-2">
-							<Clock class="h-4 w-4" />
-							<span class="text-gray-400"> {formatUptime(roomStore.createdAt, now)}</span>
-						</TooltipTrigger>
-						<TooltipContent side="top">Room Uptime</TooltipContent>
-					</Tooltip>
-				</Badge>
+				{#if viewMode !== 'ultra-compact'}
+					<Badge
+						variant="outline"
+						class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm"
+					>
+						<Tooltip delayDuration={0}>
+							<TooltipTrigger class="flex items-center gap-2">
+								<Clock class="h-4 w-4" />
+								<span class="text-gray-400"> {formatUptime(roomStore.createdAt, now)}</span>
+							</TooltipTrigger>
+							<TooltipContent side="top">Room Uptime</TooltipContent>
+						</Tooltip>
+					</Badge>
+				{/if}
 				{#if !isEmbed}
-					<SettingsSheet />
+					<SettingsSheet compact={viewMode === 'ultra-compact'} />
 				{/if}
 			</div>
 		</div>
@@ -234,7 +269,9 @@
 					<p>Waiting for runner data...</p>
 				</div>
 			{:else}
-				<div class="flex flex-col {viewMode === 'ultra-compact' ? 'gap-1.5 p-2' : 'gap-4 p-4'}">
+				<div
+					class="flex flex-col {viewMode === 'ultra-compact' ? 'gap-1.5 p-2 py-0.5' : 'gap-4 p-4'}"
+				>
 					{#each runners as runner (runner.name)}
 						{#if viewMode === 'ultra-compact'}
 							<!-- Ultra-Compact: no card header, name inline with data -->
