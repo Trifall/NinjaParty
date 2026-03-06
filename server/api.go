@@ -244,7 +244,7 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	origin := r.Header.Get("Origin")
-	if origin != "" {
+	if origin != "" && !isWriter {
 		origin = normalizeOrigin(origin)
 		allowedOrigins := strings.Split(api.config.ObserverURL, ",")
 		allowed := false
