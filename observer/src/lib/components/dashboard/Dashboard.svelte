@@ -230,6 +230,8 @@
 										resultType={runner.stronghold.resultType}
 										predictions={runner.stronghold.predictions?.slice(0, 1) || []}
 										pos={runner.stronghold.playerPosition}
+										eyeThrows={runner.stronghold.eyeThrows || []}
+										isCompact={true}
 									/>
 									<PlayerPosition pos={runner.stronghold.playerPosition} />
 								</div>
@@ -240,6 +242,7 @@
 										resultType={runner.stronghold.resultType}
 										predictions={runner.stronghold.predictions?.slice(0, 5) || []}
 										pos={runner.stronghold.playerPosition}
+										isCompact={false}
 									/>
 
 									<PlayerPosition pos={runner.stronghold.playerPosition} />

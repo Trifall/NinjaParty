@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { settings } from '$lib/stores/settings.svelte';
-	import type { ChunkPrediction, PlayerPosition, ResultType } from '$lib/types/stronghold';
+	import type {
+		ChunkPrediction,
+		EyeThrow,
+		PlayerPosition,
+		ResultType,
+	} from '$lib/types/stronghold';
 	import {
 		chunkToNether,
 		getAngleDiffColor,
@@ -9,14 +14,21 @@
 		getCertaintyColor,
 		normalizeMinecraftAngle,
 	} from '$lib/utils/stronghold';
+	import {
+		BOAT_ALLOWABLE_ERROR,
+		BOAT_STD_DEV,
+		NON_BOAT_WARNING_THRESHOLD,
+	} from '$src/lib/utils/constants';
 
 	interface Props {
 		resultType: ResultType;
 		predictions: ChunkPrediction[];
 		pos: PlayerPosition | undefined;
+		eyeThrows?: EyeThrow[];
+		isCompact?: boolean;
 	}
 
-	let { resultType, predictions, pos }: Props = $props();
+	let { resultType, predictions, pos, eyeThrows = [], isCompact = false }: Props = $props();
 
 	let displayType = $derived(settings.displayType.current);
 	let colorNegatives = $derived(settings.colorNegatives.current);
@@ -40,6 +52,49 @@
 		const diff = getAngleDifference(angle, pos.horizontalAngle);
 		return { angle, diff };
 	}
+
+	function getMaxErrorInfo() {
+		if (eyeThrows.length === 0) return { error: null, warning: null, color: null };
+
+		let maxError = 0;
+		let maxErrorType = '';
+		for (const t of eyeThrows) {
+			if (Math.abs(t.error) > Math.abs(maxError)) {
+				maxError = t.error;
+				maxErrorType = t.type;
+			}
+		}
+
+		const absError = Math.abs(maxError);
+		const isBoat = maxErrorType === 'BOAT';
+		let warning = null;
+		let color = 'text-gray-200';
+
+		if (isBoat) {
+			if (absError > BOAT_ALLOWABLE_ERROR) {
+				warning = 'Boat angle error exceeds 0.03';
+				color = 'text-red-400';
+			} else if (absError > BOAT_STD_DEV) {
+				warning = 'Error exceeds boat std dev (0.0007)';
+				color = 'text-amber-400';
+			} else {
+				color = 'text-emerald-400';
+			}
+		} else {
+			if (absError > NON_BOAT_WARNING_THRESHOLD) {
+				warning = 'Possible bad angle (>0.05)';
+				color = 'text-amber-400';
+			} else if (absError > 0.01) {
+				color = 'text-yellow-400';
+			} else {
+				color = 'text-emerald-400';
+			}
+		}
+
+		return { error: maxError, warning, color };
+	}
+
+	let maxErrorInfo = $derived(getMaxErrorInfo());
 </script>
 
 {#if resultType === 'FAILED'}
@@ -73,6 +128,34 @@
 				<th class="w-[12%] px-3 py-2 text-center font-normal">Dist.</th>
 				<th class="w-[14%] px-3 py-2 text-center font-normal">Nether</th>
 				<th class="w-[18%] px-3 py-2 text-center font-normal">Angle</th>
+				{#if isCompact}
+					<th class="w-[12%] px-3 py-2 text-center font-normal">
+						<span class="inline-flex items-center gap-1">
+							Error
+							<span class="group relative cursor-help">
+								<svg
+									class="h-4 w-4 text-gray-500"
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<circle cx="12" cy="12" r="10" />
+									<path d="M12 16v-4" />
+									<path d="M12 8h.01" />
+								</svg>
+								<span
+									class="absolute left-1/2 top-full z-50 mt-1 hidden w-48 -translate-x-1/2 rounded border border-white/10 bg-black/95 px-3 py-2 text-center text-xs text-white shadow-lg group-hover:block"
+								>
+									Displays the LARGEST error from the throws of this calculation.
+								</span>
+							</span>
+						</span>
+					</th>
+				{/if}
 			</tr>
 		</thead>
 		<tbody>
@@ -116,6 +199,42 @@
 							<span class="text-gray-500">-</span>
 						{/if}
 					</td>
+					{#if isCompact}
+						<td class="whitespace-nowrap px-3 py-1.5 text-center">
+							{#if maxErrorInfo.error !== null}
+								<span class="inline-flex items-center gap-1">
+									<span class={maxErrorInfo.color}>{maxErrorInfo.error.toFixed(5)}</span>
+									{#if maxErrorInfo.warning}
+										<span class="group relative">
+											<svg
+												class="h-4 w-4 text-amber-400"
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<path
+													d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+												/>
+												<line x1="12" y1="9" x2="12" y2="13" />
+												<line x1="12" y1="17" x2="12.01" y2="17" />
+											</svg>
+											<span
+												class="absolute right-0 top-full z-50 mt-1 hidden whitespace-nowrap rounded border border-white/10 bg-black/95 px-2 py-1 text-xs text-white shadow-lg group-hover:block"
+											>
+												{maxErrorInfo.warning}
+											</span>
+										</span>
+									{/if}
+								</span>
+							{:else}
+								<span class="text-gray-500">-</span>
+							{/if}
+						</td>
+					{/if}
 				</tr>
 			{/each}
 		</tbody>
