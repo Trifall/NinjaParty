@@ -23,8 +23,8 @@ build-observer:
 	cd $(OBSERVER_DIR) && bun run build
 
 test:
-	cd $(RELAY_DIR) && go test ./... || true
-	cd $(SERVER_DIR) && go test ./... || true
+	cd $(RELAY_DIR) && go test -v ./... || true && golangci-lint run ./... || true
+	cd $(SERVER_DIR) && go test -v ./... || true && golangci-lint run ./... || true
 	cd $(OBSERVER_DIR) && bun run test
 
 clean:

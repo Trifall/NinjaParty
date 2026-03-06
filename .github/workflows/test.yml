@@ -1,0 +1,83 @@
+name: Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      relay: ${{ steps.filter.outputs.relay }}
+      server: ${{ steps.filter.outputs.server }}
+      observer: ${{ steps.filter.outputs.observer }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.before }}
+          filters: |
+            relay:
+              - 'relay/**'
+              - '.github/workflows/test.yml'
+            server:
+              - 'server/**'
+              - '.github/workflows/test.yml'
+            observer:
+              - 'observer/**'
+              - '.github/workflows/test.yml'
+
+  test-relay:
+    needs: changes
+    if: needs.changes.outputs.relay == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: relay/go.sum
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: relay
+          args: --timeout=5m
+      - name: Test
+        working-directory: relay
+        run: go test -v ./...
+
+  test-server:
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: server/go.sum
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: server
+          args: --timeout=5m
+      - name: Test
+        working-directory: server
+        run: go test -v ./...
+
+  test-observer:
+    needs: changes
+    if: needs.changes.outputs.observer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        working-directory: observer
+        run: bun install
+      - name: Test
+        working-directory: observer
+        run: bun run test
