@@ -1,0 +1,16 @@
+services:
+  ninjaparty-server:
+    build: .
+    container_name: ninjaparty-server
+    environment:
+      LISTEN_ADDR: ${LISTEN_ADDR:-:8080}
+      OBSERVER_URL: ${OBSERVER_URL:?DEFINE_ME_IN_ENV}
+      ROOM_TTL: ${ROOM_TTL:-2h}
+      DEBUG: ${DEBUG:-0}
+    ports:
+      - "${PORT:-8080}:8080"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
