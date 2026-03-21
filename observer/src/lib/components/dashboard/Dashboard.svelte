@@ -89,6 +89,7 @@
 	});
 
 	$effect(() => {
+		// oxlint-disable-next-line no-unused-expressions
 		runnerDataSnapshot;
 
 		if (autoHideSeconds === 0) {

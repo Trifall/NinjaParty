@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Monitor } from '@lucide/svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
@@ -13,7 +14,7 @@
 	let copiedLink = $state(false);
 
 	let obsUrl = $derived(() => {
-		const params = new URLSearchParams({ embed: '1' });
+		const params = new SvelteURLSearchParams({ embed: '1' });
 
 		const viewMode = settings.viewMode.current;
 		if (viewMode !== VIEW_MODE.MAX) {

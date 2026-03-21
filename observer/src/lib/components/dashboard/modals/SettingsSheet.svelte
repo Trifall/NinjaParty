@@ -168,7 +168,7 @@
 					</p>
 				</div>
 				<div class="flex flex-col space-y-3">
-					{#each AUTO_HIDE_OPTIONS as option}
+					{#each AUTO_HIDE_OPTIONS as option (option.value)}
 						<label class="flex cursor-pointer items-center space-x-3">
 							<input
 								type="radio"
