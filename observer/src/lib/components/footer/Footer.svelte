@@ -45,6 +45,9 @@
 					</AnimatedGradientText>
 					| © {new Date().getFullYear()}
 				</span>
+				<span class="text-xs text-gray-500 dark:text-gray-600">
+					v{__APP_VERSION__}
+				</span>
 			</TooltipProvider>
 		</div>
 	</div>

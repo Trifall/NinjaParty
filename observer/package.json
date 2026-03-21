@@ -1,5 +1,6 @@
 {
-	"name": "svelte-starter",
+	"name": "ninjaparty-observer",
+	"version": "0.1.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -40,7 +41,8 @@
 		"svelte-check": "^4.4.4",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.56.1",
-		"vitest": "^4.0.18"
+		"vitest": "^4.0.18",
+		"wrangler": "^4.0.0"
 	},
 	"dependencies": {
 		"@fontsource/roboto": "^5.2.10",

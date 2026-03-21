@@ -322,6 +322,14 @@
 		.dialog-buttons { display: flex; gap: 10px; justify-content: center; }
 		.btn-cancel { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); padding: 9px 20px; }
 		.btn-confirm { background: #10b981; color: #fff; padding: 9px 20px; }
+
+		.version-label {
+			text-align: center;
+			margin-top: 16px;
+			font-size: 11px;
+			color: rgba(255,255,255,0.25);
+			letter-spacing: 0.03em;
+		}
 	</style>
 </head>
 <body>
@@ -359,6 +367,7 @@
 			</div>
 		</div>
 		<div id="setupError" class="error"></div>
+		<p class="version-label">Relay v{{.Version}}</p>
 	</div>
 	{{else if .ShowRejoin}}
 	<div class="card">
@@ -398,6 +407,7 @@
 			</div>
 		</div>
 		<div id="setupError" class="error"></div>
+		<p class="version-label">Relay v{{.Version}}</p>
 	</div>
 	{{else if .StaleRoom}}
 	<div class="card">
@@ -431,6 +441,7 @@
 			</div>
 		</div>
 		<div id="setupError" class="error"></div>
+		<p class="version-label">Relay v{{.Version}}</p>
 	</div>
 	{{else}}
 	<div class="card">
@@ -466,6 +477,7 @@
 		{{else}}
 		<button class="btn-close" onclick="showCloseDialog()">LEAVE ROOM</button>
 		{{end}}
+		<p class="version-label">Relay v{{.Version}}</p>
 	</div>
 
 	<div id="dialog" class="dialog-overlay">

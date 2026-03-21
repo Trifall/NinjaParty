@@ -9,6 +9,8 @@
 bin/
 relay/bin/
 server/bin/
+server/server
+relay/relay
 
 # Node/Bun
 node_modules/

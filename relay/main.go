@@ -83,7 +83,7 @@ func main() {
 		}
 	}
 
-	uiInstance := ui.New(config.LocalUIAddr, relay, logger, 5*time.Second)
+	uiInstance := ui.New(config.LocalUIAddr, relay, logger, 5*time.Second, version)
 	go func() {
 		if err := uiInstance.Start(); err != nil {
 			logger.Fatal("ui server failed", zap.Error(err))

@@ -28,13 +28,34 @@ jobs:
       - name: Extract version
         id: version
         run: echo "tag=${GITHUB_REF_NAME#relay/}" >> $GITHUB_OUTPUT
-        
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git tag -l 'relay/v*' --sort=-v:refname | sed -n '2p')
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -- relay/)
+          else
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges -- relay/)
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="- No changes in relay/ since last release"
+          fi
+
+          {
+            echo "## NinjaParty Relay ${{ steps.version.outputs.tag }}"
+            echo ""
+            echo "$CHANGELOG"
+          } > relay/changelog.md
+
       - name: Run GoReleaser (Linux & Windows)
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean -f relay/.goreleaser.yaml
+          args: release --clean -f relay/.goreleaser.yaml --release-notes relay/changelog.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}

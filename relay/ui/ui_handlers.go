@@ -55,6 +55,7 @@ func (u *UI) handleIndex(w http.ResponseWriter, r *http.Request) {
 		ShowRejoin:    showRejoin,
 		HasRunnerName: state.RunnerName != "",
 		SavedRoomCode: state.RoomCode,
+		Version:       u.version,
 	}
 
 	if err := u.tmpl.Execute(w, data); err != nil {

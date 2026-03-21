@@ -26,12 +26,33 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF_NAME#server/}" >> $GITHUB_OUTPUT
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git tag -l 'server/v*' --sort=-v:refname | sed -n '2p')
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -- server/)
+          else
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges -- server/)
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="- No changes in server/ since last release"
+          fi
+
+          {
+            echo "## NinjaParty Server ${{ steps.version.outputs.tag }}"
+            echo ""
+            echo "$CHANGELOG"
+          } > server/changelog.md
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean -f server/.goreleaser.yaml
+          args: release --clean -f server/.goreleaser.yaml --release-notes server/changelog.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}

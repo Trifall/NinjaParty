@@ -22,6 +22,7 @@ type UI struct {
 	logger      *zap.Logger
 	newRoomRate *core.RateLimiter
 	tmpl        *template.Template
+	version     string
 }
 
 type PageData struct {
@@ -35,6 +36,7 @@ type PageData struct {
 	ShowRejoin    bool
 	HasRunnerName bool
 	SavedRoomCode string
+	Version       string
 }
 
 type SetupRequest struct {
@@ -49,12 +51,13 @@ type SetupResponse struct {
 	RoomCode string `json:"roomCode,omitempty"`
 }
 
-func New(addr string, relay *core.Relay, logger *zap.Logger, newRoomRateInterval time.Duration) *UI {
+func New(addr string, relay *core.Relay, logger *zap.Logger, newRoomRateInterval time.Duration, version string) *UI {
 	return &UI{
 		addr:        addr,
 		relay:       relay,
 		newRoomRate: core.NewRateLimiter(newRoomRateInterval),
 		logger:      logger,
+		version:     version,
 	}
 }
 

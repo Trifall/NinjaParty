@@ -62,8 +62,4 @@ snapshot:
   version_template: "{{ incpatch .Version }}-snapshot"
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  disable: true
