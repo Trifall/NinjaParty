@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { ArrowLeft, CodeXml, Github, Radio } from '@lucide/svelte';
+	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import { Button } from '$lib/components/ui/button';
 </script>
 
@@ -19,13 +21,10 @@
 		>
 			<!-- Header -->
 			<div class="border-white/8 border-b px-8 py-6">
-				<a
-					href="/"
-					class="mb-5 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-				>
-					<ArrowLeft class="h-3.5 w-3.5" />
-					Back to home
-				</a>
+				<Button href={resolve('/' as Pathname)} class="mb-4">
+					<ArrowLeft />
+					<span>Back to Home</span>
+				</Button>
 
 				<h1
 					class="bg-gradient-to-br from-white via-white/90 to-white/50 bg-clip-text text-4xl font-black leading-tight tracking-tight text-transparent"

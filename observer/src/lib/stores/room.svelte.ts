@@ -1,7 +1,7 @@
-import { env } from '$env/dynamic/public';
 import { toast } from 'svelte-sonner';
 import { SvelteMap } from 'svelte/reactivity';
 import { goto } from '$app/navigation';
+import { WS_URL } from '$lib/constants';
 import type {
 	AllAdvancementsPayload,
 	BlindPayload,
@@ -96,8 +96,7 @@ export class RoomConnection {
 
 		this.status = this.reconnectFailures > 0 ? 'reconnecting' : 'connecting';
 
-		const wsUrl = env.PUBLIC_WS_URL || 'ws://localhost:8080/ws';
-		this.ws = new WebSocket(`${wsUrl}?room=${this.code}`);
+		this.ws = new WebSocket(`${WS_URL}?room=${this.code}`);
 
 		this.ws.onopen = () => {
 			console.log('WebSocket connected to room:', this.code);
@@ -117,10 +116,16 @@ export class RoomConnection {
 				this.runners.forEach((runner) => {
 					runner.status = 'offline';
 				});
-				if (!this.isEmbed && !this.roomClosed) {
+				if (!this.isEmbed) {
 					toast.error('The room has been closed');
 					goto('/');
 				}
+				return;
+			}
+
+			// If the very first connection fails, don't retry — the room likely doesn't exist
+			if (this.reconnectFailures === 0) {
+				this.status = 'error';
 				return;
 			}
 

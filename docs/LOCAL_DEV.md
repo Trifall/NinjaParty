@@ -88,8 +88,9 @@ Configuration uses [viper](https://github.com/spf13/viper) with support for `.en
 
 ```bash
 PUBLIC_SITE_NAME="NinjaParty"
-PUBLIC_API_URL=http://localhost:8080
-PUBLIC_WS_URL=ws://localhost:8080/ws
+PUBLIC_SERVER_URL=localhost:8080
+# True = wss/https instead of ws/http for WebSocket and API connections. This is default to true in production.
+# PUBLIC_USE_SECURE_URLS=false
 ```
 
 ### Server

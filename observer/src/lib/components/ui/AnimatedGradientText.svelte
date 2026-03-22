@@ -5,12 +5,27 @@
 	interface Props {
 		children?: Snippet;
 		className?: string;
-		spanClassName?: string;
+		textClassName?: string;
 		noBorder?: boolean;
 		inline?: boolean;
+		href?: string;
 	}
 
-	let { children, className, spanClassName, noBorder = false, inline = false }: Props = $props();
+	let {
+		children,
+		className,
+		textClassName,
+		noBorder = false,
+		inline = false,
+		href,
+	}: Props = $props();
+
+	const textClassnames = $derived(
+		cn(
+			'inline-block animate-gradient bg-gradient-to-r from-[#00FFFF] via-[#FF1493] to-[#00FFFF] bg-[length:var(--bg-size)_100%] bg-clip-text pb-2 text-3xl font-semibold leading-normal text-transparent',
+			textClassName
+		)
+	);
 </script>
 
 <div
@@ -32,12 +47,13 @@
 		></div>
 	{/if}
 
-	<span
-		class={cn(
-			'inline-block animate-gradient bg-gradient-to-r from-[#00FFFF] via-[#FF1493] to-[#00FFFF] bg-[length:var(--bg-size)_100%] bg-clip-text pb-2 text-3xl font-semibold leading-normal text-transparent',
-			spanClassName
-		)}
-	>
-		{@render children?.()}
-	</span>
+	{#if href}
+		<a {href} target="_blank" rel="noopener noreferrer" class={textClassnames}>
+			{@render children?.()}
+		</a>
+	{:else}
+		<span class={textClassnames}>
+			{@render children?.()}
+		</span>
+	{/if}
 </div>

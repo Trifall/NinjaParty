@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { Loader2 } from '@lucide/svelte';
+	import { LoaderCircle } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import AnimatedGradientText from '$components/ui/AnimatedGradientText.svelte';
 
 	let roomCode = $state('');
 	let isLoading = $state(false);
@@ -48,11 +50,13 @@
 			class="relative flex flex-col items-center space-y-8 rounded-2xl border border-white/10 bg-black/40 p-10 text-center shadow-2xl backdrop-blur-xl"
 		>
 			<div class="flex flex-col items-center justify-center space-y-4">
-				<h1
-					class="bg-gradient-to-br from-white to-white/60 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl"
+				<AnimatedGradientText
+					noBorder
+					className="p-0"
+					textClassName="text-4xl font-extrabold tracking-tight sm:text-5xl"
 				>
 					NinjaParty
-				</h1>
+				</AnimatedGradientText>
 				<p class="text-sm font-medium text-muted-foreground sm:text-base">
 					Observation tool for Ninjabrain Bot.
 				</p>
@@ -67,10 +71,12 @@
 			</div>
 
 			<div class="w-full space-y-4">
-				<div class="relative">
+				<div class="space-y-2">
+					<Label for="room-code" class="text-lg font-medium">Room Code</Label>
 					<Input
+						id="room-code"
 						type="text"
-						placeholder="Enter 6-character room code"
+						placeholder="Enter code..."
 						class="h-14 w-full bg-white/5 px-4 text-center text-lg uppercase tracking-widest text-white transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
 						style="--tw-outline-offset: 0px;"
 						value={roomCode}
@@ -101,7 +107,7 @@
 
 					<span class="relative flex items-center justify-center gap-2">
 						{#if isLoading}
-							<Loader2 class="h-5 w-5 animate-spin" />
+							<LoaderCircle class="h-5 w-5 animate-spin" />
 							Connecting...
 						{:else}
 							Join Room

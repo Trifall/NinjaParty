@@ -160,7 +160,7 @@
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
-						spanClassName="{viewMode === 'ultra-compact'
+						textClassName="{viewMode === 'ultra-compact'
 							? 'text-xs'
 							: 'text-sm'} font-bold mb-0 md:text-lg pb-0"
 					>

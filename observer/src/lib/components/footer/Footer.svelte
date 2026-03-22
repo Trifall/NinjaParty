@@ -12,12 +12,12 @@
 		authorName?: string;
 	}
 
-	let { authorName = 'Jerren Trifan' }: Props = $props();
+	let { authorName = 'Jerren' }: Props = $props();
 </script>
 
 <footer class="w-full border-t border-gray-200 py-6 dark:border-gray-800">
 	<div class="mx-auto max-w-4xl px-4">
-		<div class="flex flex-col items-center justify-center space-y-4">
+		<div class="flex flex-col items-center justify-center space-y-2">
 			<TooltipProvider>
 				<div class="flex items-center space-x-4 px-4">
 					<Tooltip delayDuration={0}>
@@ -39,15 +39,20 @@
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
-						spanClassName="text-sm font-bold mb-0 md:text-lg pb-0"
+						textClassName="text-sm font-bold mb-0 md:text-lg pb-0"
+						href="https://github.com/Trifall"
 					>
 						{authorName}
 					</AnimatedGradientText>
-					| © {new Date().getFullYear()}
 				</span>
-				<span class="text-xs text-gray-500 dark:text-gray-600">
+				<a
+					href="https://github.com/Trifall/NinjaParty/releases"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-lg font-bold text-emerald-400 transition-colors hover:text-emerald-300 hover:underline"
+				>
 					v{__APP_VERSION__}
-				</span>
+				</a>
 			</TooltipProvider>
 		</div>
 	</div>
