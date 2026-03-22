@@ -41,8 +41,9 @@ jobs:
           go-version: stable
           cache-dependency-path: relay/go.sum
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
+          version: v2.10
           working-directory: relay
           args: --timeout=5m
       - name: Test
@@ -60,8 +61,9 @@ jobs:
           go-version: stable
           cache-dependency-path: server/go.sum
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
+          version: v2.10
           working-directory: server
           args: --timeout=5m
       - name: Test
