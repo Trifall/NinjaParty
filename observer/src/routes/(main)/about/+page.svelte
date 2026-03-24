@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { ArrowLeft, CodeXml, Github, Radio } from '@lucide/svelte';
+	import { ArrowLeft, CodeXml, Radio } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import { Button } from '$lib/components/ui/button';
+	import { Icons } from '$components/ui/Icons.svelte';
 </script>
 
 <svelte:head>
@@ -97,7 +98,7 @@
 						variant="outline"
 						class="relative gap-2 border-0 bg-black text-white transition-colors hover:bg-black/80 hover:text-white"
 					>
-						<Github class="h-4 w-4" />
+						<Icons.GitHub fill="#ffffff" class="h-8 w-8 hover:fill-gray-300" />
 						View Source on GitHub
 					</Button>
 				</a>
