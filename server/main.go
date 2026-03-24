@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,8 +28,8 @@ func main() {
 	}
 	defer func() { _ = logger.Sync() }()
 
-	logger.Info("Starting NinjaParty Server",
-		zap.String("version", version),
+	logger.Info("Starting NinjaParty Server")
+	logger.Info(fmt.Sprintf("Version: %s", version),
 		zap.String("commit", commit),
 		zap.String("date", date),
 	)
