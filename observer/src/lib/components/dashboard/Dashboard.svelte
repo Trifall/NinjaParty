@@ -14,11 +14,11 @@
 	import BlindMode from './BlindMode.svelte';
 	import DivineMode from './DivineMode.svelte';
 	import EyeThrows from './EyeThrows.svelte';
+	import InformationMessages from './InformationMessages.svelte';
 	import LocationsTable from './LocationsTable.svelte';
 	import PlayerPosition from './PlayerPosition.svelte';
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
-	import InformationMessages from './InformationMessages.svelte';
 
 	let {
 		roomStore,
@@ -363,7 +363,10 @@
 										{colorNegatives}
 									/>
 								{/if}
-								<InformationMessages messages={runner.informationMessages?.informationMessages} {viewMode} />
+								<InformationMessages
+									messages={runner.informationMessages?.informationMessages}
+									{viewMode}
+								/>
 							</div>
 						{:else}
 							<!-- Standard card layout (max / compact) -->
@@ -374,7 +377,7 @@
 									: ''}"
 							>
 								<!-- Runner Header -->
-								<div class="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+								<div class="mb-1 flex items-center justify-between">
 									<div class="flex items-center gap-2">
 										<span class="relative flex h-3 w-3">
 											{#if runner.status === 'online'}
@@ -425,12 +428,12 @@
 								</div>
 
 								<!-- Runner Data -->
-								{#if !runner.stronghold}
-									<div class="flex h-20 items-center justify-center text-muted-foreground">
-										<p>Waiting for stronghold data...</p>
-									</div>
-								{:else if viewMode === 'compact'}
-									<div class="space-y-2">
+								<div class="flex flex-col gap-1">
+									{#if !runner.stronghold}
+										<div class="flex h-20 items-center justify-center text-muted-foreground">
+											<p>Waiting for stronghold data...</p>
+										</div>
+									{:else if viewMode === 'compact'}
 										<LocationsTable
 											resultType={runner.stronghold.resultType}
 											predictions={runner.stronghold.predictions?.slice(0, 1) || []}
@@ -441,9 +444,7 @@
 											{colorNegatives}
 										/>
 										<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
-									</div>
-								{:else}
-									<div class="space-y-0">
+									{:else}
 										<LocationsTable
 											resultType={runner.stronghold.resultType}
 											predictions={runner.stronghold.predictions?.slice(0, 5) || []}
@@ -457,9 +458,12 @@
 										<BlindMode blind={runner.blind ?? undefined} />
 										<DivineMode divine={runner.divine ?? undefined} />
 										<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
-									</div>
-								{/if}
-								<InformationMessages messages={runner.informationMessages?.informationMessages} {viewMode} />
+									{/if}
+									<InformationMessages
+										messages={runner.informationMessages?.informationMessages}
+										{viewMode}
+									/>
+								</div>
 							</div>
 						{/if}
 					{/each}

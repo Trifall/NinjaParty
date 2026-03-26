@@ -12,7 +12,7 @@
 
 {#if divine?.isDivineModeEnabled && divine.divineResult && 'fossilXCoordinate' in divine.divineResult}
 	{@const result = divine.divineResult}
-	<div class="border-t border-white/20 bg-amber-500/5 px-4 py-3">
+	<div class="overflow-hidden rounded-lg border border-white/10 bg-amber-500/5 px-4 py-3">
 		<div class="mb-1.5 flex items-center gap-2 font-semibold text-amber-300">
 			<svg
 				class="h-4 w-4"

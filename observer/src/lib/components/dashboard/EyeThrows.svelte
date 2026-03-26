@@ -7,6 +7,7 @@
 		NON_BOAT_WARNING_THRESHOLD,
 		getDerivedIncrements,
 	} from '$src/lib/utils/constants';
+	import { Tooltip, TooltipContent, TooltipTrigger } from '$components/ui/tooltip';
 
 	interface Props {
 		throws: EyeThrow[];
@@ -37,7 +38,7 @@
 </script>
 
 {#if throws.length > 0}
-	<div class="border-t border-white/20">
+	<div class="overflow-hidden rounded-lg border border-white/10">
 		<div class="flex items-center justify-between bg-white/[0.02] px-4 py-2">
 			<span class="font-semibold tracking-wide text-gray-300">Ender eye throws</span>
 			<span class="text-sm font-semibold text-gray-300">{throws.length} total</span>
@@ -52,27 +53,27 @@
 					<th class="px-4 py-1.5 text-center font-normal">
 						<span class="inline-flex items-center gap-1">
 							Adj
-							<span class="group relative cursor-help">
-								<svg
-									class="h-4 w-4 text-gray-500"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								>
-									<circle cx="12" cy="12" r="10" />
-									<path d="M12 16v-4" />
-									<path d="M12 8h.01" />
-								</svg>
-								<span
-									class="absolute left-1/2 top-full z-50 mt-1 hidden w-52 -translate-x-1/2 rounded border border-white/10 bg-black/95 px-3 py-2 text-center text-xs text-white shadow-lg group-hover:block"
-								>
-									Assumes 30 FOV, TALL resolution, 16384px height. May be slightly off.
-								</span>
-							</span>
+							<Tooltip delayDuration={0}>
+								<TooltipTrigger class="cursor-help flex items-center">
+									<svg
+										class="h-4 w-4 text-gray-500"
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<circle cx="12" cy="12" r="10" />
+										<path d="M12 16v-4" />
+										<path d="M12 8h.01" />
+									</svg>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>Assumes 30 FOV, TALL resolution, 16384px height. May be slightly off.</p>
+								</TooltipContent>
+							</Tooltip>
 						</span>
 					</th>
 					<th class="px-4 py-1.5 text-center font-normal">Error</th>
@@ -109,29 +110,29 @@
 							<span class="inline-flex items-center gap-1">
 								<span class={status.color}>{t.error.toFixed(5)}</span>
 								{#if status.warning}
-									<span class="group relative">
-										<svg
-											class="h-4 w-4 text-amber-400"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-										>
-											<path
-												d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-											/>
-											<line x1="12" y1="9" x2="12" y2="13" />
-											<line x1="12" y1="17" x2="12.01" y2="17" />
-										</svg>
-										<span
-											class="absolute right-0 top-full z-50 mt-1 hidden whitespace-nowrap rounded border border-white/10 bg-black/95 px-2 py-1 text-xs text-white shadow-lg group-hover:block"
-										>
-											{status.warning}
-										</span>
-									</span>
+									<Tooltip delayDuration={0}>
+										<TooltipTrigger class="cursor-help flex items-center">
+											<svg
+												class="h-4 w-4 text-amber-400"
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<path
+													d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+												/>
+												<line x1="12" y1="9" x2="12" y2="13" />
+												<line x1="12" y1="17" x2="12.01" y2="17" />
+											</svg>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>{status.warning}</p>
+										</TooltipContent>
+									</Tooltip>
 								{/if}
 							</span>
 						</td>

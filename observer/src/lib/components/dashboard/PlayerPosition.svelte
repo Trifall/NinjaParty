@@ -41,9 +41,7 @@
 		</div>
 	{:else}
 		<!-- Standard display -->
-		<div
-			class="flex items-center justify-between border-t border-white/20 bg-white/[0.02] px-4 py-2.5 text-base"
-		>
+		<div class="flex items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-white/[0.02] px-4 py-2.5 text-base">
 			<div class="flex items-center gap-5">
 				<span class="flex items-center gap-1.5 text-gray-400">
 					<svg

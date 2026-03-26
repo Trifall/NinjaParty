@@ -44,7 +44,7 @@
 			{/each}
 		</div>
 	{:else}
-		<div class="flex flex-col border-t border-white/20 bg-white/[0.02]">
+		<div class="flex flex-col overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]">
 			{#each messages as msg}
 				<div
 					class="flex items-start gap-2 border-b border-white/5 px-4 py-2 last:border-b-0 {viewMode ===

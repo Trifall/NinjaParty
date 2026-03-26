@@ -57,7 +57,7 @@
 	{@const improveBlocks = Math.round(result.improveDistance)}
 	{@const highrollPct = (result.highrollProbability * 100).toFixed(1)}
 	{@const threshold = Math.round(result.highrollThreshold)}
-	<div class="border-t border-white/20 bg-purple-500/5 px-4 py-3">
+	<div class="overflow-hidden rounded-lg border border-white/10 bg-purple-500/5 px-4 py-3">
 		<div class="mb-1 flex items-center gap-2 font-semibold text-purple-300">
 			<svg
 				class="h-4 w-4"
