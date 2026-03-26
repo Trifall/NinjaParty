@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -70,6 +71,11 @@ func (c *SSEClient) fetchInitialState(ctx context.Context, defaultEndpoint strin
 			continue
 		}
 		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode == http.StatusNotFound {
+			c.logger.Info("endpoint not found (404), skipping initial state", zap.String("url", defaultEndpoint))
+			return
+		}
 
 		if resp.StatusCode == http.StatusOK {
 			var payload json.RawMessage
@@ -140,16 +146,23 @@ func (c *SSEClient) Run(ctx context.Context, out chan<- RoomMessage, runnerName 
 		}
 		defer func() { _ = resp.Body.Close() }()
 
+		if resp.StatusCode == http.StatusNotFound {
+			c.logger.Info("endpoint not found (404), stopping retries", zap.String("url", c.url))
+			return backoff.Permanent(fmt.Errorf("endpoint 404"))
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+
 		c.logger.Info("connected to ninjabrain SSE")
 		if c.onConnected != nil {
 			c.onConnected()
 		}
 		b.Reset()
 
-		if c.msgType != "information_messages_update" {
-			baseURL := strings.TrimSuffix(c.url, "/events")
-			c.fetchInitialState(ctx, baseURL, out)
-		}
+		baseURL := strings.TrimSuffix(c.url, "/events")
+		c.fetchInitialState(ctx, baseURL, out)
 
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {

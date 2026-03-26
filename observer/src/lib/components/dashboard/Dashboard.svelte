@@ -18,6 +18,7 @@
 	import PlayerPosition from './PlayerPosition.svelte';
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
+	import InformationMessages from './InformationMessages.svelte';
 
 	let {
 		roomStore,
@@ -362,6 +363,7 @@
 										{colorNegatives}
 									/>
 								{/if}
+								<InformationMessages messages={runner.informationMessages?.informationMessages} {viewMode} />
 							</div>
 						{:else}
 							<!-- Standard card layout (max / compact) -->
@@ -425,7 +427,7 @@
 								<!-- Runner Data -->
 								{#if !runner.stronghold}
 									<div class="flex h-20 items-center justify-center text-muted-foreground">
-										<p>Waiting for data...</p>
+										<p>Waiting for stronghold data...</p>
 									</div>
 								{:else if viewMode === 'compact'}
 									<div class="space-y-2">
@@ -457,6 +459,7 @@
 										<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
 									</div>
 								{/if}
+								<InformationMessages messages={runner.informationMessages?.informationMessages} {viewMode} />
 							</div>
 						{/if}
 					{/each}
