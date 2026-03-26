@@ -135,8 +135,8 @@
 								{/if}
 							</span>
 						</td>
-						<td class="px-4 py-1.5 text-center">
-							<span class="text-xs uppercase text-gray-400">{t.type}</span>
+						<td class="px-4 py-1.5 text-center align-middle">
+							<div class="text-xs uppercase text-gray-400">{t.type}</div>
 						</td>
 					</tr>
 				{/each}
