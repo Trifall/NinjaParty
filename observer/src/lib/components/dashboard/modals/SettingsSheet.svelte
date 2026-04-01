@@ -87,6 +87,19 @@
 							>Ultra Compact <span class="ml-1 text-muted-foreground">- Minimal display</span></span
 						>
 					</label>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="radio"
+							name="viewMode"
+							value={VIEW_MODE.GRID}
+							checked={currentViewMode === VIEW_MODE.GRID}
+							onchange={() => (settings.viewMode.current = VIEW_MODE.GRID)}
+							class="h-4 w-4 accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Grid View <span class="ml-1 text-muted-foreground">- 3 Column Layout</span></span
+						>
+					</label>
 				</div>
 			</div>
 

@@ -21,22 +21,20 @@
 
 	{#if inline}
 		<!-- Ultra-compact inline display: position + dimension only, no angle -->
-		<div class="flex items-center gap-2 text-xs text-gray-400">
-			<span>Position:</span>
-			<span>
+		<div class="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
+			<span class="flex tracking-tight">
 				(<span
 					class={colorNegatives && displayX !== undefined && displayX < 0
 						? 'text-red-400'
 						: 'text-gray-200'}>{displayX?.toFixed(0) ?? '?'}</span
-				>,
-				<span
-					class={colorNegatives && displayZ !== undefined && displayZ < 0
-						? 'text-red-400'
-						: 'text-gray-200'}>{displayZ?.toFixed(0) ?? '?'}</span
+				>,<span class="ml-0.5"
+					class:text-red-400={colorNegatives && displayZ !== undefined && displayZ < 0}
+					class:text-gray-200={!(colorNegatives && displayZ !== undefined && displayZ < 0)}
+						>{displayZ?.toFixed(0) ?? '?'}</span
 				>)
 			</span>
-			<span class={pos.isInNether ? 'text-red-400' : 'text-emerald-400'}>
-				{pos.isInNether ? 'Nether' : pos.isInOverworld ? 'Overworld' : '?'}
+			<span class="font-medium {pos.isInNether ? 'text-red-400' : 'text-emerald-400'}">
+				{pos.isInNether ? 'Nether' : pos.isInOverworld ? 'OW' : '?'}
 			</span>
 		</div>
 	{:else}

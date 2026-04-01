@@ -148,20 +148,20 @@
 		<!-- Header -->
 		<div
 			class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black backdrop-blur-xl {viewMode ===
-			'ultra-compact'
+				'ultra-compact' || viewMode === 'grid'
 				? 'px-2 pb-0.5 pt-1'
 				: 'px-5 py-3'}"
 		>
 			<div class="flex items-center gap-2">
 				<span
-					class="flex items-center gap-1 {viewMode === 'ultra-compact'
+					class="flex items-center gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
 						? 'text-xs'
 						: 'text-sm text-gray-800 dark:text-gray-200 md:text-lg'}"
 				>
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
-						textClassName="{viewMode === 'ultra-compact'
+						textClassName="{viewMode === 'ultra-compact' || viewMode === 'grid'
 							? 'text-xs'
 							: 'text-sm'} font-bold mb-0 md:text-lg pb-0"
 					>
@@ -171,18 +171,18 @@
 
 				{#if !isEmbed}
 					<span class="text-gray-400">|</span>
-					<span class="{viewMode === 'ultra-compact' ? 'text-xs' : 'text-base'} text-gray-400"
+					<span class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'text-xs' : 'text-base'} text-gray-400"
 						>Room:</span
 					>
 					{#if isRoomCodeHidden}
 						<span
-							class="{viewMode === 'ultra-compact'
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
 								? 'text-xs'
 								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">******</span
 						>
 					{:else}
 						<span
-							class="{viewMode === 'ultra-compact'
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
 								? 'text-xs'
 								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span
 						>
@@ -200,9 +200,9 @@
 						title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
 					>
 						{#if isRoomCodeHidden}
-							<EyeOff class={viewMode === 'ultra-compact' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
+							<EyeOff class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
 						{:else}
-							<Eye class={viewMode === 'ultra-compact' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
+							<Eye class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
 						{/if}
 					</button>
 				{/if}
@@ -210,34 +210,34 @@
 			<div class="flex items-center gap-3">
 				<Badge
 					variant="outline"
-					class="flex gap-2 {viewMode === 'ultra-compact'
+					class="flex gap-2 {viewMode === 'ultra-compact' || viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
 						: 'px-3 py-1.5 text-sm'} {connectionColor}"
 				>
 					{#if roomStore.status === 'connected'}
-						<Wifi class={viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} /> Live
+						<Wifi class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} /> Live
 					{:else if roomStore.status === 'reconnecting'}
 						<LoaderCircle
-							class="{viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
 						/> Reconnecting
 					{:else if roomStore.status === 'connecting'}
 						<LoaderCircle
-							class="{viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
 						/> Connecting
 					{:else}
-						<WifiOff class={viewMode === 'ultra-compact' ? 'h-3 w-3' : 'h-4 w-4'} /> Offline
+						<WifiOff class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} /> Offline
 					{/if}
 				</Badge>
 				<Badge
 					variant="outline"
-					class="flex gap-2 border-white/20 bg-black/40 {viewMode === 'ultra-compact'
+					class="flex gap-2 border-white/20 bg-black/40 {viewMode === 'ultra-compact' || viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
 						: 'px-3 py-1.5 text-sm'}"
 				>
 					<span class="text-gray-400">{runners.length} Runner{runners.length !== 1 ? 's' : ''}</span
 					>
 				</Badge>
-				{#if viewMode !== 'ultra-compact'}
+				{#if viewMode !== 'ultra-compact' && viewMode !== 'grid'}
 					<Badge
 						variant="outline"
 						class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm"
@@ -252,7 +252,7 @@
 					</Badge>
 				{/if}
 				{#if !isEmbed}
-					<SettingsSheet compact={viewMode === 'ultra-compact'} />
+					<SettingsSheet compact={viewMode === 'ultra-compact' || viewMode === 'grid'} />
 				{/if}
 			</div>
 		</div>
@@ -272,13 +272,13 @@
 				</div>
 			{:else}
 				<div
-					class="flex flex-col {viewMode === 'ultra-compact' ? 'gap-1.5 p-2 py-0.5' : 'gap-4 p-4'}"
+					class="{viewMode === 'grid' ? 'grid grid-cols-3 gap-1.5 p-2' : 'flex flex-col ' + (viewMode === 'ultra-compact' ? 'gap-1.5 p-2 py-0.5' : 'gap-4 p-4')}"
 				>
 					{#each runners as runner (runner.name)}
-						{#if viewMode === 'ultra-compact'}
-							<!-- Ultra-Compact: no card header, name inline with data -->
+						{#if viewMode === 'ultra-compact' || viewMode === 'grid'}
+							<!-- Ultra-Compact / Grid: no card header, name inline with data -->
 							<div
-								class="rounded-md border border-white/10 bg-black/40 {runner.status === 'offline'
+								class="rounded-md border border-white/10 bg-black/40 overflow-hidden {runner.status === 'offline'
 									? 'opacity-60'
 									: ''}"
 							>
@@ -317,7 +317,7 @@
 										<span class="ml-auto text-muted-foreground">Waiting for data...</span>
 									</div>
 								{:else}
-									<div class="flex items-center gap-2 border-b border-white/5 px-3 py-1">
+									<div class="flex items-center gap-1.5 border-b border-white/5 px-2 py-0.5">
 										<span class="relative flex h-2 w-2 shrink-0">
 											{#if runner.status === 'online'}
 												<span
@@ -330,11 +330,11 @@
 													: 'bg-red-500'}"
 											></span>
 										</span>
-										<span class="text-sm font-semibold text-white">{runner.name}</span>
+										<span class="truncate text-xs font-semibold text-white">{runner.name}</span>
 										{#if runner.status === 'offline'}
-											<span class="text-xs text-red-400">(Offline)</span>
+											<span class="text-[10px] text-red-400">(Offline)</span>
 										{/if}
-										<div class="ml-auto flex items-center gap-2">
+										<div class="ml-auto flex shrink-0 items-center gap-1.5">
 											<PlayerPosition
 												pos={runner.stronghold.playerPosition}
 												inline={true}

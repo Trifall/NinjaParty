@@ -41,7 +41,7 @@
 </script>
 
 {#if messages && messages.length > 0}
-	{#if viewMode === 'ultra-compact'}
+	{#if viewMode === 'ultra-compact' || viewMode === 'grid'}
 		<div class="flex flex-col gap-1 border-t border-white/5 bg-white/[0.02] px-3 py-1.5 text-xs">
 			{#each messages as msg, i}
 				<div class="flex items-center gap-1.5 overflow-hidden">

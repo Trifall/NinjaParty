@@ -48,8 +48,15 @@
 		colorNegatives: colorNegativesProp,
 	}: Props = $props();
 
-	let isCompact = $derived(viewMode === VIEW_MODE.COMPACT || viewMode === VIEW_MODE.ULTRA_COMPACT);
-	let isUltraCompact = $derived(viewMode === VIEW_MODE.ULTRA_COMPACT);
+	let isGrid = $derived(viewMode === VIEW_MODE.GRID);
+	let isCompact = $derived(
+		viewMode === VIEW_MODE.COMPACT ||
+			viewMode === VIEW_MODE.ULTRA_COMPACT ||
+			viewMode === VIEW_MODE.GRID
+	);
+	let isUltraCompact = $derived(
+		viewMode === VIEW_MODE.ULTRA_COMPACT || viewMode === VIEW_MODE.GRID
+	);
 
 	// use prop if provided, otherwise fall back to store
 	let displayType = $derived(displayTypeProp ?? settings.displayType.current);
@@ -143,20 +150,21 @@
 
 {#if resultType !== 'FAILED' && predictions.length > 0}
 	<div class={isUltraCompact ? '' : 'overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]'}>
-		<table class="w-full border-collapse text-base">
+		<table class="w-full border-collapse {isGrid ? 'text-[11px]' : 'text-base'}">
 			<thead>
-			<tr class="border-b border-white/20 text-gray-400 {isUltraCompact ? 'text-xs' : ''}">
-				<th class="w-[22%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+			<tr class="border-b border-white/20 text-gray-400 {isGrid ? 'text-[10px]' : isUltraCompact ? 'text-xs' : ''}">
+				<th class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
 					>Location</th
 				>
-				<th class="w-[12%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal">%</th>
-				<th class="w-[12%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+				<th class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal">%</th>
+				<th class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
 					>Dist.</th
 				>
-				<th class="w-[14%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+				<th class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
 					>Nether</th
 				>
-				<th class="w-[18%] px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
+				{#if !isGrid}
+				<th class="px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
 					>Angle</th
 				>
 				{#if isCompact && !isUltraCompact}
@@ -187,6 +195,7 @@
 						</span>
 					</th>
 				{/if}
+				{/if}
 			</tr>
 		</thead>
 		<tbody>
@@ -196,11 +205,13 @@
 				{@const travel = getTravelAngleInfo(pred.chunkX, pred.chunkZ)}
 				{@const certaintyCol = getCertaintyColor(pred.certainty)}
 				<tr
-					class="border-b border-white/5 transition-colors hover:bg-white/5 {isUltraCompact
-						? 'text-xs'
-						: ''}"
+					class="border-b border-white/5 transition-colors hover:bg-white/5 {isGrid
+						? 'text-[11px]'
+						: isUltraCompact
+							? 'text-xs'
+							: ''}"
 				>
-					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
+					<td class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						(<span class={colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
 							>{coords[0]}</span
 						>,
@@ -209,17 +220,17 @@
 						>)
 					</td>
 					<td
-						class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center font-semibold"
+						class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center font-semibold"
 						style="color: {certaintyCol}"
 					>
 						{(pred.certainty * 100).toFixed(1)}%
 					</td>
-					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center text-gray-200">
+					<td class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center text-gray-200">
 						{pos?.isInNether
 							? Math.floor(pred.overworldDistance / 8)
 							: Math.floor(pred.overworldDistance)}
 					</td>
-					<td class="px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
+					<td class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						(<span class={colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
 							>{nether[0]}</span
 						>,
@@ -227,6 +238,7 @@
 							>{nether[1]}</span
 						>)
 					</td>
+					{#if !isGrid}
 					<td class="whitespace-nowrap px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
 						{#if travel.angle !== null && travel.diff !== null}
 							<span class="text-gray-200">{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span>
@@ -239,6 +251,7 @@
 							<span class="text-gray-500">-</span>
 						{/if}
 					</td>
+					{/if}
 					{#if isCompact && !isUltraCompact}
 						<td class="whitespace-nowrap px-3 py-1.5 text-center">
 							{#if maxErrorInfo.error !== null}

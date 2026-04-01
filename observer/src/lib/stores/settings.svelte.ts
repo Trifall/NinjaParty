@@ -6,6 +6,7 @@ export const VIEW_MODE = {
 	MAX: 'max',
 	COMPACT: 'compact',
 	ULTRA_COMPACT: 'ultra-compact',
+	GRID: 'grid'
 } as const;
 
 export type ViewMode = (typeof VIEW_MODE)[keyof typeof VIEW_MODE];
