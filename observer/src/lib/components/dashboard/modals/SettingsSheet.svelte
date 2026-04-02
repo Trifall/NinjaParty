@@ -169,6 +169,20 @@
 							></span
 						>
 					</label>
+					<label class="flex cursor-pointer items-center space-x-3">
+						<input
+							type="checkbox"
+							checked={settings.reorderOfflineRunners.current}
+							onchange={(e) =>
+								(settings.reorderOfflineRunners.current = e.currentTarget.checked)}
+							class="h-4 w-4 rounded accent-emerald-500"
+						/>
+						<span class="text-sm"
+							>Reorder offline runners <span class="ml-1 text-muted-foreground"
+								>- Move offline runners to bottom</span
+							></span
+						>
+					</label>
 				</div>
 			</div>
 

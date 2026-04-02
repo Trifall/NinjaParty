@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import { CircleAlert, Info, TriangleAlert } from '@lucide/svelte';
+	import { tick } from 'svelte';
 	import type { ViewMode } from '$lib/stores/settings.svelte';
 	import type { InformationMessage } from '$lib/types/stronghold';
 	import { sanitize } from '$src/lib/utils/sanitize';
@@ -43,7 +43,7 @@
 {#if messages && messages.length > 0}
 	{#if viewMode === 'ultra-compact' || viewMode === 'grid'}
 		<div class="flex flex-col gap-1 border-t border-white/5 bg-white/[0.02] px-3 py-1.5 text-xs">
-			{#each messages as msg, i}
+			{#each messages as msg, i (i)}
 				<div class="flex items-center gap-1.5 overflow-hidden">
 					<div
 						class="flex shrink-0 items-center gap-1 font-semibold {msg.severity === 'ERROR'
@@ -63,11 +63,21 @@
 					</div>
 					<Tooltip delayDuration={0} open={truncatedMessages[i] ? undefined : false}>
 						<TooltipTrigger
-							class="min-w-0 flex-1 {truncatedMessages[i] ? 'cursor-help' : 'cursor-default'} truncate border-none bg-transparent text-left text-gray-300 outline-none"
+							data-no-drag
+							class="min-w-0 flex-1 {truncatedMessages[i]
+								? 'cursor-help'
+								: 'cursor-default'} truncate border-none bg-transparent text-left text-gray-300 outline-none"
 						>
-							<div class="w-full truncate" use:detectTruncation={i}>{@html sanitize(msg.message)}</div>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							<div class="w-full truncate" use:detectTruncation={i}>
+								{@html sanitize(msg.message)}
+							</div>
 						</TooltipTrigger>
-						<TooltipContent class="max-w-[16rem] text-sm md:max-w-sm">
+						<TooltipContent
+							class="max-w-[16rem] cursor-auto select-text text-sm md:max-w-sm"
+							data-no-drag
+						>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							<p>{@html sanitize(msg.message)}</p>
 						</TooltipContent>
 					</Tooltip>
@@ -76,7 +86,7 @@
 		</div>
 	{:else}
 		<div class="flex flex-col overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]">
-			{#each messages as msg, i}
+			{#each messages as msg, i (i)}
 				<div
 					class="flex items-start gap-2 border-b border-white/5 px-4 py-2 last:border-b-0 {viewMode ===
 					'compact'
@@ -109,15 +119,26 @@
 						{#if viewMode === 'compact'}
 							<Tooltip delayDuration={0} open={truncatedMessages[i] ? undefined : false}>
 								<TooltipTrigger
-									class="w-full {truncatedMessages[i] ? 'cursor-help' : 'cursor-default'} truncate border-none bg-transparent text-left leading-snug text-gray-300 outline-none"
+									data-no-drag
+									class="w-full {truncatedMessages[i]
+										? 'cursor-help'
+										: 'cursor-default'} truncate border-none bg-transparent text-left leading-snug text-gray-300 outline-none"
 								>
-									<div class="w-full truncate" use:detectTruncation={i}>{@html sanitize(msg.message)}</div>
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									<div class="w-full truncate" use:detectTruncation={i}>
+										{@html sanitize(msg.message)}
+									</div>
 								</TooltipTrigger>
-								<TooltipContent class="max-w-[16rem] text-sm md:max-w-sm">
+								<TooltipContent
+									class="max-w-[16rem] cursor-auto select-text text-sm md:max-w-sm"
+									data-no-drag
+								>
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									<p>{@html sanitize(msg.message)}</p>
 								</TooltipContent>
 							</Tooltip>
 						{:else}
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							<span class="leading-snug text-gray-300">{@html sanitize(msg.message)}</span>
 						{/if}
 					</div>

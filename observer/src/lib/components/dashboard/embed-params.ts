@@ -15,6 +15,8 @@ export const embedParamsSchema = z.object({
 	displayType: z.enum(['FOUR_FOUR', 'EIGHT_EIGHT', 'CHUNK']).default('FOUR_FOUR'),
 	colorNegatives: parseBoolean.default(true),
 	autoHide: z.coerce.number().default(0),
+	runnerMoves: z.string().default(''), // re-ordered list of runner names
+	reorderOfflineRunners: parseBoolean.default(false),
 });
 
 export type EmbedParams = z.infer<typeof embedParamsSchema>;

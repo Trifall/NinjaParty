@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { Clock, Eye, EyeOff, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { type DragDropState, draggable, droppable } from '@thisux/sveltednd';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
+	import {
+		applyRunnerMoves,
+		computeOrderedRunners,
+		getRoomPreferences,
+		mergeRunnerOrder,
+		parseRunnerMoves,
+	} from '$lib/stores/room-preferences.svelte';
 	import type { RoomConnection } from '$lib/stores/room.svelte';
 	import { type ViewMode, settings } from '$lib/stores/settings.svelte';
 	import { formatUptime } from '$src/lib/utils/format';
@@ -20,6 +28,9 @@
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
 
+	import { Switch } from '$lib/components/ui/switch';
+	import { Label } from '$lib/components/ui/label';
+
 	let {
 		roomStore,
 		roomCode,
@@ -28,18 +39,23 @@
 
 	let isRoomCodeHidden = $state(true);
 	let showRevealConfirm = $state(false);
+	let dndEnabled = $state(false);
 
-	let runners = $derived(roomStore.sortedRunners);
+	let defaultSortedRunners = $derived(roomStore.sortedRunners);
+
+	let prefs = $derived(getRoomPreferences(roomCode));
 
 	let now = $state(Date.now());
 
-	let embedParams = $derived(() => {
+	let embedParams = $derived.by(() => {
 		const sp = $page.url.searchParams;
 		const result = embedParamsSchema.safeParse({
 			viewMode: sp.get('viewMode') ?? undefined,
 			displayType: sp.get('displayType') ?? undefined,
 			colorNegatives: sp.get('colorNegatives') ?? undefined,
 			autoHide: sp.get('autoHide') ?? undefined,
+			runnerMoves: sp.get('runnerMoves') ?? undefined,
+			reorderOfflineRunners: sp.get('reorderOfflineRunners') ?? undefined,
 		});
 		return result.success ? result.data : embedParamsSchema.parse({});
 	});
@@ -47,13 +63,68 @@
 	// in embed mode, URL params are the source of truth
 	// in normal mode, use the persisted settings store
 	let viewMode = $derived(
-		isEmbed ? (embedParams().viewMode as ViewMode) : (settings.viewMode.current as ViewMode)
+		isEmbed ? (embedParams.viewMode as ViewMode) : (settings.viewMode.current as ViewMode)
 	);
-	let displayType = $derived(isEmbed ? embedParams().displayType : settings.displayType.current);
+	let displayType = $derived(isEmbed ? embedParams.displayType : settings.displayType.current);
 	let colorNegatives = $derived(
-		isEmbed ? embedParams().colorNegatives : settings.colorNegatives.current
+		isEmbed ? embedParams.colorNegatives : settings.colorNegatives.current
 	);
-	let autoHideSeconds = $derived(isEmbed ? embedParams().autoHide : settings.embedAutoHide.current);
+	let autoHideSeconds = $derived(isEmbed ? embedParams.autoHide : settings.embedAutoHide.current);
+
+	// Runner order is a full top-to-bottom list of runner identities.
+	// In embed mode it comes from the URL; otherwise it comes from per-room local storage.
+	let storedRunnerOrder = $derived.by(() => {
+		if (isEmbed) {
+			return applyRunnerMoves(
+				defaultSortedRunners.map((runner) => runner.name),
+				parseRunnerMoves(embedParams.runnerMoves)
+			);
+		}
+		return prefs.order;
+	});
+	let effectiveRunnerOrder = $derived(
+		mergeRunnerOrder(
+			storedRunnerOrder,
+			defaultSortedRunners.map((runner) => runner.name)
+		)
+	);
+
+	let reorderOffline = $derived(
+		isEmbed ? embedParams.reorderOfflineRunners : settings.reorderOfflineRunners.current
+	);
+
+	// Compute the display-ordered runners list
+	let orderedRunners = $derived(
+		computeOrderedRunners(
+			defaultSortedRunners,
+			effectiveRunnerOrder,
+			reorderOffline,
+			roomStore.runnerJoinOrder
+		)
+	);
+
+	// drag-and-drop handler for reordering runners
+	function handleDrop(state: DragDropState<string>) {
+		const { draggedItem: dragName, targetContainer: targetName, dropPosition } = state;
+
+		if (!targetName) return;
+
+		// work with the displayed order's name sequence
+		const displayNames = orderedRunners.map((r) => r.name);
+		const dragIndex = displayNames.indexOf(dragName);
+		let dropIndex = displayNames.indexOf(targetName);
+		if (dropPosition === 'after') dropIndex++;
+
+		if (dragIndex !== -1 && dropIndex !== -1) {
+			const [name] = displayNames.splice(dragIndex, 1);
+			const adjusted = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+			displayNames.splice(adjusted, 0, name);
+
+			// Keep any stored-but-currently-hidden runners behind the visible order.
+			const hiddenNames = effectiveRunnerOrder.filter((name) => !displayNames.includes(name));
+			prefs.order = [...displayNames, ...hiddenNames];
+		}
+	}
 
 	// auto-hide state
 	let isHidden = $state(false);
@@ -62,7 +133,7 @@
 	// snapshot of only meaningful runner fields
 	let runnerDataSnapshot = $derived(
 		JSON.stringify(
-			runners.map((r) => ({
+			orderedRunners.map((r) => ({
 				name: r.name,
 				status: r.status,
 				stronghold: r.stronghold,
@@ -77,8 +148,8 @@
 	$effect(() => {
 		console.log('Dashboard render:', {
 			status: roomStore.status,
-			runnersLength: runners.length,
-			runners: runners.map((r) => r.name),
+			runnersLength: orderedRunners.length,
+			runners: orderedRunners.map((r) => r.name),
 		});
 	});
 
@@ -147,45 +218,35 @@
 	>
 		<!-- Header -->
 		<div
-			class="flex items-center justify-between rounded-t-lg border border-b-0 border-white/20 bg-black backdrop-blur-xl {viewMode ===
+			class="flex items-center justify-between gap-2 overflow-hidden rounded-t-lg border border-b-0 border-white/20 bg-black backdrop-blur-xl {viewMode ===
 				'ultra-compact' || viewMode === 'grid'
 				? 'px-2 pb-0.5 pt-1'
-				: 'px-5 py-3'}"
+				: 'px-3 pt-2 pb-1.5 sm:px-5 sm:py-2.5'}"
 		>
-			<div class="flex items-center gap-2">
+			<div class="flex flex-1 items-center gap-1.5 overflow-hidden">
 				<span
-					class="flex items-center gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
+					class="flex shrink-0 items-center gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
 						? 'text-xs'
-						: 'text-sm text-gray-800 dark:text-gray-200 md:text-lg'}"
+						: 'text-sm font-bold text-gray-800 dark:text-gray-200'}"
 				>
 					<AnimatedGradientText
 						noBorder
 						className="p-0"
 						textClassName="{viewMode === 'ultra-compact' || viewMode === 'grid'
 							? 'text-xs'
-							: 'text-sm'} font-bold mb-0 md:text-lg pb-0"
+							: 'text-sm'} font-bold mb-0 pb-0"
 					>
 						NinjaParty
 					</AnimatedGradientText>
 				</span>
 
 				{#if !isEmbed}
-					<span class="text-gray-400">|</span>
-					<span class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'text-xs' : 'text-base'} text-gray-400"
-						>Room:</span
-					>
+					<span class="shrink-0 text-xs text-gray-400">|</span>
+					<span class="shrink-0 text-xs text-gray-400">Room:</span>
 					{#if isRoomCodeHidden}
-						<span
-							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
-								? 'text-xs'
-								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">******</span
-						>
+						<span class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400">******</span>
 					{:else}
-						<span
-							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
-								? 'text-xs'
-								: 'text-base'} font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span
-						>
+						<span class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span>
 					{/if}
 					<button
 						type="button"
@@ -196,55 +257,65 @@
 								isRoomCodeHidden = true;
 							}
 						}}
-						class="text-gray-400 transition-colors hover:text-gray-200"
+						class="shrink-0 text-gray-400 transition-colors hover:text-gray-200"
 						title={isRoomCodeHidden ? 'Reveal room code' : 'Hide room code'}
 					>
-						{#if isRoomCodeHidden}
-							<EyeOff class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
-						{:else}
-							<Eye class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'mt-0.5 h-3 w-3' : 'mt-1 h-4 w-4'} />
-						{/if}
+						<Eye
+							class={viewMode === 'ultra-compact' || viewMode === 'grid'
+								? 'h-3 w-3'
+								: 'h-3.5 w-3.5'}
+						/>
 					</button>
 				{/if}
 			</div>
-			<div class="flex items-center gap-3">
+			<div class="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
 				<Badge
 					variant="outline"
-					class="flex gap-2 {viewMode === 'ultra-compact' || viewMode === 'grid'
+					class="flex shrink-0 whitespace-nowrap gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
-						: 'px-3 py-1.5 text-sm'} {connectionColor}"
+						: 'px-2 py-0.5 text-xs'} {connectionColor}"
 				>
 					{#if roomStore.status === 'connected'}
-						<Wifi class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} /> Live
+						<Wifi
+							class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-3.5 w-3.5'}
+						/> Live
 					{:else if roomStore.status === 'reconnecting'}
 						<LoaderCircle
-							class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
+								? 'h-3 w-3'
+								: 'h-3.5 w-3.5'} animate-spin"
 						/> Reconnecting
 					{:else if roomStore.status === 'connecting'}
 						<LoaderCircle
-							class="{viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} animate-spin"
+							class="{viewMode === 'ultra-compact' || viewMode === 'grid'
+								? 'h-3 w-3'
+								: 'h-3.5 w-3.5'} animate-spin"
 						/> Connecting
 					{:else}
-						<WifiOff class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-4 w-4'} /> Offline
+						<WifiOff
+							class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-3.5 w-3.5'}
+						/> Offline
 					{/if}
 				</Badge>
 				<Badge
 					variant="outline"
-					class="flex gap-2 border-white/20 bg-black/40 {viewMode === 'ultra-compact' || viewMode === 'grid'
+					class="flex shrink-0 whitespace-nowrap gap-1 border-white/20 bg-black/40 {viewMode === 'ultra-compact' ||
+					viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
-						: 'px-3 py-1.5 text-sm'}"
+						: 'px-2 py-0.5 text-xs'}"
 				>
-					<span class="text-gray-400">{runners.length} Runner{runners.length !== 1 ? 's' : ''}</span
+					<span class="text-gray-400"
+						>{orderedRunners.length} Runner{orderedRunners.length !== 1 ? 's' : ''}</span
 					>
 				</Badge>
 				{#if viewMode !== 'ultra-compact' && viewMode !== 'grid'}
 					<Badge
 						variant="outline"
-						class="flex gap-2 border-white/20 bg-black/40 px-3 py-1.5 text-sm"
+						class="flex shrink-0 whitespace-nowrap gap-1 border-white/20 bg-black/40 px-2 py-0.5 text-xs"
 					>
 						<Tooltip delayDuration={0}>
-							<TooltipTrigger class="flex items-center gap-2">
-								<Clock class="h-4 w-4" />
+							<TooltipTrigger class="flex items-center gap-1.5">
+								<Clock class="h-3.5 w-3.5" />
 								<span class="text-gray-400"> {formatUptime(roomStore.createdAt, now)}</span>
 							</TooltipTrigger>
 							<TooltipContent side="top">Room Uptime</TooltipContent>
@@ -252,7 +323,15 @@
 					</Badge>
 				{/if}
 				{#if !isEmbed}
-					<SettingsSheet compact={viewMode === 'ultra-compact' || viewMode === 'grid'} />
+					<div class="flex shrink-0 items-center gap-1.5 border-r border-white/20 pr-2">
+						<Label for="dnd-toggle" class="cursor-pointer text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 select-none">
+							Reorder
+						</Label>
+						<Switch id="dnd-toggle" bind:checked={dndEnabled} class="scale-75 sm:scale-90" />
+					</div>
+					<div class="shrink-0">
+						<SettingsSheet compact={viewMode === 'ultra-compact' || viewMode === 'grid'} />
+					</div>
 				{/if}
 			</div>
 		</div>
@@ -265,27 +344,85 @@
 				<div class="flex h-48 flex-col items-center justify-center gap-3 text-red-400">
 					<p class="text-base">This room has been closed</p>
 				</div>
-			{:else if roomStore.status === 'connected' && runners.length === 0}
+			{:else if roomStore.status === 'connected' && orderedRunners.length === 0}
 				<div class="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
 					<LoaderCircle class="h-8 w-8 animate-spin text-emerald-500" />
 					<p>Waiting for runner data...</p>
 				</div>
 			{:else}
 				<div
-					class="{viewMode === 'grid' ? 'grid grid-cols-3 gap-1.5 p-2' : 'flex flex-col ' + (viewMode === 'ultra-compact' ? 'gap-1.5 p-2 py-0.5' : 'gap-4 p-4')}"
+					class={viewMode === 'grid'
+						? 'grid grid-cols-3 px-1.5 py-0.5'
+						: 'flex flex-col ' +
+							(viewMode === 'ultra-compact' ? 'px-1.5' : 'px-4 py-2')}
 				>
-					{#each runners as runner (runner.name)}
-						{#if viewMode === 'ultra-compact' || viewMode === 'grid'}
-							<!-- Ultra-Compact / Grid: no card header, name inline with data -->
-							<div
-								class="rounded-md border border-white/10 bg-black/40 overflow-hidden {runner.status === 'offline'
-									? 'opacity-60'
-									: ''}"
-							>
-								{#if !runner.stronghold}
-									<div class="flex items-center gap-3 px-3 py-1.5 text-xs">
-										<div class="flex items-center gap-1.5">
-											<span class="relative flex h-2 w-2">
+					{#each orderedRunners as runner (runner.name)}
+						<div
+							class="{isEmbed || !dndEnabled ? '' : 'cursor-grab active:cursor-grabbing'} {viewMode === 'grid'
+								? 'p-[3px]'
+								: viewMode === 'ultra-compact'
+									? 'py-[3px]'
+									: 'py-2'}"
+							use:draggable={{
+								container: runner.name,
+								dragData: runner.name,
+								disabled: isEmbed || !dndEnabled,
+								interactive: ['[data-no-drag]'],
+								attributes: { draggingClass: 'dnd-dragging' },
+							}}
+							use:droppable={{
+								container: runner.name,
+								direction: viewMode === 'grid' ? 'grid' : 'vertical',
+								disabled: isEmbed || !dndEnabled,
+								callbacks: { onDrop: handleDrop },
+								attributes: { dragOverClass: 'dnd-drag-over' },
+							}}
+						>
+							{#if viewMode === 'ultra-compact' || viewMode === 'grid'}
+								<!-- Ultra-Compact / Grid: no card header, name inline with data -->
+								<div
+									class="overflow-hidden rounded-md border border-white/10 bg-black/40 {runner.status ===
+									'offline'
+										? 'opacity-60'
+										: ''}"
+								>
+									{#if !runner.stronghold}
+										<div class="flex items-center gap-3 px-3 py-1.5 text-xs">
+											<div class="flex items-center gap-1.5">
+												<span class="relative flex h-2 w-2">
+													{#if runner.status === 'online'}
+														<span
+															class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+														></span>
+													{/if}
+													<span
+														class="relative inline-flex h-2 w-2 rounded-full {runner.status ===
+														'online'
+															? 'bg-emerald-500'
+															: 'bg-red-500'}"
+													></span>
+												</span>
+												<span class="font-semibold text-white">{runner.name}</span>
+												{#if runner.status === 'offline'}
+													<span class="text-xs text-red-400">(Offline)</span>
+												{/if}
+											</div>
+											{#if runner.boat && runner.boat.boatState !== 'NONE'}
+												<img
+													src="/images/boat_{runner.boat.boatState === 'VALID'
+														? 'green'
+														: runner.boat.boatState === 'MEASURING'
+															? 'blue'
+															: 'red'}.png"
+													alt={runner.boat.boatState}
+													class="h-3 w-3 object-contain"
+												/>
+											{/if}
+											<span class="ml-auto text-muted-foreground">Waiting for data...</span>
+										</div>
+									{:else}
+										<div class="flex items-center gap-1.5 border-b border-white/5 px-2 py-0.5">
+											<span class="relative flex h-2 w-2 shrink-0">
 												{#if runner.status === 'online'}
 													<span
 														class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
@@ -298,142 +435,29 @@
 														: 'bg-red-500'}"
 												></span>
 											</span>
-											<span class="font-semibold text-white">{runner.name}</span>
+											<span class="truncate text-xs font-semibold text-white">{runner.name}</span>
 											{#if runner.status === 'offline'}
-												<span class="text-xs text-red-400">(Offline)</span>
+												<span class="text-[10px] text-red-400">(Offline)</span>
 											{/if}
+											<div class="ml-auto flex shrink-0 items-center gap-1.5">
+												<PlayerPosition
+													pos={runner.stronghold.playerPosition}
+													inline={true}
+													{colorNegatives}
+												/>
+												{#if runner.boat && runner.boat.boatState !== 'NONE'}
+													<img
+														src="/images/boat_{runner.boat.boatState === 'VALID'
+															? 'green'
+															: runner.boat.boatState === 'MEASURING'
+																? 'blue'
+																: 'red'}.png"
+														alt={runner.boat.boatState}
+														class="h-3 w-3 object-contain"
+													/>
+												{/if}
+											</div>
 										</div>
-										{#if runner.boat && runner.boat.boatState !== 'NONE'}
-											<img
-												src="/images/boat_{runner.boat.boatState === 'VALID'
-													? 'green'
-													: runner.boat.boatState === 'MEASURING'
-														? 'blue'
-														: 'red'}.png"
-												alt={runner.boat.boatState}
-												class="h-3 w-3 object-contain"
-											/>
-										{/if}
-										<span class="ml-auto text-muted-foreground">Waiting for data...</span>
-									</div>
-								{:else}
-									<div class="flex items-center gap-1.5 border-b border-white/5 px-2 py-0.5">
-										<span class="relative flex h-2 w-2 shrink-0">
-											{#if runner.status === 'online'}
-												<span
-													class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
-												></span>
-											{/if}
-											<span
-												class="relative inline-flex h-2 w-2 rounded-full {runner.status === 'online'
-													? 'bg-emerald-500'
-													: 'bg-red-500'}"
-											></span>
-										</span>
-										<span class="truncate text-xs font-semibold text-white">{runner.name}</span>
-										{#if runner.status === 'offline'}
-											<span class="text-[10px] text-red-400">(Offline)</span>
-										{/if}
-										<div class="ml-auto flex shrink-0 items-center gap-1.5">
-											<PlayerPosition
-												pos={runner.stronghold.playerPosition}
-												inline={true}
-												{colorNegatives}
-											/>
-											{#if runner.boat && runner.boat.boatState !== 'NONE'}
-												<img
-													src="/images/boat_{runner.boat.boatState === 'VALID'
-														? 'green'
-														: runner.boat.boatState === 'MEASURING'
-															? 'blue'
-															: 'red'}.png"
-													alt={runner.boat.boatState}
-													class="h-3 w-3 object-contain"
-												/>
-											{/if}
-										</div>
-									</div>
-									<LocationsTable
-										resultType={runner.stronghold.resultType}
-										predictions={runner.stronghold.predictions?.slice(0, 1) || []}
-										pos={runner.stronghold.playerPosition}
-										eyeThrows={runner.stronghold.eyeThrows || []}
-										{viewMode}
-										{displayType}
-										{colorNegatives}
-									/>
-								{/if}
-								<InformationMessages
-									messages={runner.informationMessages?.informationMessages}
-									{viewMode}
-								/>
-							</div>
-						{:else}
-							<!-- Standard card layout (max / compact) -->
-							<div
-								class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status ===
-								'offline'
-									? 'opacity-60'
-									: ''}"
-							>
-								<!-- Runner Header -->
-								<div class="mb-1 flex items-center justify-between">
-									<div class="flex items-center gap-2">
-										<span class="relative flex h-3 w-3">
-											{#if runner.status === 'online'}
-												<span
-													class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
-												></span>
-											{/if}
-											<span
-												class="relative inline-flex h-3 w-3 rounded-full {runner.status === 'online'
-													? 'bg-emerald-500'
-													: 'bg-red-500'}"
-											></span>
-										</span>
-										<span class="text-lg font-semibold text-white">{runner.name}</span>
-										{#if runner.status === 'offline'}
-											<span class="text-xs text-red-400">(Offline)</span>
-										{/if}
-									</div>
-									{#if runner.boat && runner.boat.boatState !== 'NONE'}
-										<Badge
-											variant="outline"
-											class="flex items-center gap-2 border-white/20 bg-black/40 px-2 py-1 text-xs {getBoatColor(
-												runner.boat.boatState
-											)}"
-										>
-											{#if runner.boat.boatState === 'VALID'}
-												<img
-													src="/images/boat_green.png"
-													alt="Valid"
-													class="h-3 w-3 object-contain"
-												/>
-											{:else if runner.boat.boatState === 'MEASURING'}
-												<img
-													src="/images/boat_blue.png"
-													alt="Measuring"
-													class="h-3 w-3 object-contain"
-												/>
-											{:else if runner.boat.boatState === 'ERROR'}
-												<img
-													src="/images/boat_red.png"
-													alt="Error"
-													class="h-3 w-3 object-contain"
-												/>
-											{/if}
-											{runner.boat.boatState}
-										</Badge>
-									{/if}
-								</div>
-
-								<!-- Runner Data -->
-								<div class="flex flex-col gap-1">
-									{#if !runner.stronghold}
-										<div class="flex h-20 items-center justify-center text-muted-foreground">
-											<p>Waiting for stronghold data...</p>
-										</div>
-									{:else if viewMode === 'compact'}
 										<LocationsTable
 											resultType={runner.stronghold.resultType}
 											predictions={runner.stronghold.predictions?.slice(0, 1) || []}
@@ -443,29 +467,112 @@
 											{displayType}
 											{colorNegatives}
 										/>
-										<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
-									{:else}
-										<LocationsTable
-											resultType={runner.stronghold.resultType}
-											predictions={runner.stronghold.predictions?.slice(0, 5) || []}
-											pos={runner.stronghold.playerPosition}
-											{viewMode}
-											{displayType}
-											{colorNegatives}
-										/>
-										<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
-										<EyeThrows throws={runner.stronghold.eyeThrows || []} />
-										<BlindMode blind={runner.blind ?? undefined} />
-										<DivineMode divine={runner.divine ?? undefined} />
-										<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
 									{/if}
 									<InformationMessages
 										messages={runner.informationMessages?.informationMessages}
 										{viewMode}
 									/>
 								</div>
-							</div>
-						{/if}
+							{:else}
+								<!-- Standard card layout (max / compact) -->
+								<div
+									class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status ===
+									'offline'
+										? 'opacity-60'
+										: ''}"
+								>
+									<!-- Runner Header -->
+									<div class="mb-1 flex items-center justify-between">
+										<div class="flex items-center gap-2">
+											<span class="relative flex h-3 w-3">
+												{#if runner.status === 'online'}
+													<span
+														class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+													></span>
+												{/if}
+												<span
+													class="relative inline-flex h-3 w-3 rounded-full {runner.status ===
+													'online'
+														? 'bg-emerald-500'
+														: 'bg-red-500'}"
+												></span>
+											</span>
+											<span class="text-lg font-semibold text-white">{runner.name}</span>
+											{#if runner.status === 'offline'}
+												<span class="text-xs text-red-400">(Offline)</span>
+											{/if}
+										</div>
+										{#if runner.boat && runner.boat.boatState !== 'NONE'}
+											<Badge
+												variant="outline"
+												class="flex items-center gap-2 border-white/20 bg-black/40 px-2 py-1 text-xs {getBoatColor(
+													runner.boat.boatState
+												)}"
+											>
+												{#if runner.boat.boatState === 'VALID'}
+													<img
+														src="/images/boat_green.png"
+														alt="Valid"
+														class="h-3 w-3 object-contain"
+													/>
+												{:else if runner.boat.boatState === 'MEASURING'}
+													<img
+														src="/images/boat_blue.png"
+														alt="Measuring"
+														class="h-3 w-3 object-contain"
+													/>
+												{:else if runner.boat.boatState === 'ERROR'}
+													<img
+														src="/images/boat_red.png"
+														alt="Error"
+														class="h-3 w-3 object-contain"
+													/>
+												{/if}
+												{runner.boat.boatState}
+											</Badge>
+										{/if}
+									</div>
+
+									<!-- Runner Data -->
+									<div class="flex flex-col gap-1">
+										{#if !runner.stronghold}
+											<div class="flex h-20 items-center justify-center text-muted-foreground">
+												<p>Waiting for stronghold data...</p>
+											</div>
+										{:else if viewMode === 'compact'}
+											<LocationsTable
+												resultType={runner.stronghold.resultType}
+												predictions={runner.stronghold.predictions?.slice(0, 1) || []}
+												pos={runner.stronghold.playerPosition}
+												eyeThrows={runner.stronghold.eyeThrows || []}
+												{viewMode}
+												{displayType}
+												{colorNegatives}
+											/>
+											<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
+										{:else}
+											<LocationsTable
+												resultType={runner.stronghold.resultType}
+												predictions={runner.stronghold.predictions?.slice(0, 5) || []}
+												pos={runner.stronghold.playerPosition}
+												{viewMode}
+												{displayType}
+												{colorNegatives}
+											/>
+											<PlayerPosition pos={runner.stronghold.playerPosition} {colorNegatives} />
+											<EyeThrows throws={runner.stronghold.eyeThrows || []} />
+											<BlindMode blind={runner.blind ?? undefined} />
+											<DivineMode divine={runner.divine ?? undefined} />
+											<AllAdvancements allAdvancements={runner.allAdvancements ?? undefined} />
+										{/if}
+										<InformationMessages
+											messages={runner.informationMessages?.informationMessages}
+											{viewMode}
+										/>
+									</div>
+								</div>
+							{/if}
+						</div>
 					{/each}
 				</div>
 			{/if}
@@ -474,7 +581,11 @@
 		<!-- Add to OBS Button -->
 		{#if !isEmbed}
 			<div class="flex w-full items-center justify-center gap-2">
-				<AddToObs {roomCode} />
+				<AddToObs
+					{roomCode}
+					defaultRunnerOrder={defaultSortedRunners.map((runner) => runner.name)}
+					runnerOrder={orderedRunners.map((runner) => runner.name)}
+				/>
 				<div class="mt-4 flex justify-center">
 					<button type="button" onclick={() => goto('/')} class="group relative rounded-lg p-[2px]">
 						<div
@@ -528,3 +639,23 @@
 		</AlertDialog.Root>
 	</div>
 </TooltipProvider>
+
+<style>
+	/* Drag-and-drop visual feedback */
+	:global(.dnd-dragging) {
+		opacity: 0.4;
+		transition: opacity 0.15s ease;
+	}
+	:global(.dnd-drag-over) {
+		outline: 2px dashed #10b981;
+		outline-offset: -2px;
+		border-radius: 0.375rem;
+	}
+	/* Override library's default drop indicator color to match emerald theme */
+	:global(.drop-before::before),
+	:global(.drop-after::after),
+	:global(.drop-left::before),
+	:global(.drop-right::after) {
+		background-color: #10b981 !important;
+	}
+</style>

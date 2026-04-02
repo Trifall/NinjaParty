@@ -2,18 +2,21 @@
 	import { Monitor } from '@lucide/svelte';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import { serializeRunnerMoves } from '$lib/stores/room-preferences.svelte';
 	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
 	interface Props {
 		roomCode: string;
+		defaultRunnerOrder: string[];
+		runnerOrder: string[];
 	}
 
-	let { roomCode }: Props = $props();
+	let { roomCode, defaultRunnerOrder, runnerOrder }: Props = $props();
 
 	let showObsModal = $state(false);
 	let copiedLink = $state(false);
 
-	let obsUrl = $derived(() => {
+	let obsUrl = $derived.by(() => {
 		const params = new SvelteURLSearchParams({ embed: '1' });
 
 		const viewMode = settings.viewMode.current;
@@ -35,11 +38,22 @@
 			params.set('autoHide', String(autoHide));
 		}
 
+		// encode only the deltas from the default live ordering
+		const runnerMoves = serializeRunnerMoves(defaultRunnerOrder, runnerOrder);
+		if (runnerMoves) {
+			params.set('runnerMoves', runnerMoves);
+		}
+
+		// reorder offline runners, only include if enabled
+		if (settings.reorderOfflineRunners.current) {
+			params.set('reorderOfflineRunners', 'true');
+		}
+
 		return `/room/${roomCode}?${params.toString()}`;
 	});
 
 	function copyLink() {
-		navigator.clipboard.writeText(window.location.origin + obsUrl());
+		navigator.clipboard.writeText(window.location.origin + obsUrl);
 		copiedLink = true;
 		setTimeout(() => (copiedLink = false), 2000);
 	}
@@ -93,7 +107,7 @@
 								style="overflow-x:auto; white-space:nowrap; min-width:0;"
 								class="rounded border border-white/10 bg-black px-3 py-2 text-sm text-emerald-400"
 							>
-								{window.location.origin}{obsUrl()}
+								{window.location.origin}{obsUrl}
 							</code>
 							<button
 								type="button"
