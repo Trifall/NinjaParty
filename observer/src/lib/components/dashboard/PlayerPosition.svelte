@@ -27,10 +27,11 @@
 					class={colorNegatives && displayX !== undefined && displayX < 0
 						? 'text-red-400'
 						: 'text-gray-200'}>{displayX?.toFixed(0) ?? '?'}</span
-				>,<span class="ml-0.5"
+				>,<span
+					class="ml-0.5"
 					class:text-red-400={colorNegatives && displayZ !== undefined && displayZ < 0}
 					class:text-gray-200={!(colorNegatives && displayZ !== undefined && displayZ < 0)}
-						>{displayZ?.toFixed(0) ?? '?'}</span
+					>{displayZ?.toFixed(0) ?? '?'}</span
 				>)
 			</span>
 			<span class="font-medium {pos.isInNether ? 'text-red-400' : 'text-emerald-400'}">
@@ -39,7 +40,9 @@
 		</div>
 	{:else}
 		<!-- Standard display -->
-		<div class="flex items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-white/[0.02] px-4 py-2.5 text-base">
+		<div
+			class="flex items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-white/[0.02] px-4 py-2.5 text-base"
+		>
 			<div class="flex items-center gap-5">
 				<span class="flex items-center gap-1.5 text-gray-400">
 					<svg

@@ -173,8 +173,7 @@
 						<input
 							type="checkbox"
 							checked={settings.reorderOfflineRunners.current}
-							onchange={(e) =>
-								(settings.reorderOfflineRunners.current = e.currentTarget.checked)}
+							onchange={(e) => (settings.reorderOfflineRunners.current = e.currentTarget.checked)}
 							class="h-4 w-4 rounded accent-emerald-500"
 						/>
 						<span class="text-sm"

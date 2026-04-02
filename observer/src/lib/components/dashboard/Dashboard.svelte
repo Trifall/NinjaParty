@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { Clock, Eye, EyeOff, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
+	import { Clock, Eye, House, LoaderCircle, Wifi, WifiOff } from '@lucide/svelte';
 	import { type DragDropState, draggable, droppable } from '@thisux/sveltednd';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Label } from '$lib/components/ui/label';
+	import { Switch } from '$lib/components/ui/switch';
 	import {
 		applyRunnerMoves,
 		computeOrderedRunners,
@@ -28,9 +30,6 @@
 	import AddToObs from './modals/AddToObs.svelte';
 	import SettingsSheet from './modals/SettingsSheet.svelte';
 
-	import { Switch } from '$lib/components/ui/switch';
-	import { Label } from '$lib/components/ui/label';
-
 	let {
 		roomStore,
 		roomCode,
@@ -48,7 +47,7 @@
 	let now = $state(Date.now());
 
 	let embedParams = $derived.by(() => {
-		const sp = $page.url.searchParams;
+		const sp = page.url.searchParams;
 		const result = embedParamsSchema.safeParse({
 			viewMode: sp.get('viewMode') ?? undefined,
 			displayType: sp.get('displayType') ?? undefined,
@@ -221,11 +220,12 @@
 			class="flex items-center justify-between gap-2 overflow-hidden rounded-t-lg border border-b-0 border-white/20 bg-black backdrop-blur-xl {viewMode ===
 				'ultra-compact' || viewMode === 'grid'
 				? 'px-2 pb-0.5 pt-1'
-				: 'px-3 pt-2 pb-1.5 sm:px-5 sm:py-2.5'}"
+				: 'px-3 pb-1.5 pt-2 sm:px-5 sm:py-2.5'}"
 		>
 			<div class="flex flex-1 items-center gap-1.5 overflow-hidden">
 				<span
-					class="flex shrink-0 items-center gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
+					class="flex shrink-0 items-center gap-1 {viewMode === 'ultra-compact' ||
+					viewMode === 'grid'
 						? 'text-xs'
 						: 'text-sm font-bold text-gray-800 dark:text-gray-200'}"
 				>
@@ -244,9 +244,15 @@
 					<span class="shrink-0 text-xs text-gray-400">|</span>
 					<span class="shrink-0 text-xs text-gray-400">Room:</span>
 					{#if isRoomCodeHidden}
-						<span class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400">******</span>
+						<span
+							class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400"
+							>******</span
+						>
 					{:else}
-						<span class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400">{roomCode}</span>
+						<span
+							class="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-emerald-400"
+							>{roomCode}</span
+						>
 					{/if}
 					<button
 						type="button"
@@ -271,13 +277,16 @@
 			<div class="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
 				<Badge
 					variant="outline"
-					class="flex shrink-0 whitespace-nowrap gap-1 {viewMode === 'ultra-compact' || viewMode === 'grid'
+					class="flex shrink-0 gap-1 whitespace-nowrap {viewMode === 'ultra-compact' ||
+					viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
 						: 'px-2 py-0.5 text-xs'} {connectionColor}"
 				>
 					{#if roomStore.status === 'connected'}
 						<Wifi
-							class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-3.5 w-3.5'}
+							class={viewMode === 'ultra-compact' || viewMode === 'grid'
+								? 'h-3 w-3'
+								: 'h-3.5 w-3.5'}
 						/> Live
 					{:else if roomStore.status === 'reconnecting'}
 						<LoaderCircle
@@ -293,14 +302,16 @@
 						/> Connecting
 					{:else}
 						<WifiOff
-							class={viewMode === 'ultra-compact' || viewMode === 'grid' ? 'h-3 w-3' : 'h-3.5 w-3.5'}
+							class={viewMode === 'ultra-compact' || viewMode === 'grid'
+								? 'h-3 w-3'
+								: 'h-3.5 w-3.5'}
 						/> Offline
 					{/if}
 				</Badge>
 				<Badge
 					variant="outline"
-					class="flex shrink-0 whitespace-nowrap gap-1 border-white/20 bg-black/40 {viewMode === 'ultra-compact' ||
-					viewMode === 'grid'
+					class="flex shrink-0 gap-1 whitespace-nowrap border-white/20 bg-black/40 {viewMode ===
+						'ultra-compact' || viewMode === 'grid'
 						? 'px-1.5 py-0.5 text-xs'
 						: 'px-2 py-0.5 text-xs'}"
 				>
@@ -311,7 +322,7 @@
 				{#if viewMode !== 'ultra-compact' && viewMode !== 'grid'}
 					<Badge
 						variant="outline"
-						class="flex shrink-0 whitespace-nowrap gap-1 border-white/20 bg-black/40 px-2 py-0.5 text-xs"
+						class="flex shrink-0 gap-1 whitespace-nowrap border-white/20 bg-black/40 px-2 py-0.5 text-xs"
 					>
 						<Tooltip delayDuration={0}>
 							<TooltipTrigger class="flex items-center gap-1.5">
@@ -324,7 +335,10 @@
 				{/if}
 				{#if !isEmbed}
 					<div class="flex shrink-0 items-center gap-1.5 border-r border-white/20 pr-2">
-						<Label for="dnd-toggle" class="cursor-pointer text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 select-none">
+						<Label
+							for="dnd-toggle"
+							class="cursor-pointer select-none text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs"
+						>
 							Reorder
 						</Label>
 						<Switch id="dnd-toggle" bind:checked={dndEnabled} class="scale-75 sm:scale-90" />
@@ -353,12 +367,13 @@
 				<div
 					class={viewMode === 'grid'
 						? 'grid grid-cols-3 px-1.5 py-0.5'
-						: 'flex flex-col ' +
-							(viewMode === 'ultra-compact' ? 'px-1.5' : 'px-4 py-2')}
+						: 'flex flex-col ' + (viewMode === 'ultra-compact' ? 'px-1.5' : 'px-4 py-2')}
 				>
 					{#each orderedRunners as runner (runner.name)}
 						<div
-							class="{isEmbed || !dndEnabled ? '' : 'cursor-grab active:cursor-grabbing'} {viewMode === 'grid'
+							class="{isEmbed || !dndEnabled
+								? ''
+								: 'cursor-grab active:cursor-grabbing'} {viewMode === 'grid'
 								? 'p-[3px]'
 								: viewMode === 'ultra-compact'
 									? 'py-[3px]'

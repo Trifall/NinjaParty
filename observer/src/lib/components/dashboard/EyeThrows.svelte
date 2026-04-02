@@ -54,7 +54,7 @@
 						<span class="inline-flex items-center gap-1">
 							Adj
 							<Tooltip delayDuration={0}>
-								<TooltipTrigger class="cursor-help flex items-center">
+								<TooltipTrigger class="flex cursor-help items-center">
 									<svg
 										class="h-4 w-4 text-gray-500"
 										xmlns="http://www.w3.org/2000/svg"
@@ -111,7 +111,7 @@
 								<span class={status.color}>{t.error.toFixed(5)}</span>
 								{#if status.warning}
 									<Tooltip delayDuration={0}>
-										<TooltipTrigger class="cursor-help flex items-center">
+										<TooltipTrigger class="flex cursor-help items-center">
 											<svg
 												class="h-4 w-4 text-amber-400"
 												xmlns="http://www.w3.org/2000/svg"

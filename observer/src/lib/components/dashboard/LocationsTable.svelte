@@ -149,152 +149,190 @@
 {/if}
 
 {#if resultType !== 'FAILED' && predictions.length > 0}
-	<div class={isUltraCompact ? '' : 'overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]'}>
+	<div
+		class={isUltraCompact
+			? ''
+			: 'overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]'}
+	>
 		<table class="w-full border-collapse {isGrid ? 'text-[11px]' : 'text-base'}">
 			<thead>
-			<tr class="border-b border-white/20 text-gray-400 {isGrid ? 'text-[10px]' : isUltraCompact ? 'text-xs' : ''}">
-				<th class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
-					>Location</th
-				>
-				<th class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal">%</th>
-				<th class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
-					>Dist.</th
-				>
-				<th class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
-					>Nether</th
-				>
-				{#if !isGrid}
-				<th class="px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal"
-					>Angle</th
-				>
-				{#if isCompact && !isUltraCompact}
-					<th class="w-[12%] px-3 py-2 text-center font-normal">
-						<span class="inline-flex items-center gap-1">
-							Error
-							<Tooltip delayDuration={0}>
-								<TooltipTrigger class="cursor-help flex items-center">
-									<svg
-										class="h-4 w-4 text-gray-500"
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<circle cx="12" cy="12" r="10" />
-										<path d="M12 16v-4" />
-										<path d="M12 8h.01" />
-									</svg>
-								</TooltipTrigger>
-								<TooltipContent>
-									<p>Displays the LARGEST error from the throws of this calculation.</p>
-								</TooltipContent>
-							</Tooltip>
-						</span>
-					</th>
-				{/if}
-				{/if}
-			</tr>
-		</thead>
-		<tbody>
-			{#each predictions as pred (pred.chunkX + '-' + pred.chunkZ)}
-				{@const coords = getPredictionDisplayCoords(pred.chunkX, pred.chunkZ)}
-				{@const nether = chunkToNether(pred.chunkX, pred.chunkZ)}
-				{@const travel = getTravelAngleInfo(pred.chunkX, pred.chunkZ)}
-				{@const certaintyCol = getCertaintyColor(pred.certainty)}
 				<tr
-					class="border-b border-white/5 transition-colors hover:bg-white/5 {isGrid
-						? 'text-[11px]'
+					class="border-b border-white/20 text-gray-400 {isGrid
+						? 'text-[10px]'
 						: isUltraCompact
 							? 'text-xs'
 							: ''}"
 				>
-					<td class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
-						(<span class={colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
-							>{coords[0]}</span
-						>,
-						<span class={colorNegatives && coords[1] < 0 ? 'text-red-400' : 'text-gray-200'}
-							>{coords[1]}</span
-						>)
-					</td>
-					<td
-						class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center font-semibold"
-						style="color: {certaintyCol}"
+					<th
+						class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact
+							? 'py-0'
+							: 'py-2'} text-center font-normal">Location</th
 					>
-						{(pred.certainty * 100).toFixed(1)}%
-					</td>
-					<td class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center text-gray-200">
-						{pos?.isInNether
-							? Math.floor(pred.overworldDistance / 8)
-							: Math.floor(pred.overworldDistance)}
-					</td>
-					<td class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
-						(<span class={colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
-							>{nether[0]}</span
-						>,
-						<span class={colorNegatives && nether[1] < 0 ? 'text-red-400' : 'text-gray-300'}
-							>{nether[1]}</span
-						>)
-					</td>
+					<th
+						class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact
+							? 'py-0'
+							: 'py-2'} text-center font-normal">%</th
+					>
+					<th
+						class="{isGrid ? 'px-1' : 'px-3'} {isUltraCompact
+							? 'py-0'
+							: 'py-2'} text-center font-normal">Dist.</th
+					>
+					<th
+						class="{isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact
+							? 'py-0'
+							: 'py-2'} text-center font-normal">Nether</th
+					>
 					{#if !isGrid}
-					<td class="whitespace-nowrap px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
-						{#if travel.angle !== null && travel.diff !== null}
-							<span class="text-gray-200">{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span>
-							{#if !isUltraCompact}
-								<span style="color: {getAngleDiffColor(travel.diff)}" class="ml-1.5"
-									>({travel.diff > 0 ? '→' : '←'} {Math.abs(travel.diff).toFixed(1)})</span
-								>
-							{/if}
-						{:else}
-							<span class="text-gray-500">-</span>
-						{/if}
-					</td>
-					{/if}
-					{#if isCompact && !isUltraCompact}
-						<td class="whitespace-nowrap px-3 py-1.5 text-center">
-							{#if maxErrorInfo.error !== null}
+						<th class="px-3 {isUltraCompact ? 'py-0' : 'py-2'} text-center font-normal">Angle</th>
+						{#if isCompact && !isUltraCompact}
+							<th class="w-[12%] px-3 py-2 text-center font-normal">
 								<span class="inline-flex items-center gap-1">
-									<span class={maxErrorInfo.color}>{maxErrorInfo.error.toFixed(5)}</span>
-									{#if maxErrorInfo.warning}
-										<Tooltip delayDuration={0}>
-											<TooltipTrigger class="cursor-help flex items-center">
-												<svg
-													class="h-4 w-4 text-amber-400"
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="2"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-												>
-													<path
-														d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-													/>
-													<line x1="12" y1="9" x2="12" y2="13" />
-													<line x1="12" y1="17" x2="12.01" y2="17" />
-												</svg>
-											</TooltipTrigger>
-											<TooltipContent>
-												<p>{maxErrorInfo.warning}</p>
-											</TooltipContent>
-										</Tooltip>
-									{/if}
+									Error
+									<Tooltip delayDuration={0}>
+										<TooltipTrigger class="flex cursor-help items-center">
+											<svg
+												class="h-4 w-4 text-gray-500"
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<circle cx="12" cy="12" r="10" />
+												<path d="M12 16v-4" />
+												<path d="M12 8h.01" />
+											</svg>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>Displays the LARGEST error from the throws of this calculation.</p>
+										</TooltipContent>
+									</Tooltip>
 								</span>
-							{:else}
-								<span class="text-gray-500">-</span>
-							{/if}
-						</td>
+							</th>
+						{/if}
 					{/if}
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{#each predictions as pred (pred.chunkX + '-' + pred.chunkZ)}
+					{@const coords = getPredictionDisplayCoords(pred.chunkX, pred.chunkZ)}
+					{@const nether = chunkToNether(pred.chunkX, pred.chunkZ)}
+					{@const travel = getTravelAngleInfo(pred.chunkX, pred.chunkZ)}
+					{@const certaintyCol = getCertaintyColor(pred.certainty)}
+					<tr
+						class="border-b border-white/5 transition-colors hover:bg-white/5 {isGrid
+							? 'text-[11px]'
+							: isUltraCompact
+								? 'text-xs'
+								: ''}"
+					>
+						<td
+							class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact
+								? 'py-0.5'
+								: 'py-1.5'} text-center"
+						>
+							(<span class={colorNegatives && coords[0] < 0 ? 'text-red-400' : 'text-gray-200'}
+								>{coords[0]}</span
+							>,
+							<span class={colorNegatives && coords[1] < 0 ? 'text-red-400' : 'text-gray-200'}
+								>{coords[1]}</span
+							>)
+						</td>
+						<td
+							class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact
+								? 'py-0.5'
+								: 'py-1.5'} text-center font-semibold"
+							style="color: {certaintyCol}"
+						>
+							{(pred.certainty * 100).toFixed(1)}%
+						</td>
+						<td
+							class="whitespace-nowrap {isGrid ? 'px-1' : 'px-3'} {isUltraCompact
+								? 'py-0.5'
+								: 'py-1.5'} text-center text-gray-200"
+						>
+							{pos?.isInNether
+								? Math.floor(pred.overworldDistance / 8)
+								: Math.floor(pred.overworldDistance)}
+						</td>
+						<td
+							class="whitespace-nowrap {isGrid ? 'px-1.5' : 'px-3'} {isUltraCompact
+								? 'py-0.5'
+								: 'py-1.5'} text-center"
+						>
+							(<span class={colorNegatives && nether[0] < 0 ? 'text-red-400' : 'text-gray-300'}
+								>{nether[0]}</span
+							>,
+							<span class={colorNegatives && nether[1] < 0 ? 'text-red-400' : 'text-gray-300'}
+								>{nether[1]}</span
+							>)
+						</td>
+						{#if !isGrid}
+							<td class="whitespace-nowrap px-3 {isUltraCompact ? 'py-0.5' : 'py-1.5'} text-center">
+								{#if travel.angle !== null && travel.diff !== null}
+									<span class="text-gray-200"
+										>{normalizeMinecraftAngle(travel.angle).toFixed(2)}</span
+									>
+									{#if !isUltraCompact}
+										<span style="color: {getAngleDiffColor(travel.diff)}" class="ml-1.5"
+											>({travel.diff > 0 ? '→' : '←'} {Math.abs(travel.diff).toFixed(1)})</span
+										>
+									{/if}
+								{:else}
+									<span class="text-gray-500">-</span>
+								{/if}
+							</td>
+						{/if}
+						{#if isCompact && !isUltraCompact}
+							<td class="whitespace-nowrap px-3 py-1.5 text-center">
+								{#if maxErrorInfo.error !== null}
+									<span class="inline-flex items-center gap-1">
+										<span class={maxErrorInfo.color}>{maxErrorInfo.error.toFixed(5)}</span>
+										{#if maxErrorInfo.warning}
+											<Tooltip delayDuration={0}>
+												<TooltipTrigger class="flex cursor-help items-center">
+													<svg
+														class="h-4 w-4 text-amber-400"
+														xmlns="http://www.w3.org/2000/svg"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<path
+															d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+														/>
+														<line x1="12" y1="9" x2="12" y2="13" />
+														<line x1="12" y1="17" x2="12.01" y2="17" />
+													</svg>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>{maxErrorInfo.warning}</p>
+												</TooltipContent>
+											</Tooltip>
+										{/if}
+									</span>
+								{:else}
+									<span class="text-gray-500">-</span>
+								{/if}
+							</td>
+						{/if}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 {:else if resultType !== 'FAILED'}
-	<div class="flex h-16 items-center justify-center text-muted-foreground {isUltraCompact ? '' : 'overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]'}">
+	<div
+		class="flex h-16 items-center justify-center text-muted-foreground {isUltraCompact
+			? ''
+			: 'overflow-hidden rounded-lg border border-white/10 bg-white/[0.02]'}"
+	>
 		<svg
 			class="mr-2 h-4 w-4"
 			xmlns="http://www.w3.org/2000/svg"

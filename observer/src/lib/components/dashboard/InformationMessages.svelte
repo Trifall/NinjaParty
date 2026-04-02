@@ -68,8 +68,8 @@
 								? 'cursor-help'
 								: 'cursor-default'} truncate border-none bg-transparent text-left text-gray-300 outline-none"
 						>
-							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							<div class="w-full truncate" use:detectTruncation={i}>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 								{@html sanitize(msg.message)}
 							</div>
 						</TooltipTrigger>
@@ -124,8 +124,8 @@
 										? 'cursor-help'
 										: 'cursor-default'} truncate border-none bg-transparent text-left leading-snug text-gray-300 outline-none"
 								>
-									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									<div class="w-full truncate" use:detectTruncation={i}>
+										<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 										{@html sanitize(msg.message)}
 									</div>
 								</TooltipTrigger>
