@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Settings } from '@lucide/svelte';
+	import { Label } from '$lib/components/ui/label';
 	import * as Sheet from '$lib/components/ui/sheet';
+	import { Switch } from '$lib/components/ui/switch';
 	import { VIEW_MODE, settings } from '$lib/stores/settings.svelte';
 
 	interface Props {
@@ -155,33 +157,33 @@
 
 			<div class="space-y-4 border-t border-white/10 pt-4">
 				<h4 class="text-sm font-medium leading-none text-white">Display Options</h4>
-				<div class="flex flex-col space-y-3">
-					<label class="flex cursor-pointer items-center space-x-3">
-						<input
-							type="checkbox"
-							checked={settings.colorNegatives.current}
-							onchange={(e) => (settings.colorNegatives.current = e.currentTarget.checked)}
-							class="h-4 w-4 rounded accent-emerald-500"
+				<div class="flex flex-col space-y-4 pt-1">
+					<div class="flex items-center justify-between">
+						<Label for="color-negatives" class="flex cursor-pointer flex-col space-y-1.5">
+							<span class="text-sm font-medium leading-none text-white"
+								>Color negative coordinates</span
+							>
+							<span class="text-xs text-muted-foreground">Show negative values in red</span>
+						</Label>
+						<Switch
+							id="color-negatives"
+							bind:checked={settings.colorNegatives.current}
+							class="data-[state=checked]:bg-emerald-500"
 						/>
-						<span class="text-sm"
-							>Color negative coordinates <span class="ml-1 text-muted-foreground"
-								>- Show negative values in red</span
-							></span
-						>
-					</label>
-					<label class="flex cursor-pointer items-center space-x-3">
-						<input
-							type="checkbox"
-							checked={settings.reorderOfflineRunners.current}
-							onchange={(e) => (settings.reorderOfflineRunners.current = e.currentTarget.checked)}
-							class="h-4 w-4 rounded accent-emerald-500"
+					</div>
+					<div class="flex items-center justify-between">
+						<Label for="reorder-offline" class="flex cursor-pointer flex-col space-y-1.5">
+							<span class="text-sm font-medium leading-none text-white"
+								>Reorder offline runners</span
+							>
+							<span class="text-xs text-muted-foreground">Move offline runners to bottom</span>
+						</Label>
+						<Switch
+							id="reorder-offline"
+							bind:checked={settings.reorderOfflineRunners.current}
+							class="data-[state=checked]:bg-emerald-500"
 						/>
-						<span class="text-sm"
-							>Reorder offline runners <span class="ml-1 text-muted-foreground"
-								>- Move offline runners to bottom</span
-							></span
-						>
-					</label>
+					</div>
 				</div>
 			</div>
 
