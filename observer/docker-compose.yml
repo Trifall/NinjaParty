@@ -1,0 +1,28 @@
+services:
+  ninjaparty-observer:
+    build: .
+    container_name: ninjaparty-observer
+    ports:
+      - '3000:3000'
+    environment:
+      # SvelteKit node-adapter expects ORIGIN if using certain features or behind a proxy
+      ORIGIN: ${PUBLIC_WEB_UI_URL:-http://localhost:3000}
+      # optional, only if truly needed:
+      # CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      BODY_SIZE_LIMIT: 5M
+
+      PUBLIC_SITE_NAME: ${PUBLIC_SITE_NAME:-NinjaParty}
+
+      # If not using a .env, uncomment below, and set this to the URL of the server
+      # PUBLIC_SERVER_URL: ${PUBLIC_SERVER_URL:-localhost:8080}
+
+      # Use wss/https (set to false for local dev with http/ws)
+      PUBLIC_USE_SECURE_URLS: ${PUBLIC_USE_SECURE_URLS:-true}
+
+      # Trust Proxy Headers (Cloudflare/Reverse Proxy)
+      PROTOCOL_HEADER: X-Forwarded-Proto
+      HOST_HEADER: X-Forwarded-Host
+    restart: unless-stopped
+    # If not using a .env file, comment out the lines below
+    env_file:
+      - .env
