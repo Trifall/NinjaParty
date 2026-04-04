@@ -3,9 +3,8 @@ version: 2
 project_name: NinjaParty-Server
 dist: server/dist
 
-monorepo:
-  tag_prefix: server/
-  dir: server
+release:
+  tag: "{{ .Env.GORELEASER_RELEASE_TAG }}"
 
 builds:
   - id: server-linux

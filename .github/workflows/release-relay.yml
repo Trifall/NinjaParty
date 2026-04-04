@@ -53,6 +53,24 @@ jobs:
 
           echo "path=$CHANGELOG_PATH" >> $GITHUB_OUTPUT
 
+      - name: Prepare GoReleaser tags
+        id: goreleaser_tags
+        run: |
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+          RELEASE_TAG="${GITHUB_REF_NAME}"
+          PREVIOUS_PREFIXED_TAG=$(git tag -l 'relay/v*' --sort=-v:refname | sed -n '2p')
+
+          git tag "$CURRENT_TAG" "$GITHUB_SHA"
+
+          if [ -n "$PREVIOUS_PREFIXED_TAG" ]; then
+            PREVIOUS_TAG="${PREVIOUS_PREFIXED_TAG#relay/}"
+            git tag "$PREVIOUS_TAG" "$PREVIOUS_PREFIXED_TAG"
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          fi
+
+          echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+
       - name: Run GoReleaser (Linux & Windows)
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -61,6 +79,9 @@ jobs:
           args: release --clean -f relay/.goreleaser.yaml --release-notes "${{ steps.changelog.outputs.path }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
+          GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
+          GORELEASER_RELEASE_TAG: ${{ steps.goreleaser_tags.outputs.release_tag }}
 
   goreleaser-mac:
     runs-on: macos-latest
@@ -79,6 +100,24 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF_NAME#relay/}" >> $GITHUB_OUTPUT
 
+      - name: Prepare GoReleaser tags
+        id: goreleaser_tags
+        run: |
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+          RELEASE_TAG="${GITHUB_REF_NAME}"
+          PREVIOUS_PREFIXED_TAG=$(git tag -l 'relay/v*' --sort=-v:refname | sed -n '2p')
+
+          git tag "$CURRENT_TAG" "$GITHUB_SHA"
+
+          if [ -n "$PREVIOUS_PREFIXED_TAG" ]; then
+            PREVIOUS_TAG="${PREVIOUS_PREFIXED_TAG#relay/}"
+            git tag "$PREVIOUS_TAG" "$PREVIOUS_PREFIXED_TAG"
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          fi
+
+          echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+
       - name: Run GoReleaser (macOS)
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -87,6 +126,9 @@ jobs:
           args: build --clean -f relay/.goreleaser.yaml --id relay-darwin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
+          GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
+          GORELEASER_RELEASE_TAG: ${{ steps.goreleaser_tags.outputs.release_tag }}
           
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
