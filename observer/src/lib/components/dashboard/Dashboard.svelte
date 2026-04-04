@@ -367,7 +367,10 @@
 				<div
 					class={viewMode === 'grid'
 						? 'grid grid-cols-3 px-1.5 py-0.5'
-						: 'flex flex-col ' + (viewMode === 'ultra-compact' ? 'px-1.5' : 'px-4 py-2')}
+						: 'flex flex-col ' +
+							(viewMode === 'ultra-compact'
+								? 'px-1.5'
+								: 'px-2 py-1')}
 				>
 					{#each orderedRunners as runner (runner.name)}
 						<div
@@ -377,7 +380,7 @@
 								? 'p-[3px]'
 								: viewMode === 'ultra-compact'
 									? 'py-[3px]'
-									: 'py-2'}"
+									: 'py-1'}"
 							use:draggable={{
 								container: runner.name,
 								dragData: runner.name,
@@ -491,10 +494,7 @@
 							{:else}
 								<!-- Standard card layout (max / compact) -->
 								<div
-									class="rounded-lg border border-white/10 bg-black/40 p-4 {runner.status ===
-									'offline'
-										? 'opacity-60'
-										: ''}"
+									class="rounded-lg border border-white/10 bg-black/40 p-2.5 {runner.status === 'offline' ? 'opacity-60' : ''}"
 								>
 									<!-- Runner Header -->
 									<div class="mb-1 flex items-center justify-between">

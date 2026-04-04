@@ -127,6 +127,9 @@
 					<div class="flex flex-col gap-2">
 						<span class="text-sm font-medium text-white">3. Set dimensions:</span>
 						<span class="text-sm text-white/60">Width: 800, Height: 900</span>
+						<span class="text-sm text-white/60"
+							>(Note: You can increase this if you have more runners and it cuts off)</span
+						>
 					</div>
 
 					<div class="flex flex-col gap-2">
