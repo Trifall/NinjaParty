@@ -2,6 +2,8 @@
 
 NinjaParty is an observation tool for [Ninjabrain Bot](https://github.com/Ninjabrain1/NinjabrainBot). It allows Minecraft speedrunners to broadcast their stronghold triangulation data to observers in real-time (ish) through a web dashboard.
 
+This project is entirely open-source, and the releases are automatically built via GitHub Actions
+
 ## Installation
 
 1. Player enables the Ninjabrain API server: 
