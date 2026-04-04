@@ -1,6 +1,6 @@
 services:
   ninjaparty-server:
-    build: .
+    image: ${IMAGE:-jerrent/ninjaparty-server:latest}
     container_name: ninjaparty-server
     environment:
       LISTEN_ADDR: ${LISTEN_ADDR:-:8080}

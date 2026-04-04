@@ -93,6 +93,9 @@ Check out the [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for instructions on setting
 
 This project is open-source, so you can host the server and observer site yourself. Check out the [docs/INFRA.md](docs/INFRA.md) for instructions on how to do that.
 
+The server is also published as a Docker image on Docker Hub: `jerrent/ninjaparty-server`.
+Server image releases are created automatically from Git tags matching `server/v*`.
+
 **Precedence order** (highest to lowest):
 1. Environment variables (shell exports)
 2. `.env` file in the service directory

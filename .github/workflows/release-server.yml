@@ -7,6 +7,12 @@ on:
 
 permissions:
   contents: write
+  attestations: write
+  id-token: write
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ vars.SERVER_DOCKER_IMAGE || 'jerrent/ninjaparty-server' }}
 
 jobs:
   goreleaser:
@@ -26,6 +32,12 @@ jobs:
       - name: Extract version
         id: version
         run: echo "tag=${GITHUB_REF_NAME#server/}" >> $GITHUB_OUTPUT
+
+      - name: Extract build metadata
+        id: build_meta
+        run: |
+          echo "commit_sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "commit_date=$(git show -s --format=%cI \"$GITHUB_SHA\")" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: changelog
@@ -80,6 +92,54 @@ jobs:
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Docker metadata
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.tag }}
+            type=raw,value=latest,enable=${{ !contains(steps.version.outputs.tag, '-') }}
+
+      - name: Build and push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+          provenance: false
+          build-args: |
+            VERSION=${{ steps.version.outputs.tag }}
+            COMMIT=${{ steps.build_meta.outputs.commit_sha }}
+            DATE=${{ steps.build_meta.outputs.commit_date }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true
+
       - name: Publish GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,4 +158,13 @@ jobs:
             gh release upload "$RELEASE_TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$RELEASE_TAG" "${files[@]}" --title "$RELEASE_TITLE" --notes-file "$RELEASE_NOTES" --repo "$GITHUB_REPOSITORY"
+          fi
+
+      - name: Notify release
+        if: success()
+        run: |
+          echo "Release ${{ github.ref_name }} created successfully"
+          echo "Docker image: ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}"
+          if [[ "${{ steps.version.outputs.tag }}" != *-* ]]; then
+            echo "Docker image: ${{ env.IMAGE_NAME }}:latest"
           fi

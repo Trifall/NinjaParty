@@ -163,14 +163,32 @@ Notes:
 Docker is the simplest self-hosting path for the server.
 
 1. Create `server/.env` and set at least `OBSERVER_URL`.
-2. Start the container:
+2. Pull the published image and start the container:
 
 ```bash
 cd server
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-The default compose setup publishes container port `8080` to host port `8080`.
+The default compose setup publishes container port `8080` to host port `8080` and defaults to `jerrent/ninjaparty-server:latest`.
+
+Official server images are published to Docker Hub from Git tags matching `server/v*`. For example, pushing `server/v1.2.3` creates Docker tags such as `1.2.3`, `1.2`, `1`, and `latest` on stable releases.
+
+If you want to pin a version or use your own image, override `IMAGE` when starting Compose:
+
+```bash
+cd server
+IMAGE=jerrent/ninjaparty-server:v1.2.3 docker compose up -d
+```
+
+If you want to build the image locally from source instead of using Docker Hub:
+
+```bash
+docker build -t ninjaparty-server-local ./server
+cd server
+IMAGE=ninjaparty-server-local docker compose up -d
+```
 
 ### Manual binary deployment
 
