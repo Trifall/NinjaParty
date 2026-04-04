@@ -51,7 +51,7 @@
 					rel="noopener noreferrer"
 					class="text-lg font-bold text-emerald-400 transition-colors hover:text-emerald-300 hover:underline"
 				>
-					v{__APP_VERSION__}
+					{__APP_VERSION__}
 				</a>
 			</TooltipProvider>
 		</div>
