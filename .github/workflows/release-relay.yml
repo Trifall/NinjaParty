@@ -77,7 +77,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean --skip=publish --skip=announce -f relay/.goreleaser.yaml
+          args: release --clean --skip=publish --skip=announce -f relay/.goreleaser.yaml --id relay-linux --id relay-windows
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
@@ -151,7 +151,7 @@ jobs:
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
           
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: relay-macos
           path: relay/dist/relay-darwin_darwin_*/NinjaParty-Relay*
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download macOS artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: relay-macos
           path: macos-dist/

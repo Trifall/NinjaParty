@@ -43,7 +43,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libayatana-appindicator3-dev
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.10
           working-directory: relay
@@ -63,7 +63,7 @@ jobs:
           go-version: stable
           cache-dependency-path: server/go.sum
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.10
           working-directory: server
