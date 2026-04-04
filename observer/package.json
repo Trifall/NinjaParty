@@ -8,6 +8,7 @@
 		"build": "NODE_ENV=production bunx --bun vite build",
 		"build:node": "BUILD_TARGET=node NODE_ENV=production bunx --bun vite build",
 		"build:cloudflare": "BUILD_TARGET=cloudflare NODE_ENV=production bunx --bun vite build",
+		"deploy": "bun run build:cloudflare && bunx wrangler deploy",
 		"start": "NODE_ENV=production bun run build/index.js",
 		"preview": "bunx --bun vite preview",
 		"prepare": "husky && svelte-kit sync || echo ''",

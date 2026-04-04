@@ -23,7 +23,9 @@ const config = {
 		// CSRF protection for cross-origin submissions from third parties
 		csrf: {
 			trustedOrigins: process.env.CSRF_TRUSTED_ORIGINS
-				? process.env.CSRF_TRUSTED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+				? process.env.CSRF_TRUSTED_ORIGINS.split(',')
+						.map((s) => s.trim())
+						.filter(Boolean)
 				: [],
 		},
 		experimental: {

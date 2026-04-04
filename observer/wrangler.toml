@@ -1,0 +1,19 @@
+"$schema" = "./node_modules/wrangler/config-schema.json"
+
+name = "ninjaparty-observer"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-04-03"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+keep_vars = true
+
+[assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[observability]
+enabled = true
+
+[[routes]]
+pattern = "np.trifall.com"
+custom_domain = true
