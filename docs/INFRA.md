@@ -179,7 +179,7 @@ If you want to pin a version or use your own image, override `IMAGE` when starti
 
 ```bash
 cd server
-IMAGE=jerrent/ninjaparty-server:v1.2.3 docker compose up -d
+IMAGE=jerrent/ninjaparty-server:1.2.3 docker compose up -d
 ```
 
 If you want to build the image locally from source instead of using Docker Hub:

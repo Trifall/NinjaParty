@@ -33,11 +33,18 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF_NAME#server/}" >> $GITHUB_OUTPUT
 
+      - name: Resolve release commit
+        id: release_commit
+        run: |
+          COMMIT_SHA=$(git rev-list -n 1 "$GITHUB_REF_NAME")
+          echo "sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "date=$(git show -s --format=%cI "$COMMIT_SHA")" >> $GITHUB_OUTPUT
+
       - name: Extract build metadata
         id: build_meta
         run: |
-          echo "commit_sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-          echo "commit_date=$(git show -s --format=%cI \"$GITHUB_SHA\")" >> $GITHUB_OUTPUT
+          echo "commit_sha=${{ steps.release_commit.outputs.sha }}" >> $GITHUB_OUTPUT
+          echo "commit_date=${{ steps.release_commit.outputs.date }}" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: changelog
@@ -69,8 +76,9 @@ jobs:
           CURRENT_TAG="${{ steps.version.outputs.tag }}"
           RELEASE_TAG="${GITHUB_REF_NAME}"
           PREVIOUS_PREFIXED_TAG=$(git tag -l 'server/v*' --sort=-v:refname | sed -n '2p')
+          RELEASE_COMMIT="${{ steps.release_commit.outputs.sha }}"
 
-          git tag "$CURRENT_TAG" "$GITHUB_SHA"
+          git tag "$CURRENT_TAG" "$RELEASE_COMMIT"
 
           if [ -n "$PREVIOUS_PREFIXED_TAG" ]; then
             PREVIOUS_TAG="${PREVIOUS_PREFIXED_TAG#server/}"
