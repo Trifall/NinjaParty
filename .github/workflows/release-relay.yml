@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: stable
+          cache-dependency-path: relay/go.sum
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libayatana-appindicator3-dev gcc-mingw-w64
@@ -72,16 +73,35 @@ jobs:
           echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
       - name: Run GoReleaser (Linux & Windows)
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean -f relay/.goreleaser.yaml --release-notes "${{ steps.changelog.outputs.path }}"
+          args: release --clean --skip=publish --skip=announce -f relay/.goreleaser.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
-          GORELEASER_RELEASE_TAG: ${{ steps.goreleaser_tags.outputs.release_tag }}
+
+      - name: Publish GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.changelog.outputs.path }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TITLE: NinjaParty Relay ${{ steps.version.outputs.tag }}
+        run: |
+          files=()
+          for f in relay/dist/*; do
+            if [ -f "$f" ]; then
+              files+=("$f")
+            fi
+          done
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" "${files[@]}" --title "$RELEASE_TITLE" --notes-file "$RELEASE_NOTES" --repo "$GITHUB_REPOSITORY"
+          fi
 
   goreleaser-mac:
     runs-on: macos-latest
@@ -95,6 +115,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: stable
+          cache-dependency-path: relay/go.sum
 
       - name: Extract version
         id: version
@@ -119,7 +140,7 @@ jobs:
           echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
       - name: Run GoReleaser (macOS)
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
@@ -128,7 +149,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
-          GORELEASER_RELEASE_TAG: ${{ steps.goreleaser_tags.outputs.release_tag }}
           
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4

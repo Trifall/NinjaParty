@@ -3,9 +3,6 @@ version: 2
 project_name: NinjaParty-Relay
 dist: relay/dist
 
-release:
-  tag: "{{ .Env.GORELEASER_RELEASE_TAG }}"
-
 builds:
   - id: relay-linux
     dir: relay
