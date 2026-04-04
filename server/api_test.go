@@ -143,6 +143,30 @@ func TestAPI_HandleRoomExists(t *testing.T) {
 	}
 }
 
+func TestAPI_HandleRoomExists_AllowsOriginWithoutTrailingSlash(t *testing.T) {
+	logger := zap.NewNop()
+	rm := NewRoomManager(time.Hour, logger)
+	config := &Config{ObserverURL: "https://np.trifall.com/"}
+	api := NewAPI(config, logger, rm)
+	router := api.Router()
+
+	code, _, _, _ := rm.CreateRoom("runner_test", "")
+
+	req, _ := http.NewRequest("GET", "/api/v1/rooms/"+code+"/exists", nil)
+	req.Header.Set("Origin", "https://np.trifall.com")
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected OK, got %v", rr.Code)
+	}
+
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "https://np.trifall.com" {
+		t.Fatalf("expected Access-Control-Allow-Origin to be set, got %q", got)
+	}
+}
+
 func TestAPI_HandleForceCloseRoom(t *testing.T) {
 	logger := zap.NewNop()
 	rm := NewRoomManager(time.Hour, logger)

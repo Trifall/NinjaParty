@@ -25,7 +25,21 @@ func normalizeOrigin(o string) string {
 	if !strings.HasPrefix(o, "http://") && !strings.HasPrefix(o, "https://") {
 		o = "http://" + o
 	}
-	return strings.ToLower(o)
+	o = strings.ToLower(o)
+	return strings.TrimRight(o, "/")
+}
+
+func allowedOrigins(observerURL string) []string {
+	origins := strings.Split(observerURL, ",")
+	normalized := make([]string, 0, len(origins))
+	for _, origin := range origins {
+		origin = normalizeOrigin(origin)
+		if origin == "" {
+			continue
+		}
+		normalized = append(normalized, origin)
+	}
+	return normalized
 }
 
 type API struct {
@@ -52,7 +66,7 @@ func (api *API) Router() chi.Router {
 	r.Use(middleware.Recoverer)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: strings.Split(api.config.ObserverURL, ","),
+		AllowedOrigins: allowedOrigins(api.config.ObserverURL),
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	})
@@ -246,10 +260,9 @@ func (api *API) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	if origin != "" && !isWriter {
 		origin = normalizeOrigin(origin)
-		allowedOrigins := strings.Split(api.config.ObserverURL, ",")
 		allowed := false
-		for _, ao := range allowedOrigins {
-			allowed = allowed || (strings.TrimSpace(normalizeOrigin(ao)) == origin)
+		for _, ao := range allowedOrigins(api.config.ObserverURL) {
+			allowed = allowed || (ao == origin)
 		}
 		if !allowed {
 			http.Error(w, "origin not allowed", http.StatusForbidden)
