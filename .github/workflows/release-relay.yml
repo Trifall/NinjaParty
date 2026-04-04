@@ -171,4 +171,7 @@ jobs:
       - name: Upload to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${GITHUB_REF_NAME}" macos-dist/** --clobber --repo "$GITHUB_REPOSITORY"
+        run: |
+          shopt -s globstar nullglob
+          files=(macos-dist/**/NinjaParty-Relay*)
+          gh release upload "${GITHUB_REF_NAME}" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
