@@ -24,7 +24,7 @@ func main() {
 	if os.Getenv("DEBUG") == "1" {
 		logger, _ = zap.NewDevelopmentConfig().Build(zap.AddStacktrace(zapcore.FatalLevel))
 	} else {
-		logger, _ = zap.NewDevelopment()
+		logger, _ = zap.NewProductionConfig().Build(zap.AddStacktrace(zapcore.FatalLevel))
 	}
 	defer func() { _ = logger.Sync() }()
 
