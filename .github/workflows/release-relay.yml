@@ -174,4 +174,8 @@ jobs:
         run: |
           shopt -s globstar nullglob
           files=(macos-dist/**/NinjaParty-Relay*)
-          gh release upload "${GITHUB_REF_NAME}" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+
+          for file in "${files[@]}"; do
+            asset_name="$(basename "$(dirname "$file")")-$(basename "$file")"
+            gh release upload "${GITHUB_REF_NAME}" "$file#$asset_name" --clobber --repo "$GITHUB_REPOSITORY"
+          done
