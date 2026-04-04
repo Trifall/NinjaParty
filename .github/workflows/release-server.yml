@@ -29,6 +29,7 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
+          CHANGELOG_PATH="$RUNNER_TEMP/server-changelog.md"
           PREVIOUS_TAG=$(git tag -l 'server/v*' --sort=-v:refname | sed -n '2p')
 
           if [ -z "$PREVIOUS_TAG" ]; then
@@ -45,14 +46,15 @@ jobs:
             echo "## NinjaParty Server ${{ steps.version.outputs.tag }}"
             echo ""
             echo "$CHANGELOG"
-          } > server/changelog.md
+          } > "$CHANGELOG_PATH"
+
+          echo "path=$CHANGELOG_PATH" >> $GITHUB_OUTPUT
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean -f server/.goreleaser.yaml --release-notes server/changelog.md
+          args: release --clean -f server/.goreleaser.yaml --release-notes "${{ steps.changelog.outputs.path }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.tag }}

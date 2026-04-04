@@ -2,6 +2,11 @@
 version: 2
 project_name: NinjaParty-Relay
 dist: relay/dist
+
+monorepo:
+  tag_prefix: relay/
+  dir: relay
+
 builds:
   - id: relay-linux
     dir: relay

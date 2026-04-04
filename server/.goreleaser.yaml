@@ -2,6 +2,11 @@
 version: 2
 project_name: NinjaParty-Server
 dist: server/dist
+
+monorepo:
+  tag_prefix: server/
+  dir: server
+
 builds:
   - id: server-linux
     dir: server
