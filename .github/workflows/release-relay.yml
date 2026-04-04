@@ -77,11 +77,12 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean --skip=publish --skip=announce -f relay/.goreleaser.yaml --id relay-linux --id relay-windows
+          args: release --clean --skip=publish --skip=announce -f relay/.goreleaser.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
+          RELAY_BUILD_SET: desktop
 
       - name: Publish GitHub release
         env:
@@ -149,6 +150,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.goreleaser_tags.outputs.current_tag }}
           GORELEASER_PREVIOUS_TAG: ${{ steps.goreleaser_tags.outputs.previous_tag }}
+          RELAY_BUILD_SET: darwin
           
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v7

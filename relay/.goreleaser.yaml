@@ -8,6 +8,7 @@ builds:
     dir: relay
     main: ./
     binary: NinjaParty-Relay
+    skip: '{{ eq .Env.RELAY_BUILD_SET "darwin" }}'
     goos:
       - linux
     goarch:
@@ -23,6 +24,7 @@ builds:
     dir: relay
     main: ./
     binary: NinjaParty-Relay
+    skip: '{{ eq .Env.RELAY_BUILD_SET "darwin" }}'
     goos:
       - windows
     goarch:
@@ -39,6 +41,7 @@ builds:
     dir: relay
     main: ./
     binary: NinjaParty-Relay
+    skip: '{{ eq .Env.RELAY_BUILD_SET "desktop" }}'
     goos:
       - darwin
     goarch:
