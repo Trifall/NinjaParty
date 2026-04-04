@@ -49,8 +49,7 @@ Decided on using a central relay server instead of direct peer-to-peer (P2P) con
 ├─ server/     # Central Go WebSocket broker
 ├─ observer/   # SvelteKit web dashboard for observers
 ├─ shared/     # Shared JSON schemas and types
-├─ infra/      # Docker & deployment configurations
-├─ docs/       # Documentation
+├─ docs/       # Documentation - including local dev setup and deployment instructions
 └─ Makefile    # Development and build commands
 ```
 
