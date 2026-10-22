@@ -15,6 +15,14 @@ The observer app supports three deployment styles:
 - Docker via `observer/Dockerfile` and `observer/docker-compose.yml`
 - Manual process hosting using the package scripts
 
+### Node.js runtime security
+
+The Go server and relay do not run Node.js. The observer Docker image and package scripts use Bun; the Cloudflare deployment uses the Workers runtime. Selecting the Node adapter does not itself select the Node.js runtime.
+
+If you use Node.js for tooling or run the built observer with `node build/index.js`, use Node.js **22.23.4+**, **24.22.1+**, or **26.12.1+** within those respective release lines. These are the patched minimums for the [October 21, 2026 security release](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), including CVE-2026-111497. CI explicitly selects Node.js 24.22.1 for observer tooling.
+
+Updating the host's Node.js does not update existing containers or running processes. For any Node-based deployment, rebuild images with a patched runtime and restart or redeploy the application. Verify `node --version` in the actual service/container environment; package engine constraints alone do not protect an already-running process.
+
 ### Environment variables
 
 See `observer/.env.example`:
